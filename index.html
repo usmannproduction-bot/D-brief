@@ -33,6 +33,10 @@ body{background:#08080C;color:#F0F0F5;font-family:-apple-system,BlinkMacSystemFo
 .cnt{position:absolute;bottom:-2px;left:50%;transform:translateX(-50%);background:#1E1E2E;border:2px solid #0C0C12;border-radius:99px;padding:1px 7px;font-size:9px;font-weight:700;color:#8888A0}
 .ct-ring{width:72px;height:72px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:900;color:#fff}
 .ct-def{border:3px solid #4ECB71;background:linear-gradient(135deg,#1A3D28,#122E1E);box-shadow:0 0 20px rgba(78,203,113,.2)}
+.ct-def.speaking{animation:sp 1.5s ease-in-out infinite}
+.ct-acc.speaking{animation:spa 1.5s ease-in-out infinite}
+@keyframes sp{0%,100%{box-shadow:0 0 20px rgba(78,203,113,.2)}50%{box-shadow:0 0 35px rgba(78,203,113,.5)}}
+@keyframes spa{0%,100%{box-shadow:0 0 20px rgba(255,71,87,.2)}50%{box-shadow:0 0 35px rgba(255,71,87,.5)}}
 .ct-acc{border:3px solid #FF4757;background:linear-gradient(135deg,#3D1A1A,#2E1212);box-shadow:0 0 20px rgba(255,71,87,.2)}
 .ct-pres{border:3px solid #FFD23F;background:linear-gradient(135deg,#3D3520,#2A2418);box-shadow:0 0 24px rgba(255,210,63,.25)}
 .badge{font-size:8px;font-weight:800;text-transform:uppercase;letter-spacing:1.5px;padding:3px 10px;border-radius:6px}
@@ -260,7 +264,12 @@ body{background:#08080C;color:#F0F0F5;font-family:-apple-system,BlinkMacSystemFo
 </div>
 <div style="height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.1),transparent);margin:0 20px"></div>
 <div style="flex:1;padding:8px 14px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;justify-content:flex-end" id="coms"></div>
-<div style="padding:8px 14px;display:flex;gap:8px;border-top:1px solid rgba(255,255,255,.07)"><input class="inp" id="ci" type="text" placeholder="Commenter en direct..." style="padding:12px 14px;font-size:13px;border-radius:99px" onkeydown="if(event.key==='Enter')sendCom()"><button style="padding:10px 16px;background:linear-gradient(135deg,#FF7A2E,#FFA04E);border:none;border-radius:99px;color:#fff;font-size:12px;font-weight:700;cursor:pointer" onclick="sendCom()">Envoyer</button></div>
+<div style="padding:8px 14px;display:flex;gap:8px;border-top:1px solid rgba(255,255,255,.07);align-items:center">
+<button id="mic-btn" style="width:44px;height:44px;border-radius:50%;background:#1E1E2E;border:2px solid rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;font-size:20px;cursor:pointer;flex-shrink:0" onclick="toggleAudio()">🎤</button>
+<input class="inp" id="ci" type="text" placeholder="Commenter en direct..." style="padding:12px 14px;font-size:13px;border-radius:99px" onkeydown="if(event.key==='Enter')sendCom()">
+<button style="padding:10px 16px;background:linear-gradient(135deg,#FF7A2E,#FFA04E);border:none;border-radius:99px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap" onclick="sendCom()">Envoyer</button>
+</div>
+<audio id="remote-audio" autoplay style="display:none"></audio>
 </div>
 
 </div>
@@ -331,7 +340,103 @@ pick.forEach(function(c,i){
 var d=document.createElement('div');
 d.style.cssText='display:flex;align-items:center;gap:14px;padding:16px;background:#161622;border:2px solid rgba(255,255,255,.07);border-radius:16px;cursor:pointer';
 d.innerHTML='<div style="width:56px;height:56px;border-radius:50%;border:3px solid #FF7A2E;background:linear-gradient(135deg,#2D1B69,#1E1245);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:900;color:#fff">'+c.i+'</div><div style="flex:1"><div style="font-size:16px;font-weight:800">'+c.n+'</div><div style="font-size:12px;color:#8888A0">'+c.s+'</div><div style="font-size:10px;font-weight:700;color:#FF7A2E;margin-top:4px;text-transform:uppercase">'+c.c+'</div></div>';
-d.onclick=function(){me.client=c;document.getElementById('my-clients').innerHTML='<div style="display:flex;align-items:center;gap:12px;padding:12px;background:#161622;border:1px solid rgba(255,255,255,.07);border-radius:14px"><div style="width:46px;height:46px;border-radius:50%;border:3px solid #FF7A2E;background:linear-gradient(135deg,#2D1B69,#1E1245);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:#fff">'+c.i+'</div><div><div style="font-size:13px;font-weight:700">'+c.n+'</div><div style="font-size:11px;color:#505068">'+c.s+'</div></div></div>';buildHome();go('home')};
+d.onclick=function(){me.client=c;document.getElementById('my-clients').innerHTML='<div style="display:flex;align-items:center;gap:12px;padding:12px;background:#161622;border:1px solid rgba(255,255,255,.07);border-radius:14px"><div style="width:46px;height:46px;border-radius:50%;border:3px solid #FF7A2E;background:linear-gradient(135deg,#2D1B69,#1E1245);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:#fff">'+c.i+'</div><div><div style="font-size:13px;font-weight:700">'+c.n+'</div><div style="font-size:11px;color:#505068">'+c.s+'</div></div></div>';/* ===== AUDIO - PeerJS ===== */
+var myPeer=null;
+var myStream=null;
+var audioOn=false;
+var peers={};
+var roomPeerId=null;
+
+function initAudio(){
+var s=document.createElement('script');
+s.src='https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js';
+s.onload=function(){
+myPeer=new Peer();
+myPeer.on('open',function(id){
+roomPeerId=id;
+console.log('PeerJS ready:',id);
+});
+myPeer.on('call',function(call){
+/* Answer incoming call with our stream (or empty) */
+if(myStream){
+call.answer(myStream);
+}else{
+call.answer();
+}
+call.on('stream',function(remoteStream){
+playRemote(remoteStream);
+});
+peers[call.peer]=call;
+});
+};
+s.onerror=function(){console.log('PeerJS not available')};
+document.head.appendChild(s);
+}
+
+function toggleAudio(){
+if(audioOn){
+stopAudio();
+}else{
+startAudio();
+}
+}
+
+function startAudio(){
+navigator.mediaDevices.getUserMedia({audio:true,video:false}).then(function(stream){
+myStream=stream;
+audioOn=true;
+document.getElementById('mic-btn').style.background='#FF4757';
+document.getElementById('mic-btn').style.borderColor='#FF4757';
+document.getElementById('mic-btn').textContent='🔴';
+document.getElementById('s-def').classList.add('speaking');
+addC('Système','Micro activé — les autres joueurs vous entendent','#4ECB71');
+/* Call all known peers */
+Object.keys(peers).forEach(function(pid){
+var call=myPeer.call(pid,stream);
+call.on('stream',function(rs){playRemote(rs)});
+});
+}).catch(function(e){
+addC('Système','Micro refusé ou indisponible','#FF4757');
+});
+}
+
+function stopAudio(){
+if(myStream){
+myStream.getTracks().forEach(function(t){t.stop()});
+myStream=null;
+}
+audioOn=false;
+document.getElementById('mic-btn').style.background='#1E1E2E';
+document.getElementById('mic-btn').style.borderColor='rgba(255,255,255,.12)';
+document.getElementById('mic-btn').textContent='🎤';
+document.getElementById('s-def').classList.remove('speaking');
+}
+
+function playRemote(stream){
+var audio=document.getElementById('remote-audio');
+if(audio){
+audio.srcObject=stream;
+audio.play().catch(function(){});
+}
+}
+
+function connectToRoom(hostPeerId){
+if(!myPeer)return;
+var call=myPeer.call(hostPeerId,myStream||new MediaStream());
+call.on('stream',function(rs){playRemote(rs)});
+peers[hostPeerId]=call;
+}
+
+function disconnectAudio(){
+stopAudio();
+Object.keys(peers).forEach(function(pid){
+if(peers[pid])peers[pid].close();
+});
+peers={};
+}
+
+initAudio();
+buildHome();go('home')};
 el.appendChild(d);
 });
 go('choose');
@@ -486,8 +591,104 @@ var m=fakeMsgs[Math.floor(Math.random()*fakeMsgs.length)];
 addC(u,m,'#7C5CFC');
 },5000+Math.random()*5000);
 }
-function leaveAud(){clearInterval(debI);clearInterval(comI);go('home')}
+function leaveAud(){clearInterval(debI);clearInterval(comI);disconnectAudio();go('home')}
 
+/* ===== AUDIO - PeerJS ===== */
+var myPeer=null;
+var myStream=null;
+var audioOn=false;
+var peers={};
+var roomPeerId=null;
+
+function initAudio(){
+var s=document.createElement('script');
+s.src='https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js';
+s.onload=function(){
+myPeer=new Peer();
+myPeer.on('open',function(id){
+roomPeerId=id;
+console.log('PeerJS ready:',id);
+});
+myPeer.on('call',function(call){
+/* Answer incoming call with our stream (or empty) */
+if(myStream){
+call.answer(myStream);
+}else{
+call.answer();
+}
+call.on('stream',function(remoteStream){
+playRemote(remoteStream);
+});
+peers[call.peer]=call;
+});
+};
+s.onerror=function(){console.log('PeerJS not available')};
+document.head.appendChild(s);
+}
+
+function toggleAudio(){
+if(audioOn){
+stopAudio();
+}else{
+startAudio();
+}
+}
+
+function startAudio(){
+navigator.mediaDevices.getUserMedia({audio:true,video:false}).then(function(stream){
+myStream=stream;
+audioOn=true;
+document.getElementById('mic-btn').style.background='#FF4757';
+document.getElementById('mic-btn').style.borderColor='#FF4757';
+document.getElementById('mic-btn').textContent='🔴';
+document.getElementById('s-def').classList.add('speaking');
+addC('Système','Micro activé — les autres joueurs vous entendent','#4ECB71');
+/* Call all known peers */
+Object.keys(peers).forEach(function(pid){
+var call=myPeer.call(pid,stream);
+call.on('stream',function(rs){playRemote(rs)});
+});
+}).catch(function(e){
+addC('Système','Micro refusé ou indisponible','#FF4757');
+});
+}
+
+function stopAudio(){
+if(myStream){
+myStream.getTracks().forEach(function(t){t.stop()});
+myStream=null;
+}
+audioOn=false;
+document.getElementById('mic-btn').style.background='#1E1E2E';
+document.getElementById('mic-btn').style.borderColor='rgba(255,255,255,.12)';
+document.getElementById('mic-btn').textContent='🎤';
+document.getElementById('s-def').classList.remove('speaking');
+}
+
+function playRemote(stream){
+var audio=document.getElementById('remote-audio');
+if(audio){
+audio.srcObject=stream;
+audio.play().catch(function(){});
+}
+}
+
+function connectToRoom(hostPeerId){
+if(!myPeer)return;
+var call=myPeer.call(hostPeerId,myStream||new MediaStream());
+call.on('stream',function(rs){playRemote(rs)});
+peers[hostPeerId]=call;
+}
+
+function disconnectAudio(){
+stopAudio();
+Object.keys(peers).forEach(function(pid){
+if(peers[pid])peers[pid].close();
+});
+peers={};
+}
+
+initAudio();
 buildHome();
 </script>
 </body>
