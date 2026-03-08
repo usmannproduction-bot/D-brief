@@ -74,8 +74,8 @@ body{background:#08080C;color:#F0F0F5;font-family:-apple-system,BlinkMacSystemFo
 <div style="font-size:30px;font-weight:900;color:#FF7A2E;margin-bottom:8px">Maître</div>
 <div style="color:#505068;margin-bottom:28px">Créez votre cabinet.</div>
 <div style="display:flex;flex-direction:column;gap:18px">
-<div><div style="font-size:12px;font-weight:700;color:#8888A0;text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px">Nom complet</div><input class="inp" id="su-n" placeholder="Kelan Usman"><div class="err" id="e1">Requis</div></div>
-<div><div style="font-size:12px;font-weight:700;color:#8888A0;text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px">E-mail</div><input class="inp" id="su-e" type="email" placeholder="kelan@guette.app"><div class="err" id="e2">Requis</div></div>
+<div><div style="font-size:12px;font-weight:700;color:#8888A0;text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px">Nom complet</div><input class="inp" id="su-n" placeholder="Votre nom"><div class="err" id="e1">Requis</div></div>
+<div><div style="font-size:12px;font-weight:700;color:#8888A0;text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px">E-mail</div><input class="inp" id="su-e" type="email" placeholder="email@exemple.com"><div class="err" id="e2">Requis</div></div>
 <div><div style="font-size:12px;font-weight:700;color:#8888A0;text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px">Mot de passe</div><input class="inp" id="su-p" type="password" placeholder="Min. 6 caractères"><div class="err" id="e3">Min. 6 caractères</div></div>
 </div>
 <button class="btn bo" style="margin-top:24px" onclick="doSignup()">Créer mon compte</button>
@@ -91,7 +91,7 @@ body{background:#08080C;color:#F0F0F5;font-family:-apple-system,BlinkMacSystemFo
 <div style="font-size:30px;font-weight:900;color:#FF7A2E;margin-bottom:8px">Maître</div>
 <div style="color:#505068;margin-bottom:28px">Reprenez votre place.</div>
 <div style="display:flex;flex-direction:column;gap:18px">
-<div><div style="font-size:12px;font-weight:700;color:#8888A0;text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px">E-mail</div><input class="inp" id="li-e" type="email" placeholder="kelan@guette.app"><div class="err" id="e4">Requis</div></div>
+<div><div style="font-size:12px;font-weight:700;color:#8888A0;text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px">E-mail</div><input class="inp" id="li-e" type="email" placeholder="email@exemple.com"><div class="err" id="e4">Requis</div></div>
 <div><div style="font-size:12px;font-weight:700;color:#8888A0;text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px">Mot de passe</div><input class="inp" id="li-p" type="password" placeholder="Mot de passe"><div class="err" id="e5">Min. 6 caractères</div></div>
 </div>
 <button class="btn bo" style="margin-top:24px" onclick="doLogin()">Se connecter</button>
@@ -307,6 +307,7 @@ document.getElementById('e3').style.display=p.length>=6?'none':'block';
 if(!n||!e||p.length<6)return;
 me.name=n;
 document.getElementById('p-name').textContent=n;
+RANKS[0].n=n;
 document.getElementById('p-w').textContent='250';
 go('onb1');
 }
@@ -436,6 +437,75 @@ peers={};
 }
 
 initAudio();
+
+/* ===== FIREBASE MULTIPLAYER ===== */
+function initFirebase(){
+var s1=document.createElement('script');
+s1.src='https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js';
+s1.onload=function(){
+var s2=document.createElement('script');
+s2.src='https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js';
+s2.onload=function(){
+try{
+firebase.initializeApp({
+apiKey:"AIzaSyCAsL1P1YDGWfZMBzQdZdp4xd6zjgoGK9g",
+authDomain:"guette-a9b5d.firebaseapp.com",
+projectId:"guette-a9b5d",
+databaseURL:"https://guette-a9b5d-default-rtdb.europe-west1.firebasedatabase.app"
+});
+window.db=firebase.database();
+console.log('Firebase OK');
+}catch(e){}
+};
+document.head.appendChild(s2);
+};
+s1.onerror=function(){};
+document.head.appendChild(s1);
+}
+initFirebase();
+
+/* Join a room and listen for real comments */
+var currentRoom=null;
+var roomListener=null;
+
+function joinRoom(caseId){
+currentRoom=caseId;
+if(!window.db)return;
+/* Register as player */
+var playerRef=window.db.ref('rooms/'+caseId+'/players').push();
+playerRef.set({name:me.name||'Maître',joined:Date.now()});
+playerRef.onDisconnect().remove();
+/* Listen for player count */
+window.db.ref('rooms/'+caseId+'/players').on('value',function(snap){
+var count=snap.numChildren();
+var el=document.getElementById('a-viewers');
+if(el)el.textContent=count+' joueur'+(count>1?'s':'');
+});
+/* Listen for comments */
+if(roomListener)window.db.ref('rooms/'+currentRoom+'/comments').off();
+window.db.ref('rooms/'+caseId+'/comments').orderByChild('ts').limitToLast(50).on('child_added',function(snap){
+var m=snap.val();
+if(m.uid===myUid)return;
+addC(m.name,m.text,m.color||'#7C5CFC');
+});
+}
+
+function leaveRoom(){
+if(!window.db||!currentRoom)return;
+window.db.ref('rooms/'+currentRoom+'/players').off();
+window.db.ref('rooms/'+currentRoom+'/comments').off();
+currentRoom=null;
+}
+
+var myUid='u'+Math.random().toString(36).substr(2,9);
+
+function sendComToFirebase(name,text,color){
+if(!window.db||!currentRoom)return;
+window.db.ref('rooms/'+currentRoom+'/comments').push({
+uid:myUid,name:name,text:text,color:color,ts:Date.now()
+});
+}
+
 buildHome();go('home')};
 el.appendChild(d);
 });
@@ -561,8 +631,9 @@ document.getElementById('s-acc').textContent=c.a.substring(0,2).toUpperCase();
 document.getElementById('s-ab').textContent=c.ar;
 document.getElementById('coms').innerHTML='';
 go('audience');
+joinRoom(curCase);
 addC('Le Président','L\'audience est ouverte. '+c.q+'.','#FFD23F');
-setTimeout(function(){addC(c.a,'Monsieur le Président, les faits que nous allons exposer sont accablants.','#FF4757')},3000);
+
 var left=c.dt;
 clearInterval(debI);
 debI=setInterval(function(){left--;var m=Math.floor(left/60);var s=left%60;document.getElementById('a-timer').textContent=String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');document.getElementById('a-bar').style.width=(left/c.dt*100)+'%';if(left<=0){clearInterval(debI);clearInterval(comI)}},1000);
@@ -579,19 +650,13 @@ el.scrollTop=el.scrollHeight;
 function sendCom(){
 var inp=document.getElementById('ci');var t=inp.value.trim();if(!t)return;inp.value='';
 addC(me.name||'Maître',t,'#4ECB71');
-setTimeout(function(){addC('Le Président','La cour prend note.','#FFD23F')},1500);
+sendComToFirebase(me.name||'Maître',t,'#4ECB71');
+
 }
-var fakeUsers=['Karim D.','Aïcha F.','Moussa B.','Fatou S.','Omar K.'];
-var fakeMsgs=['La défense est en feu 🔥','Argument solide !','Pas convaincu...','C\'est tendu 😤','GG la défense','L\'accusation a raison','Objection !!','Quel retournement'];
-function startFakeComments(){
-clearInterval(comI);
-comI=setInterval(function(){
-var u=fakeUsers[Math.floor(Math.random()*fakeUsers.length)];
-var m=fakeMsgs[Math.floor(Math.random()*fakeMsgs.length)];
-addC(u,m,'#7C5CFC');
-},5000+Math.random()*5000);
-}
-function leaveAud(){clearInterval(debI);clearInterval(comI);disconnectAudio();go('home')}
+
+
+function startFakeComments(){}
+function leaveAud(){clearInterval(debI);clearInterval(comI);disconnectAudio();leaveRoom();go('home')}
 
 /* ===== AUDIO - PeerJS ===== */
 var myPeer=null;
@@ -689,6 +754,75 @@ peers={};
 }
 
 initAudio();
+
+/* ===== FIREBASE MULTIPLAYER ===== */
+function initFirebase(){
+var s1=document.createElement('script');
+s1.src='https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js';
+s1.onload=function(){
+var s2=document.createElement('script');
+s2.src='https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js';
+s2.onload=function(){
+try{
+firebase.initializeApp({
+apiKey:"AIzaSyCAsL1P1YDGWfZMBzQdZdp4xd6zjgoGK9g",
+authDomain:"guette-a9b5d.firebaseapp.com",
+projectId:"guette-a9b5d",
+databaseURL:"https://guette-a9b5d-default-rtdb.europe-west1.firebasedatabase.app"
+});
+window.db=firebase.database();
+console.log('Firebase OK');
+}catch(e){}
+};
+document.head.appendChild(s2);
+};
+s1.onerror=function(){};
+document.head.appendChild(s1);
+}
+initFirebase();
+
+/* Join a room and listen for real comments */
+var currentRoom=null;
+var roomListener=null;
+
+function joinRoom(caseId){
+currentRoom=caseId;
+if(!window.db)return;
+/* Register as player */
+var playerRef=window.db.ref('rooms/'+caseId+'/players').push();
+playerRef.set({name:me.name||'Maître',joined:Date.now()});
+playerRef.onDisconnect().remove();
+/* Listen for player count */
+window.db.ref('rooms/'+caseId+'/players').on('value',function(snap){
+var count=snap.numChildren();
+var el=document.getElementById('a-viewers');
+if(el)el.textContent=count+' joueur'+(count>1?'s':'');
+});
+/* Listen for comments */
+if(roomListener)window.db.ref('rooms/'+currentRoom+'/comments').off();
+window.db.ref('rooms/'+caseId+'/comments').orderByChild('ts').limitToLast(50).on('child_added',function(snap){
+var m=snap.val();
+if(m.uid===myUid)return;
+addC(m.name,m.text,m.color||'#7C5CFC');
+});
+}
+
+function leaveRoom(){
+if(!window.db||!currentRoom)return;
+window.db.ref('rooms/'+currentRoom+'/players').off();
+window.db.ref('rooms/'+currentRoom+'/comments').off();
+currentRoom=null;
+}
+
+var myUid='u'+Math.random().toString(36).substr(2,9);
+
+function sendComToFirebase(name,text,color){
+if(!window.db||!currentRoom)return;
+window.db.ref('rooms/'+currentRoom+'/comments').push({
+uid:myUid,name:name,text:text,color:color,ts:Date.now()
+});
+}
+
 buildHome();
 </script>
 </body>
