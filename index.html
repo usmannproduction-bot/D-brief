@@ -307,7 +307,6 @@ document.getElementById('e3').style.display=p.length>=6?'none':'block';
 if(!n||!e||p.length<6)return;
 me.name=n;
 document.getElementById('p-name').textContent=n;
-RANKS[0].n=n;
 document.getElementById('p-w').textContent='250';
 go('onb1');
 }
@@ -465,7 +464,6 @@ document.head.appendChild(s1);
 initFirebase();
 
 /* Join a room and listen for real comments */
-var currentRoom=null;
 var roomListener=null;
 
 function joinRoom(caseId){
