@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,interactive-widget=resizes-content">
 <title>Guette</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:rgba(255,122,46,0.2)}
@@ -408,6 +408,12 @@ body{background:#08080C;color:#F0F0F5;font-family:-apple-system,BlinkMacSystemFo
 </div>
 <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
 
+<!-- FIXED BOTTOM BAR -->
+<div style="flex-shrink:0;position:sticky;bottom:0;background:#0C0C12;z-index:40">
+<!-- REQUEST WORD (defense & accusation only) -->
+<div id="request-word" style="display:none;padding:6px 14px;border-top:1px solid rgba(255,255,255,.04)">
+<button id="req-btn" style="width:100%;padding:10px;background:rgba(255,210,63,.08);border:1.5px solid rgba(255,210,63,.2);border-radius:12px;color:#FFD23F;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px" onclick="requestWord()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FFD23F" stroke-width="2.5" stroke-linecap="round"><path d="M12 1v14M5 8l7-7 7 7"/></svg>Demander la parole</button>
+</div>
 <!-- REACTIONS BAR -->
 <div style="padding:4px 14px;display:flex;gap:6px;border-top:1px solid rgba(255,255,255,.04);overflow-x:auto" id="react-bar">
 <button class="rbtn" onclick="sendReact('😂')">😂</button>
@@ -426,6 +432,7 @@ body{background:#08080C;color:#F0F0F5;font-family:-apple-system,BlinkMacSystemFo
 <button style="padding:10px 16px;background:linear-gradient(135deg,#FF7A2E,#FFA04E);border:none;border-radius:99px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap" onclick="sendCom()">Envoyer</button>
 </div>
 <audio id="remote-audio" autoplay style="display:none"></audio>
+</div>
 </div>
 
 <!-- SOLO GAME -->
@@ -543,6 +550,13 @@ document.getElementById('e5').style.display=p.length>=6?'none':'block';
 if(!e||p.length<6)return;
 me.name='';
 document.getElementById('p-name').textContent='Maître';
+/* Fix mobile keyboard pushing input */
+if(window.visualViewport){
+window.visualViewport.addEventListener('resize',function(){
+var bar=document.querySelector('[style*="position:sticky"]');
+if(bar)bar.style.bottom='0px';
+});
+}
 buildHome();
 go('home');
 }
@@ -777,27 +791,6 @@ peers[data.peerId]=call;
 /* Join a room and listen for real comments */
 var roomListener=null;
 
-function joinRoom(caseId){
-currentRoom=caseId;
-if(!window.db)return;
-/* Register as player */
-var playerRef=window.db.ref('rooms/'+caseId+'/players/'+myUid);
-playerRef.set({name:me.name||'Maître',joined:Date.now()});
-playerRef.onDisconnect().remove();
-/* Listen for player count */
-window.db.ref('rooms/'+caseId+'/players').on('value',function(snap){
-var count=snap.numChildren();
-var el=document.getElementById('a-viewers');
-if(el)el.textContent=count+' joueur'+(count>1?'s':'');
-});
-/* Listen for comments */
-if(roomListener)window.db.ref('rooms/'+currentRoom+'/comments').off();
-window.db.ref('rooms/'+caseId+'/comments').orderByChild('ts').limitToLast(50).on('child_added',function(snap){
-var m=snap.val();
-if(m.uid===myUid)return;
-addC(m.name,m.text,m.color||'#7C5CFC');
-});
-}
 
 function leaveRoom(){
 if(!window.db||!currentRoom)return;
@@ -816,6 +809,13 @@ uid:myUid,name:name,text:text,color:color,ts:Date.now()
 });
 }
 
+/* Fix mobile keyboard pushing input */
+if(window.visualViewport){
+window.visualViewport.addEventListener('resize',function(){
+var bar=document.querySelector('[style*="position:sticky"]');
+if(bar)bar.style.bottom='0px';
+});
+}
 buildHome();
 go('home')};
 el.appendChild(d);
@@ -956,6 +956,45 @@ setTimeout(function(){inp.style.borderColor='rgba(255,255,255,.07)'},2000);
 }
 
 /* UPDATE USER STATS */
+/* REQUEST WORD */
+function requestWord(){
+var btn=document.getElementById('req-btn');
+btn.textContent='Parole demandée...';
+btn.style.borderColor='#FFA04E';
+btn.style.color='#FFA04E';
+btn.onclick=null;
+/* Notify judge via Firebase */
+if(window.db&&currentRoom){
+window.db.ref('rooms/'+currentRoom+'/requests').push({
+uid:myUid,
+name:me.name||'',
+role:myRole,
+timestamp:Date.now()
+});
+}
+/* Also show in chat for judge */
+var label=myRole==='defense'?'Défense':'Accusation';
+sendComToFirebase(label+' · '+(me.name||''),'demande la parole',myRole==='defense'?'#4ECB71':'#FF4757');
+/* Reset after 5s */
+setTimeout(function(){
+btn.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FFD23F" stroke-width="2.5" stroke-linecap="round"><path d="M12 1v14M5 8l7-7 7 7"/></svg>Demander la parole';
+btn.style.borderColor='rgba(255,210,63,.2)';
+btn.style.color='#FFD23F';
+btn.onclick=requestWord;
+},5000);
+}
+
+/* Listen for word requests (judge only) */
+function listenRequests(){
+if(!window.db||!currentRoom||myRole!=='juge')return;
+window.db.ref('rooms/'+currentRoom+'/requests').on('child_added',function(snap){
+var r=snap.val();
+var label=r.role==='defense'?'Défense':'Accusation';
+var color=r.role==='defense'?'#4ECB71':'#FF4757';
+addC(label+' · '+(r.name||''),'demande la parole',color,true);
+});
+}
+
 function addWin(){
 me.wins=(me.wins||0)+1;
 me.points=(me.points||0)+4;
@@ -1105,7 +1144,23 @@ html+='<div style="height:20px"></div>';
 h.innerHTML=html;
 }
 
+/* TRACK PREFERENCES */
+function trackView(id){
+try{
+var v=JSON.parse(localStorage.getItem('gV')||'{}');
+v[id]=(v[id]||0)+1;
+localStorage.setItem('gV',JSON.stringify(v));
+}catch(e){}
+}
+function getTopCases(){
+try{
+var v=JSON.parse(localStorage.getItem('gV')||'{}');
+return Object.entries(v).sort(function(a,b){return b[1]-a[1]}).map(function(e){return e[0]});
+}catch(e){return[]}
+}
+
 function joinCase(id){
+trackView(id);
 var c=CASES[id];if(!c)return;
 curCase=id;
 document.getElementById('rp-case').textContent=c.n;
@@ -1247,12 +1302,14 @@ document.getElementById('pres-label').textContent='PRÉSIDENT';
 var jc=document.getElementById('juge-controls');
 if(myRole==='juge'){jc.style.display='flex'}else{jc.style.display='none'}
 document.getElementById('coms').innerHTML='';
+var myA=document.getElementById('my-args');if(myA)myA.innerHTML='';
 go('audience');
 joinRoom(curCase);
 publishPeerId(curCase);
 addC('Président','L\'audience est ouverte. '+c.q+'.','#FFD23F');
 startTurnDebate();
 if(myRole!=='juge')listenVerdict();
+if(myRole==='juge')listenRequests();
 }
 /* TURN-BASED DEBATE - JUDGE CONTROLS */
 var turnRound=0;
@@ -1265,9 +1322,42 @@ var turnInt=null;
 var paused=false;
 
 function startTurnDebate(){
-turnRound=1;turnSide='defense';turnLeft=60;roundsDef=0;roundsAcc=0;paused=false;
+turnRound=0;turnSide='intro';turnLeft=0;roundsDef=0;roundsAcc=0;paused=false;
+/* Intro phase: Judge presents the case */
+var badge=document.getElementById('turn-badge');
+if(badge){badge.textContent='PRÉSENTATION DE L\'AFFAIRE';badge.style.background='rgba(255,210,63,.1)';badge.style.color='#FFD23F';badge.style.border='1px solid rgba(255,210,63,.2)'}
+document.getElementById('a-timer').textContent='--:--';
+document.getElementById('a-timer').style.color='#FFD23F';
+if(myRole==='juge'){
+document.getElementById('ci').placeholder='Présentez l\'affaire aux parties...';
+/* Show start button for judge */
+var jc=document.getElementById('juge-controls');
+if(jc){
+jc.innerHTML='<button style="flex:1;padding:10px;background:rgba(78,203,113,.1);border:1px solid rgba(78,203,113,.2);border-radius:10px;color:#4ECB71;font-size:12px;font-weight:700;cursor:pointer" onclick="judgeStartDebate()">Donner la parole à la Défense</button><button style="flex:1;padding:10px;background:rgba(255,71,87,.1);border:1px solid rgba(255,71,87,.2);border-radius:10px;color:#FF4757;font-size:12px;font-weight:700;cursor:pointer" onclick="judgeStartAccusation()">Donner la parole à l\'Accusation</button>';
+}
+}else{
+document.getElementById('ci').placeholder='Le Président présente l\'affaire...';
+}
+}
+
+function judgeStartDebate(){
+turnRound=1;turnSide='defense';turnLeft=60;
 showTurnBanner();
 runTurnTimer();
+/* Restore judge controls */
+var jc=document.getElementById('juge-controls');
+if(jc){
+jc.innerHTML='<button style="flex:1;padding:8px;background:rgba(78,203,113,.1);border:1px solid rgba(78,203,113,.2);border-radius:10px;color:#4ECB71;font-size:11px;font-weight:700;cursor:pointer" onclick="judgeGiveWord(\'defense\')">Parole Défense</button><button style="padding:8px 12px;background:rgba(255,210,63,.1);border:1px solid rgba(255,210,63,.2);border-radius:10px;color:#FFD23F;font-size:11px;font-weight:700;cursor:pointer" onclick="judgePause()"><span id="pause-label">Pause</span></button><button style="flex:1;padding:8px;background:rgba(255,71,87,.1);border:1px solid rgba(255,71,87,.2);border-radius:10px;color:#FF4757;font-size:11px;font-weight:700;cursor:pointer" onclick="judgeGiveWord(\'accusation\')">Parole Accusation</button>';
+}
+}
+function judgeStartAccusation(){
+turnRound=1;turnSide='accusation';turnLeft=60;
+showTurnBanner();
+runTurnTimer();
+var jc=document.getElementById('juge-controls');
+if(jc){
+jc.innerHTML='<button style="flex:1;padding:8px;background:rgba(78,203,113,.1);border:1px solid rgba(78,203,113,.2);border-radius:10px;color:#4ECB71;font-size:11px;font-weight:700;cursor:pointer" onclick="judgeGiveWord(\'defense\')">Parole Défense</button><button style="padding:8px 12px;background:rgba(255,210,63,.1);border:1px solid rgba(255,210,63,.2);border-radius:10px;color:#FFD23F;font-size:11px;font-weight:700;cursor:pointer" onclick="judgePause()"><span id="pause-label">Pause</span></button><button style="flex:1;padding:8px;background:rgba(255,71,87,.1);border:1px solid rgba(255,71,87,.2);border-radius:10px;color:#FF4757;font-size:11px;font-weight:700;cursor:pointer" onclick="judgeGiveWord(\'accusation\')">Parole Accusation</button>';
+}
 }
 
 function showTurnBanner(){
@@ -1293,7 +1383,9 @@ updateInput();
 function updateInput(){
 var canSpeak=(myRole===turnSide)||(myRole==='juge');
 var isSpec=(myRole==='spectateur');
-if(paused){
+if(turnSide==='intro'&&myRole!=='juge'&&!isSpec){
+document.getElementById('ci').placeholder='Le Président présente l\'affaire...';
+}else if(paused){
 document.getElementById('ci').placeholder='Audience en pause...';
 }else if(isSpec){
 document.getElementById('ci').placeholder='Commenter...';
@@ -1478,19 +1570,32 @@ function addC(name,text,color,forceShow){
 /* Defense & Accusation only see: president (gold) + their own messages */
 if(!forceShow && (myRole==='defense'||myRole==='accusation')){
 var isPresident=(color==='#FFD23F');
-var isOwn=(name===(me.name||'Maître'));
-if(!isPresident && !isOwn)return;
+var isOwn=(name===(me.name||''));
+var isEmoji=/^[\p{Emoji}\s]+$/u.test(text);
+if(!isPresident && !isOwn && !isEmoji)return;
 }
 var el=document.getElementById('coms');
 var d=document.createElement('div');d.className='com';
 var now=new Date();var ts=String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
-d.innerHTML='<div style="width:26px;height:26px;border-radius:50%;background:'+color+';display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:#fff;flex-shrink:0">'+name.substring(0,2).toUpperCase()+'</div><div style="flex:1;min-width:0"><div style="display:flex;align-items:center;gap:6px"><span style="font-size:11px;font-weight:700;color:'+color+'">'+name+'</span><span style="font-size:9px;color:#505068">'+ts+'</span></div><div style="font-size:13px;color:rgba(255,255,255,.9);line-height:1.4;margin-top:2px">'+text+'</div></div>';
+var safeName=String(name||'').replace(/</g,'&lt;');var safeText=String(text||'').replace(/</g,'&lt;');
+d.innerHTML='<div style="width:26px;height:26px;border-radius:50%;background:'+color+';display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:#fff;flex-shrink:0">'+name.substring(0,2).toUpperCase()+'</div><div style="flex:1;min-width:0"><div style="display:flex;align-items:center;gap:6px"><span style="font-size:11px;font-weight:700;color:'+color+'">'+name+'</span><span style="font-size:9px;color:#505068">'+ts+'</span></div><div style="font-size:13px;color:rgba(255,255,255,.9);line-height:1.4;margin-top:2px">'+safeText+'</div></div>';
 el.appendChild(d);
-while(el.children.length>20)el.removeChild(el.firstChild);
-el.scrollTop=el.scrollHeight;
+while(el.children.length>25)el.removeChild(el.firstChild);
+/* Always scroll to show newest message */
+requestAnimationFrame(function(){el.scrollTop=el.scrollHeight});
 }
+/* CONTENT FILTER */
+var BLOCKED=['putain','merde','connard','connasse','salope','nique','pute','fuck','shit','bitch','asshole','nigger','nigga'];
+function cleanMsg(t){
+if(!t)return'';
+var c=String(t).replace(/<[^>]*>/g,'').replace(/[<>]/g,'');
+var low=c.toLowerCase();
+for(var i=0;i<BLOCKED.length;i++){if(low.indexOf(BLOCKED[i])!==-1)return'[message filtré]'}
+return c.length>300?c.substring(0,300):c;
+}
+
 function sendCom(){
-var inp=document.getElementById('ci');var t=inp.value.trim();if(!t)return;
+var inp=document.getElementById('ci');var t=cleanMsg(inp.value.trim());if(!t)return;
 if(paused&&myRole!=='juge'){inp.placeholder='Audience en pause';return}
 /* Spectateurs commentent en gris */
 if(myRole==='spectateur'){
@@ -1518,7 +1623,7 @@ var ad=document.createElement('div');
 ad.style.cssText='padding:10px 14px;background:rgba('+(myRole==='defense'?'78,203,113':'255,71,87')+',.08);border:1px solid rgba('+(myRole==='defense'?'78,203,113':'255,71,87')+',.15);border-radius:12px';
 ad.innerHTML='<div style="font-size:10px;font-weight:700;color:'+color+';margin-bottom:3px">'+label+'</div><div style="font-size:13px;color:#fff;line-height:1.5">'+t+'</div>';
 argEl.appendChild(ad);
-argEl.scrollTop=argEl.scrollHeight;
+requestAnimationFrame(function(){argEl.scrollTop=argEl.scrollHeight});
 }
 /* Send to Firebase so judge and spectators see it */
 sendComToFirebase(label+' · '+(me.name||''),t,color);
@@ -1688,9 +1793,13 @@ var roomListener=null;
 function joinRoom(caseId){
 currentRoom=caseId;
 if(!window.db)return;
+/* Clear old messages */
+window.db.ref('rooms/'+caseId+'/comments').remove();
+window.db.ref('rooms/'+caseId+'/requests').remove();
+window.db.ref('rooms/'+caseId+'/verdict').remove();
 /* Register as player */
 var playerRef=window.db.ref('rooms/'+caseId+'/players/'+myUid);
-playerRef.set({name:me.name||'Maître',joined:Date.now()});
+playerRef.set({name:me.name||'',joined:Date.now()});
 playerRef.onDisconnect().remove();
 /* Listen for player count */
 window.db.ref('rooms/'+caseId+'/players').on('value',function(snap){
@@ -1703,7 +1812,7 @@ if(roomListener)window.db.ref('rooms/'+currentRoom+'/comments').off();
 window.db.ref('rooms/'+caseId+'/comments').orderByChild('ts').limitToLast(50).on('child_added',function(snap){
 var m=snap.val();
 if(m.uid===myUid)return;
-addC(m.name,m.text,m.color||'#7C5CFC');
+addC(cleanMsg(m.name),cleanMsg(m.text),m.color||'#7C5CFC');
 });
 }
 
@@ -1724,6 +1833,13 @@ uid:myUid,name:name,text:text,color:color,ts:Date.now()
 });
 }
 
+/* Fix mobile keyboard pushing input */
+if(window.visualViewport){
+window.visualViewport.addEventListener('resize',function(){
+var bar=document.querySelector('[style*="position:sticky"]');
+if(bar)bar.style.bottom='0px';
+});
+}
 buildHome();
 </script>
 </body>
