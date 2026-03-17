@@ -1,0 +1,1928 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,interactive-widget=resizes-content">
+<title>Guette</title>
+<!-- v1.0.0 -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Guette">
+<meta name="theme-color" content="#0C0C12">
+<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%230C0C12'/><text x='50' y='65' text-anchor='middle' font-size='40' font-weight='900' fill='%23FF7A2E'>G</text></svg>">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:rgba(255,122,46,0.2)}
+button{touch-action:manipulation;pointer-events:auto}
+html{overflow:hidden;height:100%}
+body{overflow:hidden;background:#08080C;color:#F0F0F5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;height:100dvh;display:flex;justify-content:center;align-items:center}
+#app{width:min(430px,100vw);height:min(932px,100dvh);background:#0C0C12;position:relative;overflow:hidden}
+.P{position:absolute;inset:0;display:none;flex-direction:column;background:#0C0C12;overflow-y:auto}
+#audience.P{overflow:hidden!important}
+.P.on{display:flex;animation:fadeIn .2s ease-out}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.btn{width:100%;padding:15px;border-radius:14px;font-size:16px;font-weight:700;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.btn:active{opacity:.85;transform:scale(.98)}
+.rbtn:active{transform:scale(1.25)}
+button:active{opacity:.85}
+.bo{background:linear-gradient(135deg,#FF7A2E,#FFA04E);color:#fff}
+.bg{background:#1E1E2E;border:1.5px solid rgba(255,255,255,.12);color:#F0F0F5}
+.bp{background:linear-gradient(135deg,#FF7A2E,#FF6B9D);color:#fff}
+.hd{padding:12px 20px;display:flex;align-items:center;justify-content:space-between}
+.logo{font-size:32px;font-weight:900;background:linear-gradient(135deg,#FF7A2E,#FFD23F,#FF6B9D);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.av{width:48px;height:48px;border-radius:16px;background:linear-gradient(135deg,#FF7A2E,#FFD23F);display:flex;align-items:center;justify-content:center;font-size:28px;cursor:pointer}
+.hl{height:1.5px;background:linear-gradient(90deg,transparent,rgba(255,122,46,.3),transparent);margin:0 20px}
+.inp{width:100%;padding:16px;background:rgba(22,22,34,.6);border:1.5px solid rgba(255,255,255,.12);border-radius:14px;color:#F0F0F5;font-size:16px;outline:none}
+.inp:focus{border-color:#FF7A2E}
+.err{font-size:12px;color:#FF4757;display:none}
+.tab{height:72px;background:rgba(22,22,34,.95);border-top:1px solid rgba(255,255,255,.06);display:flex}
+.ti{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer}
+.ti span:last-child{font-size:11px;font-weight:600;color:#505068}
+.ti.on span:last-child{color:#FF7A2E}
+.ring{width:80px;height:80px;border-radius:50%;display:flex;align-items:center;justify-content:center;position:relative;border:3px solid #FFD23F;box-shadow:0 0 20px rgba(255,210,63,.2);background:linear-gradient(135deg,#2D1B69,#1E1245);font-size:22px;font-weight:900;color:#fff;cursor:pointer}
+.ring.glow{animation:gl 2.5s ease-in-out infinite}
+@keyframes gl{0%,100%{box-shadow:0 0 18px rgba(255,210,63,.2)}50%{box-shadow:0 0 30px rgba(255,210,63,.45)}}
+.dot{position:absolute;top:2px;right:2px;width:13px;height:13px;border-radius:50%;background:#FF4757;border:2.5px solid #0C0C12}
+.cnt{position:absolute;bottom:-2px;left:50%;transform:translateX(-50%);background:#1E1E2E;border:2px solid #0C0C12;border-radius:99px;padding:1px 7px;font-size:9px;font-weight:700;color:#8888A0}
+.ct-ring{width:72px;height:72px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:900;color:#fff}
+.ct-def{border:3px solid #4ECB71;background:linear-gradient(135deg,#1A3D28,#122E1E);box-shadow:0 0 20px rgba(78,203,113,.2)}
+.ct-def.speaking{animation:sp 1.5s ease-in-out infinite}
+.ct-acc.speaking{animation:spa 1.5s ease-in-out infinite}
+@keyframes sp{0%,100%{box-shadow:0 0 20px rgba(78,203,113,.2)}50%{box-shadow:0 0 35px rgba(78,203,113,.5)}}
+@keyframes spa{0%,100%{box-shadow:0 0 20px rgba(255,71,87,.2)}50%{box-shadow:0 0 35px rgba(255,71,87,.5)}}
+.ct-acc{border:3px solid #FF4757;background:linear-gradient(135deg,#3D1A1A,#2E1212);box-shadow:0 0 20px rgba(255,71,87,.2)}
+.ct-pres{border:3px solid #FFD23F;background:linear-gradient(135deg,#3D3520,#2A2418);box-shadow:0 0 24px rgba(255,210,63,.25)}
+.badge{font-size:8px;font-weight:800;text-transform:uppercase;letter-spacing:1.5px;padding:3px 10px;border-radius:6px}
+.b-def{background:rgba(78,203,113,.08);color:#4ECB71;border:1px solid rgba(78,203,113,.15)}
+.b-acc{background:rgba(255,71,87,.08);color:#FF4757;border:1px solid rgba(255,71,87,.15)}
+.b-pres{background:rgba(255,210,63,.08);color:#FFD23F;border:1px solid rgba(255,210,63,.2)}
+.com{display:flex;align-items:flex-start;gap:10px;padding:10px 14px;background:rgba(22,22,34,.8);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.05);border-radius:16px;border-top-left-radius:4px;max-width:90%;animation:cs .3s}
+@keyframes cs{from{opacity:0;transform:translateY(15px)}to{opacity:1;transform:translateY(0)}}
+.rbtn{padding:6px 10px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);border-radius:99px;font-size:18px;cursor:pointer;flex-shrink:0;transition:transform .15s}
+.rbtn:active{transform:scale(1.3)}
+.float-react{position:absolute;font-size:28px;animation:floatUp 1.5s ease-out forwards;pointer-events:none;z-index:50}
+@keyframes reactPop{0%{opacity:1;transform:translateX(-50%) scale(0.5) translateY(0)}30%{opacity:1;transform:translateX(-50%) scale(1.3) translateY(-10px)}100%{opacity:0;transform:translateX(-50%) scale(1) translateY(-30px)}}
+@keyframes floatUp{0%{opacity:1;transform:translateY(0) scale(1)}50%{opacity:.8;transform:translateY(-60px) scale(1.2)}100%{opacity:0;transform:translateY(-120px) scale(0.8)}}
+.vd{background:#161622;border:1px solid rgba(255,255,255,.07);border-radius:20px;overflow:hidden;margin-bottom:20px}
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- SPLASH -->
+<div class="P on" id="splash">
+<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;text-align:center">
+<div style="width:120px;height:120px;border-radius:32px;background:linear-gradient(135deg,#7C5CFC,#A78BFA);display:flex;align-items:center;justify-content:center;font-size:64px;margin-bottom:20px;box-shadow:0 8px 40px rgba(124,92,252,.3)">👨🏿‍⚖️</div>
+<div class="logo" style="font-size:42px">Guette</div>
+<div style="color:#8888A0;font-size:16px;margin:12px 0 40px">Jugez vos personnages préférés en direct</div>
+<div style="display:flex;flex-direction:column;gap:12px;width:100%;max-width:300px">
+<button class="btn bo" onclick="go('signup')">Créer un compte</button>
+<button class="btn bg" onclick="go('login')">Se connecter</button>
+</div>
+<div style="font-size:12px;color:#505068;text-align:center;line-height:1.6;margin-top:20px">En continuant vous acceptez nos <span style="color:#A78BFA">Conditions</span> et notre <span style="color:#A78BFA">Politique de confidentialité</span></div>
+</div>
+</div>
+
+<!-- SIGNUP -->
+<div class="P" id="signup">
+<div class="hd"><div class="logo">Guette</div><div class="av">👨🏿‍⚖️</div></div><div class="hl"></div>
+<div style="padding:8px 20px"><button style="background:none;border:none;color:#FFA04E;font-size:14px;font-weight:600;cursor:pointer" onclick="go('splash')" style="z-index:50;position:relative">← Retour</button></div>
+<div style="flex:1;padding:0 24px 40px;overflow-y:auto">
+<div style="font-size:30px;font-weight:900;margin-bottom:4px">Bienvenue,</div>
+<div style="font-size:30px;font-weight:900;color:#FF7A2E;margin-bottom:8px">Maître</div>
+<div style="color:#505068;margin-bottom:28px">Créez votre cabinet.</div>
+<div style="display:flex;flex-direction:column;gap:18px">
+<div><div style="font-size:12px;font-weight:700;color:#8888A0;text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px">Nom de l'avocat</div><input class="inp" id="su-n" placeholder="Votre nom"><div class="err" id="e1">Requis</div></div>
+<div><div style="font-size:12px;font-weight:700;color:#8888A0;text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px">Nom du cabinet</div><input class="inp" id="su-cab" placeholder="Nom du cabinet (optionnel)"><div class="err" id="e6" style="display:none">Requis</div></div>
+<div><div style="font-size:12px;font-weight:700;color:#8888A0;text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px">E-mail</div><input class="inp" id="su-e" type="email" placeholder="Adresse e-mail"><div class="err" id="e2">Requis</div></div>
+<div><div style="font-size:12px;font-weight:700;color:#8888A0;text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px">Mot de passe</div><input class="inp" id="su-p" type="password" placeholder="6 caractères minimum"><div class="err" id="e3">Min. 6 caractères</div></div>
+</div>
+<button class="btn bo" style="margin-top:24px" onclick="doSignup()">Créer mon compte</button>
+</div>
+</div>
+
+<!-- LOGIN -->
+<div class="P" id="login">
+<div class="hd"><div class="logo">Guette</div><div class="av">👨🏿‍⚖️</div></div><div class="hl"></div>
+<div style="padding:8px 20px"><button style="background:none;border:none;color:#FFA04E;font-size:14px;font-weight:600;cursor:pointer" onclick="go('splash')" style="z-index:50;position:relative">← Retour</button></div>
+<div style="flex:1;padding:0 24px 40px;overflow-y:auto">
+<div style="font-size:30px;font-weight:900;margin-bottom:4px">Bon retour,</div>
+<div style="font-size:30px;font-weight:900;color:#FF7A2E;margin-bottom:8px">Maître</div>
+<div style="color:#505068;margin-bottom:28px">Reprenez votre place.</div>
+<div style="display:flex;flex-direction:column;gap:18px">
+<div><div style="font-size:12px;font-weight:700;color:#8888A0;text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px">E-mail</div><input class="inp" id="li-e" type="email" placeholder="Adresse e-mail"><div class="err" id="e4">Requis</div></div>
+<div><div style="font-size:12px;font-weight:700;color:#8888A0;text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px">Mot de passe</div><input class="inp" id="li-p" type="password" placeholder="Mot de passe"><div class="err" id="e5">Min. 6 caractères</div></div>
+</div>
+<button class="btn bo" style="margin-top:24px" onclick="doLogin()">Se connecter</button>
+</div>
+</div>
+
+<!-- ONB 1 -->
+<div class="P" id="onb1">
+<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;text-align:center;background:radial-gradient(ellipse at 50% 30%,rgba(255,122,46,.06) 0%,transparent 60%)">
+<div style="font-size:42px;margin-bottom:16px">📺</div>
+<div style="font-size:28px;font-weight:900;line-height:1.2;margin-bottom:12px;max-width:280px">Vos séries préférées passent au <span style="color:#FF7A2E">tribunal</span></div>
+<div style="color:#8888A0;font-size:14px;line-height:1.6;max-width:280px;margin-bottom:28px">Ghost, Annalise, Light Yagami, Dushane... Ils sont tous accusés. Choisissez une affaire en direct.</div>
+<div style="background:#161622;border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:16px;width:100%;max-width:280px">
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><div style="font-size:11px;font-weight:700;color:#FF4757">● EN DIRECT</div></div>
+<div style="font-size:15px;font-weight:800;margin-bottom:4px">Dushane vs Sully</div>
+<div style="font-size:11px;color:#505068;margin-bottom:10px">Top Boy — Trahison à Summerhouse</div>
+<div style="padding:8px;background:linear-gradient(135deg,#FF7A2E,#FFA04E);border-radius:10px;text-align:center;font-size:12px;font-weight:700;color:#fff">Rejoindre l'audience</div>
+</div>
+</div>
+<div style="padding:0 24px 32px"><button class="btn bp" onclick="go('onb2')">Suivant</button></div>
+</div>
+
+<!-- ONB 2 -->
+<div class="P" id="onb2">
+<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;text-align:center;background:radial-gradient(ellipse at 50% 30%,rgba(124,92,252,.06) 0%,transparent 60%)">
+<div style="font-size:42px;margin-bottom:16px">🎭</div>
+<div style="font-size:28px;font-weight:900;line-height:1.2;margin-bottom:12px;max-width:280px">Choisissez votre <span style="color:#7C5CFC">rôle</span></div>
+<div style="color:#8888A0;font-size:14px;line-height:1.6;max-width:280px;margin-bottom:28px">Juge, avocat de la défense, accusation ou spectateur. À vous de décider comment vous entrez dans l'histoire.</div>
+<div style="display:flex;gap:10px;width:100%;max-width:300px">
+<div style="flex:1;padding:16px 8px;background:#161622;border:1.5px solid #4ECB71;border-radius:14px;text-align:center"><div style="font-size:24px;font-weight:900;color:#4ECB71;margin-bottom:4px">DF</div><div style="font-size:12px;font-weight:700;color:#4ECB71">Défense</div></div>
+<div style="flex:1;padding:16px 8px;background:#161622;border:1.5px solid #FF4757;border-radius:14px;text-align:center"><div style="font-size:24px;font-weight:900;color:#FF4757;margin-bottom:4px">AC</div><div style="font-size:12px;font-weight:700;color:#FF4757">Accusation</div></div>
+<div style="flex:1;padding:16px 8px;background:#161622;border:1.5px solid #FFD23F;border-radius:14px;text-align:center"><div style="font-size:24px;font-weight:900;color:#FFD23F;margin-bottom:4px">JG</div><div style="font-size:12px;font-weight:700;color:#FFD23F">Juge</div></div>
+</div>
+</div>
+<div style="padding:0 24px 32px"><button class="btn bp" onclick="go('onb3')">Suivant</button></div>
+</div>
+
+<!-- ONB 3 -->
+<div class="P" id="onb3">
+<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;text-align:center">
+<div style="font-size:36px;font-weight:900;color:#FF7A2E;margin-bottom:20px;letter-spacing:-2px">03</div>
+<div style="font-size:26px;font-weight:900;margin-bottom:12px"><span style="color:#FF7A2E">Étape 3</span> — Préparation</div>
+<div style="color:#8888A0;font-size:15px;line-height:1.6;max-width:300px;margin-bottom:28px">Lisez l'histoire de l'affaire. Préparez vos arguments pendant <strong style="color:#F0F0F5">5 à 10 minutes</strong>. Pas besoin de jargon — plaidez avec conviction.</div>
+<div style="background:rgba(255,210,63,.08);border:1px solid rgba(255,210,63,.2);border-radius:14px;padding:14px;display:flex;align-items:center;gap:12px;width:100%;max-width:280px">
+<div style="font-size:28px">⏳</div>
+<div><div style="font-size:22px;font-weight:900;color:#FFD23F">05:00</div><div style="font-size:12px;color:#505068">Temps de préparation</div></div>
+</div>
+</div>
+<div style="padding:0 24px 32px"><button class="btn bp" onclick="go('onb4')">Suivant</button></div>
+</div>
+
+<!-- ONB 4 -->
+<div class="P" id="onb4">
+<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;text-align:center;background:radial-gradient(ellipse at 50% 30%,rgba(255,71,87,.06) 0%,transparent 60%)">
+<div style="font-size:42px;margin-bottom:16px">🎙</div>
+<div style="font-size:28px;font-weight:900;line-height:1.2;margin-bottom:12px;max-width:280px">Plaidez en <span style="color:#FF4757">direct</span></div>
+<div style="color:#8888A0;font-size:14px;line-height:1.6;max-width:280px;margin-bottom:28px">3 tours d'une minute. Vous plaidez, l'adversaire répond, le juge tranche. Le public réagit en live.</div>
+<div style="width:100%;max-width:280px;display:flex;flex-direction:column;gap:8px">
+<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:rgba(78,203,113,.06);border:1px solid rgba(78,203,113,.12);border-radius:12px"><div style="width:32px;height:32px;border-radius:50%;background:#4ECB71;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff">DF</div><div style="font-size:13px;color:#fff;flex:1">Les faits parlent d'eux-mêmes.</div><div style="font-size:9px;color:#505068">14:32</div></div>
+<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:rgba(255,71,87,.06);border:1px solid rgba(255,71,87,.12);border-radius:12px"><div style="width:32px;height:32px;border-radius:50%;background:#FF4757;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff">AC</div><div style="font-size:13px;color:#fff;flex:1">Je conteste cette version !</div><div style="font-size:9px;color:#505068">14:33</div></div>
+<div style="display:flex;gap:6px;justify-content:center;margin-top:4px"><div style="padding:4px 8px;background:rgba(255,255,255,.04);border-radius:99px;font-size:14px">😂</div><div style="padding:4px 8px;background:rgba(255,255,255,.04);border-radius:99px;font-size:14px">🔥</div><div style="padding:4px 8px;background:rgba(255,255,255,.04);border-radius:99px;font-size:14px">😤</div><div style="padding:4px 8px;background:rgba(255,255,255,.04);border-radius:99px;font-size:14px">👏</div></div>
+</div>
+</div>
+<div style="padding:0 24px 32px"><button class="btn bp" onclick="go('onb5')">Suivant</button></div>
+</div>
+
+<!-- ONB 5 -->
+<div class="P" id="onb5">
+<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;text-align:center;background:radial-gradient(ellipse at 50% 30%,rgba(78,203,113,.06) 0%,transparent 60%)">
+<div style="font-size:42px;margin-bottom:16px">⚖</div>
+<div style="font-size:28px;font-weight:900;line-height:1.2;margin-bottom:12px;max-width:280px">Le <span style="color:#4ECB71">verdict</span> tombe</div>
+<div style="color:#8888A0;font-size:14px;line-height:1.6;max-width:280px;margin-bottom:28px">Le juge tranche. Gagnez des points, montez au classement. Devenez le meilleur avocat de Guette.</div>
+<div style="width:100%;max-width:280px">
+<div style="background:#161622;border:1px solid rgba(255,255,255,.06);border-radius:16px;padding:18px;margin-bottom:12px">
+<div style="font-size:11px;font-weight:800;color:#FFD23F;letter-spacing:1px;margin-bottom:10px">VERDICT</div>
+<div style="font-size:22px;font-weight:900;color:#4ECB71;margin-bottom:4px">ACQUITTÉ</div>
+<div style="font-size:12px;color:#8888A0;margin-bottom:14px">Ghost est déclaré non coupable</div>
+<div style="display:flex;gap:6px;margin-bottom:4px"><div style="flex:62;height:6px;background:#4ECB71;border-radius:99px"></div><div style="flex:38;height:6px;background:#FF4757;border-radius:99px"></div></div>
+<div style="display:flex;justify-content:space-between"><div style="font-size:10px;color:#4ECB71;font-weight:700">62%</div><div style="font-size:10px;color:#FF4757;font-weight:700">38%</div></div>
+</div>
+<div style="background:rgba(78,203,113,.08);border:1px solid rgba(78,203,113,.15);border-radius:12px;padding:12px;text-align:center"><div style="font-size:16px;font-weight:900;color:#4ECB71">+4 pts · Victoire</div></div>
+</div>
+</div>
+<div style="padding:0 24px 32px"><button class="btn bp" onclick="goChoose()" style="background:linear-gradient(135deg,#FF7A2E,#FF6B9D);font-size:18px;padding:16px">Commencer</button></div>
+</div>
+
+<!-- CHOOSE CLIENT -->
+<div class="P" id="choose">
+<div style="flex:1;display:flex;flex-direction:column;padding:24px;overflow-y:auto">
+<div style="font-size:12px;font-weight:700;color:#FF7A2E;text-transform:uppercase;letter-spacing:2px;text-align:center;margin-bottom:8px">Votre premier client</div>
+<div style="font-size:26px;font-weight:900;text-align:center;margin-bottom:4px">Choisissez qui défendre</div>
+<div style="font-size:13px;color:#505068;text-align:center;margin-bottom:24px">Gagnez des procès pour en débloquer d'autres.</div>
+<div id="choices" style="display:flex;flex-direction:column;gap:12px"></div>
+</div>
+</div>
+
+<!-- HOME -->
+<div class="P" id="home">
+<div class="hd"><div class="logo">Guette</div><div class="av" onclick="go('profil')">👨🏿‍⚖️</div></div><div class="hl"></div>
+<div style="flex:1;padding:16px;overflow-y:auto" id="home-content"></div>
+<div style="position:absolute;bottom:86px;right:20px;width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#FF7A2E,#FFD23F);display:flex;align-items:center;justify-content:center;font-size:26px;color:#fff;cursor:pointer;box-shadow:0 6px 24px rgba(255,122,46,.35)" onclick="go('duel')"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+<div class="tab"><div class="ti on" onclick="switchTab('home')"><span>Accueil</span></div><div class="ti" onclick="switchTab('verdicts')"><span>Verdicts</span></div><div class="ti" onclick="switchTab('classement')"><span>Rang</span></div><div class="ti" onclick="switchTab('profil')"><span>Profil</span></div></div>
+</div>
+
+<!-- VERDICTS -->
+<div class="P" id="verdicts">
+<div class="hd"><div class="logo">Guette</div><div class="av">👨🏿‍⚖️</div></div><div class="hl"></div>
+<div style="flex:1;overflow-y:auto;scroll-snap-type:y mandatory" id="vd-scroll">
+<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px;text-align:center;min-height:300px">
+<div style="font-size:48px;margin-bottom:16px;opacity:.3">⚖</div>
+<div style="font-size:18px;font-weight:800;color:#505068;margin-bottom:8px">Aucun verdict pour le moment</div>
+<div style="font-size:13px;color:#505068;max-width:260px;line-height:1.5">Les verdicts des audiences apparaîtront ici au fur et à mesure des procès.</div>
+</div>
+</div>
+<div class="tab"><div class="ti" onclick="switchTab('home')"><span>Accueil</span></div><div class="ti on" onclick="switchTab('verdicts')"><span>Verdicts</span></div><div class="ti" onclick="switchTab('classement')"><span>Rang</span></div><div class="ti" onclick="switchTab('profil')"><span>Profil</span></div></div>
+</div>
+
+<!-- CLASSEMENT -->
+<div class="P" id="classement">
+<div class="hd"><div class="logo">Guette</div><div class="av">👨🏿‍⚖️</div></div><div class="hl"></div>
+<div style="flex:1;padding:16px;overflow-y:auto">
+<div style="font-size:22px;font-weight:900;margin-bottom:16px">Classement</div>
+<div id="rank-list"><div style="display:flex;align-items:center;gap:12px;padding:14px;background:#161622;border:1px solid rgba(255,255,255,.07);border-radius:14px;margin-bottom:8px"><div style="width:28px;height:28px;border-radius:50%;background:#FFD23F;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;color:#0C0C12">1</div><div style="flex:1"><div style="font-size:14px;font-weight:700">Maître Keita</div><div style="font-size:11px;color:#505068">324 pts</div></div><div style="font-size:13px;font-weight:700;color:#FF7A2E">92%</div></div><div style="display:flex;align-items:center;gap:12px;padding:14px;background:#161622;border:1px solid rgba(255,255,255,.07);border-radius:14px;margin-bottom:8px"><div style="width:28px;height:28px;border-radius:50%;background:#C0C0C0;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;color:#0C0C12">2</div><div style="flex:1"><div style="font-size:14px;font-weight:700">Maître Okonkwo</div><div style="font-size:11px;color:#505068">298 pts</div></div><div style="font-size:13px;font-weight:700;color:#FF7A2E">88%</div></div><div style="display:flex;align-items:center;gap:12px;padding:14px;background:#161622;border:1px solid rgba(255,255,255,.07);border-radius:14px;margin-bottom:8px"><div style="width:28px;height:28px;border-radius:50%;background:#CD7F32;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;color:#0C0C12">3</div><div style="flex:1"><div style="font-size:14px;font-weight:700">Maître Diarra</div><div style="font-size:11px;color:#505068">276 pts</div></div><div style="font-size:13px;font-weight:700;color:#FF7A2E">85%</div></div><div style="display:flex;align-items:center;gap:12px;padding:14px;background:#161622;border:1px solid rgba(255,255,255,.07);border-radius:14px;margin-bottom:8px"><div style="width:28px;height:28px;border-radius:50%;background:#8888A0;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;color:#0C0C12">4</div><div style="flex:1"><div style="font-size:14px;font-weight:700">Maître Sow</div><div style="font-size:11px;color:#505068">251 pts</div></div><div style="font-size:13px;font-weight:700;color:#FF7A2E">83%</div></div><div style="display:flex;align-items:center;gap:12px;padding:14px;background:#161622;border:1px solid rgba(255,255,255,.07);border-radius:14px;margin-bottom:8px"><div style="width:28px;height:28px;border-radius:50%;background:#8888A0;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;color:#0C0C12">5</div><div style="flex:1"><div style="font-size:14px;font-weight:700">Maître Traoré</div><div style="font-size:11px;color:#505068">243 pts</div></div><div style="font-size:13px;font-weight:700;color:#FF7A2E">81%</div></div><div style="display:flex;align-items:center;gap:12px;padding:14px;background:#161622;border:1px solid rgba(255,255,255,.07);border-radius:14px;margin-bottom:8px"><div style="width:28px;height:28px;border-radius:50%;background:#8888A0;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;color:#0C0C12">6</div><div style="flex:1"><div style="font-size:14px;font-weight:700">Maître Faye</div><div style="font-size:11px;color:#505068">228 pts</div></div><div style="font-size:13px;font-weight:700;color:#FF7A2E">79%</div></div><div style="display:flex;align-items:center;gap:12px;padding:14px;background:#161622;border:1px solid rgba(255,255,255,.07);border-radius:14px;margin-bottom:8px"><div style="width:28px;height:28px;border-radius:50%;background:#8888A0;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;color:#0C0C12">7</div><div style="flex:1"><div style="font-size:14px;font-weight:700">Maître Konaté</div><div style="font-size:11px;color:#505068">215 pts</div></div><div style="font-size:13px;font-weight:700;color:#FF7A2E">77%</div></div><div style="display:flex;align-items:center;gap:12px;padding:14px;background:#161622;border:1px solid rgba(255,255,255,.07);border-radius:14px;margin-bottom:8px"><div style="width:28px;height:28px;border-radius:50%;background:#8888A0;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;color:#0C0C12">8</div><div style="flex:1"><div style="font-size:14px;font-weight:700">Maître Mensah</div><div style="font-size:11px;color:#505068">198 pts</div></div><div style="font-size:13px;font-weight:700;color:#FF7A2E">75%</div></div></div>
+</div>
+<div class="tab"><div class="ti" onclick="switchTab('home')"><span>Accueil</span></div><div class="ti" onclick="switchTab('verdicts')"><span>Verdicts</span></div><div class="ti on" onclick="switchTab('classement')"><span>Rang</span></div><div class="ti" onclick="switchTab('profil')"><span>Profil</span></div></div>
+</div>
+
+<!-- PROFIL -->
+<div class="P" id="profil">
+<div class="hd"><div class="logo">Guette</div><div class="av">👨🏿‍⚖️</div></div><div class="hl"></div>
+<div style="flex:1;overflow-y:auto">
+<div style="padding:20px;display:flex;flex-direction:column;align-items:center;text-align:center;background:linear-gradient(180deg,#2D1B69,#0C0C12)">
+<div style="width:90px;height:90px;border-radius:28px;background:linear-gradient(135deg,#FF7A2E,#FFD23F);display:flex;align-items:center;justify-content:center;font-size:48px;margin-bottom:14px;box-shadow:0 4px 24px rgba(255,122,46,.25);border:3px solid rgba(255,210,63,.3)">👨🏿‍⚖️</div>
+<div style="display:flex;align-items:center;gap:4px;margin-bottom:4px"><span style="font-size:22px;font-weight:900" id="p-name">Maître</span><span style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:#7C5CFC"><svg width="10" height="10" viewBox="0 0 24 24" fill="#fff"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span></div>
+<div style="font-size:14px;font-weight:700;color:#FFA04E" id="p-cab">Cabinet indépendant</div>
+<div style="font-size:12px;color:#505068;margin-top:4px">Avocat passionné · Guette</div>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding:16px 20px">
+<div style="background:#161622;border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:14px 8px;text-align:center"><div style="font-size:22px;font-weight:900;color:#FF7A2E" id="p-w">0</div><div style="font-size:11px;color:#505068;margin-top:2px">Victoires</div></div>
+<div style="background:#161622;border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:14px 8px;text-align:center"><div style="font-size:22px;font-weight:900;color:#FF7A2E" id="p-rate">0%</div><div style="font-size:11px;color:#505068;margin-top:2px">Taux</div></div>
+<div style="background:#161622;border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:14px 8px;text-align:center"><div style="font-size:22px;font-weight:900;color:#FF7A2E" id="p-pts">0</div><div style="font-size:11px;color:#505068;margin-top:2px">Points</div></div>
+</div>
+<div style="padding:0 20px 16px"><div style="font-size:16px;font-weight:800;margin-bottom:12px">Mon Client</div><div id="my-clients"></div></div>
+<div style="padding:0 20px 16px"><button style="width:100%;padding:12px;background:none;border:1.5px solid rgba(255,71,87,.2);border-radius:12px;color:#FF4757;font-size:13px;font-weight:700;cursor:pointer" onclick="go('splash')">Déconnexion</button></div>
+<div style="padding:0 20px 16px"><div style="font-size:16px;font-weight:800;margin-bottom:12px">Affaires traitées</div>
+<div style="display:flex;flex-wrap:wrap;gap:8px" id="p-cases">
+<div style="padding:8px 14px;background:#161622;border:1px solid rgba(255,255,255,.07);border-radius:10px;font-size:11px;font-weight:700;color:#FFA04E">Power · Ghost</div>
+<div style="padding:8px 14px;background:#161622;border:1px solid rgba(255,255,255,.07);border-radius:10px;font-size:11px;font-weight:700;color:#FF6B9D">Death Note · Light</div>
+<div style="padding:8px 14px;background:#161622;border:1px solid rgba(255,255,255,.07);border-radius:10px;font-size:11px;font-weight:700;color:#4ECB71">Top Boy · Dushane</div>
+<div style="padding:8px 14px;background:#161622;border:1px solid rgba(255,255,255,.07);border-radius:10px;font-size:11px;font-weight:700;color:#505068;opacity:.5">Murder · Annalise</div>
+<div style="padding:8px 14px;background:#161622;border:1px solid rgba(255,255,255,.07);border-radius:10px;font-size:11px;font-weight:700;color:#505068;opacity:.5">Peaky · Shelby</div>
+</div></div>
+</div>
+<div class="tab"><div class="ti" onclick="switchTab('home')"><span>Accueil</span></div><div class="ti" onclick="switchTab('verdicts')"><span>Verdicts</span></div><div class="ti" onclick="switchTab('classement')"><span>Rang</span></div><div class="ti on" onclick="switchTab('profil')"><span>Profil</span></div></div>
+</div>
+
+<!-- ROLE CHOICE -->
+<div class="P" id="role-pick">
+<div style="padding:14px 16px;display:flex;align-items:center"><button style="background:none;border:none;color:#FFA04E;font-size:14px;font-weight:600;cursor:pointer" onclick="go('home')" style="z-index:50;position:relative">← Retour</button></div>
+<div style="flex:1;display:flex;flex-direction:column;padding:24px;overflow-y:auto">
+
+<div style="font-size:22px;font-weight:900;text-align:center;margin-bottom:4px" id="rp-case">—</div>
+<div style="font-size:13px;color:#8888A0;text-align:center;margin-bottom:24px" id="rp-type">—</div>
+
+<div style="font-size:14px;font-weight:800;margin-bottom:14px">Choisissez votre rôle</div>
+<div style="display:flex;flex-direction:column;gap:10px;margin-bottom:24px">
+<!-- Président -->
+<div id="role-juge" style="display:flex;align-items:center;gap:14px;padding:16px;background:#161622;border:2px solid #FFD23F;border-radius:16px;cursor:pointer" onclick="claimRole('juge')">
+<div style="width:50px;height:50px;border-radius:50%;background:linear-gradient(135deg,#3D3520,#2A2418);border:2.5px solid #FFD23F;display:flex;align-items:center;justify-content:center;font-size:22px">👨‍⚖️</div>
+<div style="flex:1"><div style="font-size:15px;font-weight:800;color:#FFD23F">Président du tribunal</div><div style="font-size:11px;color:#8888A0">Arbitre le débat et maintient l'ordre</div></div>
+<div style="font-size:11px;font-weight:700;color:#4ECB71;background:rgba(78,203,113,.1);padding:4px 10px;border-radius:8px" id="role-juge-status">Libre</div>
+</div>
+<!-- Défense -->
+<div id="role-defense" style="display:flex;align-items:center;gap:14px;padding:16px;background:#161622;border:2px solid #4ECB71;border-radius:16px;cursor:pointer" onclick="claimRole('defense')">
+<div style="width:50px;height:50px;border-radius:50%;background:linear-gradient(135deg,#1A3D28,#122E1E);border:2.5px solid #4ECB71;display:flex;align-items:center;justify-content:center;font-size:22px">🛡️</div>
+<div style="flex:1"><div style="font-size:15px;font-weight:800;color:#4ECB71">Avocat de la défense</div><div style="font-size:11px;color:#8888A0">Protégez l'accusé et plaidez non coupable</div></div>
+<div style="font-size:11px;font-weight:700;color:#4ECB71;background:rgba(78,203,113,.1);padding:4px 10px;border-radius:8px" id="role-def-status">Libre</div>
+</div>
+<!-- Accusation -->
+<div id="role-accusation" style="display:flex;align-items:center;gap:14px;padding:16px;background:#161622;border:2px solid #FF4757;border-radius:16px;cursor:pointer" onclick="claimRole('accusation')">
+<div style="width:50px;height:50px;border-radius:50%;background:linear-gradient(135deg,#3D1A1A,#2E1212);border:2.5px solid #FF4757;display:flex;align-items:center;justify-content:center;font-size:22px">⚔️</div>
+<div style="flex:1"><div style="font-size:15px;font-weight:800;color:#FF4757">Avocat de l'accusation</div><div style="font-size:11px;color:#8888A0">Prouvez la culpabilité de l'accusé</div></div>
+<div style="font-size:11px;font-weight:700;color:#4ECB71;background:rgba(78,203,113,.1);padding:4px 10px;border-radius:8px" id="role-acc-status">Libre</div>
+</div>
+<!-- Spectateur -->
+<div style="display:flex;align-items:center;gap:14px;padding:16px;background:#161622;border:2px solid rgba(255,255,255,.12);border-radius:16px;cursor:pointer" onclick="claimRole('spectateur')">
+<div style="width:50px;height:50px;border-radius:50%;background:#161622;border:2.5px solid #8888A0;display:flex;align-items:center;justify-content:center;font-size:22px">👁️</div>
+<div style="flex:1"><div style="font-size:15px;font-weight:800;color:#8888A0">Spectateur</div><div style="font-size:11px;color:#505068">Regardez, commentez et votez</div></div>
+<div style="font-size:11px;font-weight:700;color:#4ECB71;background:rgba(78,203,113,.1);padding:4px 10px;border-radius:8px">∞ places</div>
+</div>
+</div>
+
+<!-- Affaires à venir -->
+<div style="font-size:14px;font-weight:800;margin-bottom:12px">Prochaines audiences</div>
+<div style="display:flex;flex-direction:column;gap:8px;margin-bottom:20px" id="upcoming-cases"></div>
+</div>
+</div>
+
+<!-- PREP -->
+<div class="P" id="prep">
+<div style="padding:14px 16px;display:flex;align-items:center;justify-content:space-between"><button style="background:none;border:none;color:#FFA04E;font-size:14px;font-weight:600;cursor:pointer" onclick="go('home')" style="z-index:50;position:relative">← Quitter</button><div style="font-size:14px;font-weight:700;color:#8888A0">Préparation</div><div></div></div>
+<div style="flex:1;padding:0 20px;overflow-y:auto">
+<div style="background:#161622;border:1px solid rgba(255,255,255,.07);border-radius:16px;padding:18px;margin-bottom:16px">
+<div style="font-size:17px;font-weight:800" id="pr-name">—</div>
+<div style="font-size:12px;color:#505068;margin-top:4px" id="pr-type">—</div>
+</div>
+<div style="background:rgba(255,210,63,.08);border:1px solid rgba(255,210,63,.2);border-radius:16px;padding:18px;display:flex;align-items:center;gap:14px;margin-bottom:16px">
+<div style="width:36px;height:36px;border-radius:10px;background:rgba(255,210,63,.1);border:1px solid rgba(255,210,63,.2);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:900;color:#FFD23F">T</div>
+<div><div style="font-size:32px;font-weight:900;color:#FFD23F" id="pr-timer">02:00</div><div style="font-size:12px;color:#505068">Temps de préparation</div></div>
+</div>
+<div style="font-size:14px;font-weight:800;margin-bottom:10px">📋 Dossier</div>
+<div style="background:#161622;border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:16px;font-size:14px;color:#8888A0;line-height:1.8;margin-bottom:20px;white-space:pre-line" id="pr-dos">—</div>
+</div>
+<div style="padding:12px 20px 24px"><button class="btn bo" onclick="enterAud()">Entrer dans le débat</button></div>
+</div>
+
+<!-- AUDIENCE -->
+<div class="P" id="audience" style="position:relative;overflow:hidden !important;overflow-y:hidden !important;background:linear-gradient(180deg,#0C0C12 0%,#0F0F1A 30%,#110E1C 60%,#0C0C12 100%)">
+<!-- TOP BAR -->
+<div style="padding:8px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,.06);flex-shrink:0">
+<button onclick="leaveAud()" style="background:none;border:none;color:#FFA04E;font-size:13px;font-weight:600;cursor:pointer;z-index:999;pointer-events:auto;-webkit-tap-highlight-color:rgba(255,122,46,0.3)">Quitter</button>
+<div style="text-align:center"><div style="font-size:10px;font-weight:800;color:#FF4757;letter-spacing:1px">LIVE</div><div style="font-size:12px;font-weight:700;color:#8888A0" id="a-type">—</div></div>
+<div style="display:flex;align-items:center;gap:6px;cursor:pointer" onclick="toggleViewers()">
+<div style="display:flex" id="viewer-avatars"></div>
+<div style="font-size:12px;font-weight:700;color:#8888A0" id="a-viewers">0</div>
+<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#8888A0" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+</div>
+</div>
+<!-- VIEWERS PANEL (toggleable) -->
+<div id="viewers-panel" style="display:none;max-height:200px;overflow-y:auto;padding:10px 16px;background:#0A0A10;border-bottom:1px solid rgba(255,255,255,.06);flex-shrink:0">
+<div style="font-size:11px;font-weight:700;color:#505068;margin-bottom:8px">En train de regarder</div>
+<div id="viewers-list" style="display:flex;flex-wrap:wrap;gap:8px"></div>
+</div>
+
+<!-- CASE TITLE -->
+<div style="text-align:center;padding:8px 20px"><div style="font-size:16px;font-weight:900" id="a-name">—</div></div>
+
+<!-- TIMER BAR -->
+<div style="padding:0 20px 8px;display:flex;align-items:center;gap:10px">
+<div style="font-size:22px;font-weight:900;color:#FF7A2E;min-width:54px" id="a-timer">01:00</div>
+<div style="flex:1;height:5px;background:rgba(255,255,255,.06);border-radius:99px;overflow:hidden"><div style="height:100%;background:linear-gradient(90deg,#FF7A2E,#FFA04E);border-radius:99px;transition:width 1s linear;width:100%" id="a-bar"></div></div>
+</div>
+
+<!-- TURN INDICATOR -->
+<div style="padding:0 20px 10px;text-align:center"><div style="display:inline-block;padding:6px 20px;border-radius:99px;font-size:12px;font-weight:800;letter-spacing:1px" id="turn-badge" style="background:rgba(78,203,113,.1);color:#4ECB71">DÉFENSE · Tour 1/3</div></div>
+
+<!-- COURTROOM LAYOUT -->
+<div style="padding:0 16px 10px">
+<!-- PRÉSIDENT centered -->
+<div style="display:flex;justify-content:center;margin-bottom:14px">
+<div style="text-align:center;padding:10px 24px;background:#161622;border:1.5px solid rgba(255,210,63,.2);border-radius:14px">
+<div style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#3D3520,#2A2418);border:2.5px solid #FFD23F;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:#FFD23F;margin:0 auto 6px">PR</div>
+<div style="font-size:11px;font-weight:700;color:#FFD23F" id="pres-label">PRÉSIDENT</div>
+<div style="font-size:10px;color:#505068;margin-top:2px" id="pres-name">En attente</div>
+</div>
+</div>
+<!-- DEFENSE (left) vs ACCUSATION (right) -->
+<div style="display:flex;justify-content:space-between;gap:10px">
+<div style="flex:1;padding:10px;background:#161622;border:1.5px solid rgba(78,203,113,.2);border-radius:14px;text-align:center">
+<div class="ct-ring ct-def" style="width:44px;height:44px;font-size:14px;margin:0 auto 6px" id="s-def">DF</div>
+<div style="font-size:11px;font-weight:700;color:#4ECB71">DÉFENSE</div>
+<div style="font-size:10px;color:#505068;margin-top:2px" id="s-dn">En attente</div>
+</div>
+<div style="display:flex;align-items:center;font-size:12px;font-weight:900;color:rgba(255,255,255,.15)">VS</div>
+<div style="flex:1;padding:10px;background:#161622;border:1.5px solid rgba(255,71,87,.2);border-radius:14px;text-align:center">
+<div class="ct-ring ct-acc" style="width:44px;height:44px;font-size:14px;margin:0 auto 6px" id="s-acc">AC</div>
+<div style="font-size:11px;font-weight:700;color:#FF4757">ACCUSATION</div>
+<div style="font-size:10px;color:#505068;margin-top:2px" id="s-an">En attente</div>
+<div style="display:none" id="s-ab"></div>
+</div>
+</div>
+</div>
+
+<!-- PRESIDENT CONTROLS (only visible to judge) -->
+<div id="juge-controls" style="display:none;padding:6px 16px;gap:8px;border-top:1px solid rgba(255,210,63,.1);border-bottom:1px solid rgba(255,210,63,.1);background:rgba(255,210,63,.03)">
+<button style="flex:1;padding:8px;background:rgba(78,203,113,.1);border:1px solid rgba(78,203,113,.2);border-radius:10px;color:#4ECB71;font-size:11px;font-weight:700;cursor:pointer" onclick="judgeGiveWord('defense')">Parole Défense</button>
+<button style="padding:8px 12px;background:rgba(255,210,63,.1);border:1px solid rgba(255,210,63,.2);border-radius:10px;color:#FFD23F;font-size:11px;font-weight:700;cursor:pointer" onclick="judgePause()"><span id="pause-label">Pause</span></button>
+<button style="flex:1;padding:8px;background:rgba(255,71,87,.1);border:1px solid rgba(255,71,87,.2);border-radius:10px;color:#FF4757;font-size:11px;font-weight:700;cursor:pointer" onclick="judgeGiveWord('accusation')">Parole Accusation</button>
+</div>
+
+<!-- MESSAGES ZONE -->
+<!-- ARGUMENT ZONE (defense & accusation only) -->
+<div id="arg-zone" style="display:none;flex:1;flex-direction:column;padding:14px;overflow-y:auto;position:relative;padding-bottom:0">
+<!-- Background pattern like WhatsApp -->
+<div style="position:absolute;inset:0;opacity:.03;pointer-events:none;background-image:url('data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2260%22 height=%2260%22><text x=%2210%22 y=%2220%22 font-size=%2212%22>⚖</text><text x=%2240%22 y=%2245%22 font-size=%2210%22>§</text><text x=%2215%22 y=%2250%22 font-size=%228%22>⚖</text></svg>');background-repeat:repeat"></div>
+<div style="font-size:11px;font-weight:700;color:#505068;text-align:center;margin-bottom:12px;position:relative">Vos arguments</div>
+<div id="my-args" style="flex:1;display:flex;flex-direction:column;gap:8px;overflow-y:auto;justify-content:flex-end;position:relative"></div>
+</div>
+
+<!-- COMMENTS (judge & spectators) -->
+<div style="flex:1;padding:8px 14px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;justify-content:flex-end;position:relative" id="coms">
+<!-- Background pattern -->
+<div style="position:absolute;inset:0;opacity:.02;pointer-events:none;background-image:url('data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2280%22 height=%2280%22><text x=%2210%22 y=%2225%22 font-size=%2214%22 fill=%22white%22>⚖</text><text x=%2250%22 y=%2255%22 font-size=%2210%22 fill=%22white%22>§</text><text x=%2225%22 y=%2270%22 font-size=%228%22 fill=%22white%22>⚖</text></svg>');background-repeat:repeat"></div>
+
+<!-- BOTTOM BAR -->
+<div style="flex-shrink:0;background:#0C0C12;border-top:1px solid rgba(255,255,255,.06);padding:8px 14px 12px">
+<!-- LISTENERS ROW -->
+<div style="display:flex;gap:8px;overflow-x:auto;padding-bottom:8px;-webkit-overflow-scrolling:touch" id="listeners-row"></div>
+<!-- CONTROLS ROW -->
+<div style="display:flex;align-items:center;gap:8px">
+<!-- MIC - ALWAYS VISIBLE FOR EVERYONE -->
+<button id="mic-btn" style="width:48px;height:48px;border-radius:50%;background:#1E1E2E;border:2px solid rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;z-index:50;pointer-events:auto" onclick="toggleAudio()"><svg id="mic-ico" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8888A0" stroke-width="2" stroke-linecap="round"><rect x="9" y="1" width="6" height="11" rx="3"/><path d="M5 10a7 7 0 0014 0"/><line x1="12" y1="17" x2="12" y2="22"/></svg></button>
+<!-- REQUEST WORD (defense/accusation) -->
+<div id="request-word" style="display:none;flex:1">
+<button id="req-btn" style="width:100%;padding:10px;background:rgba(255,210,63,.08);border:1.5px solid rgba(255,210,63,.2);border-radius:99px;color:#FFD23F;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px" onclick="requestWord()">Demander la parole</button>
+</div>
+<!-- REACTIONS (spectators + judge) -->
+<div id="react-bar" style="flex:1;display:flex;gap:4px;overflow-x:auto;align-items:center">
+<button class="rbtn" onclick="sendReact('❤️')">❤️</button>
+<button class="rbtn" onclick="sendReact('😂')">😂</button>
+<button class="rbtn" onclick="sendReact('😮')">😮</button>
+<button class="rbtn" onclick="sendReact('🔥')">🔥</button>
+<button class="rbtn" onclick="sendReact('👏')">👏</button>
+<button class="rbtn" onclick="sendReact('💯')">💯</button>
+<button class="rbtn" onclick="sendReact('✋')">✋</button>
+</div>
+<!-- LEAVE - ALWAYS VISIBLE -->
+<button style="width:48px;height:48px;border-radius:50%;background:rgba(255,71,87,.1);border:2px solid rgba(255,71,87,.2);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;z-index:999;pointer-events:auto" onclick="leaveAud()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FF4757" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+</div>
+</div>
+<audio id="remote-audio" autoplay style="display:none"></audio>
+
+</div>
+
+
+<!-- SOLO GAME -->
+<div class="P" id="solo-game">
+<div style="padding:10px 16px;display:flex;align-items:center;justify-content:space-between"><button style="background:none;border:none;color:#A78BFA;font-size:14px;font-weight:600;cursor:pointer" onclick="quitSolo()" style="z-index:50;position:relative">← Quitter</button><div style="font-size:13px;font-weight:800;color:#A78BFA">DÉCRYPTAGE</div></div>
+<div style="padding:0 20px 8px"><div style="font-size:20px;font-weight:900" id="sl-title">—</div><div style="display:flex;align-items:center;gap:8px;margin-top:6px"><div style="font-size:11px;color:#505068" id="sl-series">—</div><div style="font-size:11px;font-weight:700;color:#A78BFA;background:rgba(124,92,252,.1);padding:2px 8px;border-radius:6px" id="sl-diff">—</div></div></div>
+<div style="padding:0 20px 10px;display:flex;align-items:center;gap:10px"><div style="font-size:24px;font-weight:900;color:#A78BFA" id="sl-timer">03:00</div><div style="flex:1;height:4px;background:#161622;border-radius:99px;overflow:hidden"><div style="height:100%;background:#7C5CFC;border-radius:99px;transition:width 1s linear;width:100%" id="sl-bar"></div></div></div>
+<div style="flex:1;padding:0 20px;overflow-y:auto">
+<div style="font-size:13px;font-weight:800;color:#8888A0;margin-bottom:10px">📋 DOSSIER</div>
+<div style="background:#161622;border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:16px;font-size:14px;color:#8888A0;line-height:1.8;white-space:pre-line;margin-bottom:16px" id="sl-dos">—</div>
+<div style="font-size:13px;font-weight:800;color:#A78BFA;margin-bottom:8px">💡 INDICES</div>
+<div id="sl-indices" style="display:flex;flex-direction:column;gap:6px;margin-bottom:16px"></div>
+<div style="font-size:13px;font-weight:800;color:#FF7A2E;margin-bottom:8px">✍️ VOTRE ANALYSE</div>
+<textarea style="width:100%;padding:14px;background:#161622;border:1.5px solid rgba(255,255,255,.07);border-radius:12px;color:#F0F0F5;font-size:14px;font-family:inherit;outline:none;resize:none;height:100px;line-height:1.6" id="sl-answer" placeholder="Décrivez le vice de procédure..."></textarea>
+</div>
+<div style="padding:12px 20px 24px"><button class="btn" style="background:linear-gradient(135deg,#7C5CFC,#A78BFA);color:#fff" onclick="submitSolo()">Soumettre mon analyse</button></div>
+<div id="solo-result" style="position:absolute;inset:0;display:none;flex-direction:column;background:rgba(12,12,18,.97);z-index:60" style="background:rgba(12,12,18,.97);z-index:60">
+<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px;text-align:center">
+<div style="font-size:64px;margin-bottom:16px" id="sl-ico">🔍</div>
+<div style="font-size:24px;font-weight:900;margin-bottom:8px" id="sl-vtitle">—</div>
+<div style="font-size:14px;color:#8888A0;line-height:1.6;max-width:320px;margin-bottom:20px" id="sl-vtext">—</div>
+<div style="background:#161622;border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:16px;width:100%;margin-bottom:20px;text-align:left">
+<div style="font-size:12px;font-weight:800;color:#A78BFA;margin-bottom:8px">LA BONNE RÉPONSE :</div>
+<div style="font-size:13px;color:#8888A0;line-height:1.6" id="sl-correct">—</div>
+</div>
+<button class="btn bo" onclick="quitSolo()">Retour à l'accueil</button>
+</div>
+</div>
+</div>
+
+<!-- DUEL 1V1 -->
+<div class="P" id="duel">
+<div style="padding:10px 16px;display:flex;align-items:center;justify-content:space-between"><button style="background:none;border:none;color:#FFA04E;font-size:14px;font-weight:600;cursor:pointer" onclick="go('home')" style="z-index:50;position:relative">← Retour</button><div style="font-size:13px;font-weight:800;color:#FF7A2E">DUEL 1V1</div></div>
+<div style="flex:1;padding:0 24px;overflow-y:auto">
+<div style="font-size:26px;font-weight:900;margin-bottom:4px">Défier quelqu'un</div>
+<div style="color:#505068;margin-bottom:24px">Pas de Président. L'IA tranche à la fin.</div>
+<div style="display:flex;flex-direction:column;gap:14px">
+<div><div style="font-size:12px;font-weight:700;color:#8888A0;text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px">Sujet du débat</div><input class="inp" id="duel-topic" placeholder="Ex: Qui mérite le trône ?"></div>
+<div style="font-size:12px;font-weight:700;color:#8888A0;text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px">Durée</div>
+<div style="display:flex;gap:10px">
+<div id="dur-court" style="flex:1;padding:16px;background:#161622;border:2px solid #4ECB71;border-radius:14px;text-align:center;cursor:pointer" onclick="pickDur('court')"><div style="font-size:24px;margin-bottom:4px">⚡</div><div style="font-size:14px;font-weight:800;color:#4ECB71">Court</div><div style="font-size:11px;color:#505068">5 min</div></div>
+<div id="dur-long" style="flex:1;padding:16px;background:#161622;border:2px solid rgba(255,255,255,.07);border-radius:14px;text-align:center;cursor:pointer" onclick="pickDur('long')"><div style="font-size:24px;margin-bottom:4px">🔥</div><div style="font-size:14px;font-weight:800;color:#FF7A2E">Long</div><div style="font-size:11px;color:#505068">10 min</div></div>
+</div>
+</div>
+<div style="margin-top:24px;padding:18px;background:linear-gradient(135deg,rgba(124,92,252,.08),rgba(255,122,46,.05));border:1px solid rgba(124,92,252,.15);border-radius:16px">
+<div style="font-size:14px;font-weight:800;margin-bottom:4px">📤 Partager le lien</div>
+<div style="font-size:12px;color:#505068;margin-bottom:12px">Envoyez ce lien à votre adversaire</div>
+<div style="display:flex;gap:8px"><input class="inp" id="duel-link" readonly style="padding:12px;font-size:12px;border-radius:10px" value=""><button style="padding:12px 16px;background:#7C5CFC;border:none;border-radius:10px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap" onclick="copyDuelLink()">Copier</button></div>
+</div>
+<button class="btn bo" style="margin-top:20px" onclick="createDuel()">Créer le duel</button>
+</div>
+</div>
+
+
+<script>
+var cur='splash';
+var stack=[];
+var me={name:'',client:null,cabinet:'',wins:0,losses:0,points:0};
+
+function go(id){
+document.getElementById(cur).classList.remove('on');
+stack.push(cur);
+cur=id;
+document.getElementById(id).classList.add('on');
+}
+function back(){
+if(!stack.length)return;
+document.getElementById(cur).classList.remove('on');
+cur=stack.pop();
+document.getElementById(cur).classList.add('on');
+}
+function switchTab(id){
+['home','verdicts','classement','profil'].forEach(function(t){document.getElementById(t).classList.remove('on')});
+document.getElementById(id).classList.add('on');
+cur=id;stack=[];
+}
+
+function doSignup(){
+var n=document.getElementById('su-n').value.trim();
+var cab=document.getElementById('su-cab').value.trim();
+var e=document.getElementById('su-e').value.trim();
+var p=document.getElementById('su-p').value;
+document.getElementById('e1').style.display=n?'none':'block';
+document.getElementById('e2').style.display=e?'none':'block';
+document.getElementById('e3').style.display=p.length>=6?'none':'block';
+if(!n||!e||p.length<6)return;
+me.name=n;
+me.cabinet=cab||'Cabinet indépendant';
+setUid(e);
+document.getElementById('p-name').textContent=n;
+document.getElementById('p-cab').textContent=me.cabinet;
+
+/* Save user to Firebase */
+function saveUser(){
+if(!window.db)return setTimeout(saveUser,1000);
+window.db.ref('users/'+myUid).set({
+name:me.name,
+cabinet:me.cabinet,
+email:e,
+wins:0,
+losses:0,
+points:0,
+joined:Date.now()
+});
+}
+saveUser();
+var pw=document.getElementById('p-w');if(pw)pw.textContent='0';
+go('onb1');
+}
+function doLogin(){
+var e=document.getElementById('li-e').value.trim();
+var p=document.getElementById('li-p').value;
+document.getElementById('e4').style.display=e?'none':'block';
+document.getElementById('e5').style.display=p.length>=6?'none':'block';
+if(!e||p.length<6)return;
+me.name='';
+document.getElementById('p-name').textContent='Maître';
+/* Fix mobile keyboard pushing input */
+if(window.visualViewport){
+window.visualViewport.addEventListener('resize',function(){
+var bar=document.querySelector('[style*="position:sticky"]');
+if(bar)bar.style.bottom='0px';
+});
+}
+buildHome();
+
+/* Show connection status */
+setTimeout(function(){
+if(window.db){
+console.log('Firebase: connecté');
+}
+},3000);
+go('home');
+}
+
+var CLIENTS=[
+/* AFRIQUE DU SUD */
+{n:'Tsotsi',i:'TS',s:'Tsotsi',c:'film 🇿🇦'},
+{n:'Shaka Zulu',i:'SZ',s:'Shaka Zulu',c:'série 🇿🇦'},
+{n:'Queen Sono',i:'QS',s:'Queen Sono',c:'série 🇿🇦'},
+{n:'Reyka',i:'RK',s:'Reyka',c:'série 🇿🇦'},
+{n:'Tyla',i:'TY',s:'Blood & Water',c:'série 🇿🇦'},
+/* CÔTE D\'IVOIRE */
+{n:'Docteur Boris',i:'DB',s:'Docteur Boris',c:'série 🇨🇮'},
+{n:'Commissaire Yo',i:'CY',s:'Ma Famille',c:'série 🇨🇮'},
+{n:'Dj Arafat',i:'DA',s:'Arafat le film',c:'film 🇨🇮'},
+{n:'Gohou',i:'GO',s:'Ma Famille',c:'série 🇨🇮'},
+{n:'Akissi Delta',i:'AD',s:'Ma Famille',c:'série 🇨🇮'},
+/* SÉNÉGAL */
+{n:'Mati Diop',i:'MD',s:'Atlantique',c:'film 🇸🇳'},
+{n:'Omar Sy',i:'OS',s:'Marabout',c:'film 🇸🇳'},
+{n:'Djibril Diop',i:'DD',s:'Touki Bouki',c:'film 🇸🇳'},
+{n:'Marème',i:'MR',s:'Bois d\'Ébène',c:'série 🇸🇳'},
+{n:'Thierno',i:'TH',s:'Sakho & Mangane',c:'série 🇸🇳'},
+/* NIGERIA */
+{n:'Efe',i:'EF',s:'King of Boys',c:'film 🇳🇬'},
+{n:'Eniola Salami',i:'ES',s:'King of Boys',c:'film 🇳🇬'},
+{n:'Nonso',i:'NO',s:'Gangs of Lagos',c:'film 🇳🇬'},
+{n:'Amaka',i:'AM',s:'The Men\'s Club',c:'série 🇳🇬'},
+{n:'Obinna',i:'OB',s:'Far From Home',c:'série 🇳🇬'},
+{n:'Kemi Adetiba',i:'KA',s:'Citation',c:'film 🇳🇬'},
+/* FRANCE */
+{n:'Assane Diop',i:'AD',s:'Lupin',c:'série 🇫🇷'},
+{n:'Le Professeur',i:'PR',s:'Casa de Papel',c:'série 🇪🇸'},
+{n:'Omar',i:'OM',s:'Les Misérables',c:'film 🇫🇷'},
+{n:'Vinz',i:'VZ',s:'La Haine',c:'film 🇫🇷'},
+{n:'Abdel',i:'AB',s:'Intouchables',c:'film 🇫🇷'},
+{n:'Validé',i:'VA',s:'Validé',c:'série 🇫🇷'},
+{n:'Mehdi',i:'ME',s:'Baron Noir',c:'série 🇫🇷'},
+/* UK / US */
+{n:'Ghost',i:'GH',s:'Power',c:'série 🇺🇸'},
+{n:'Tommy Shelby',i:'TS',s:'Peaky Blinders',c:'série 🇬🇧'},
+{n:'Annalise',i:'AK',s:'Murder',c:'série 🇺🇸'},
+{n:'Walter White',i:'WW',s:'Breaking Bad',c:'série 🇺🇸'},
+{n:'Dushane',i:'DU',s:'Top Boy',c:'série 🇬🇧'},
+{n:'Sully',i:'SU',s:'Top Boy',c:'série 🇬🇧'},
+{n:'Olivia Pope',i:'OP',s:'Scandal',c:'série 🇺🇸'},
+{n:'Tony Soprano',i:'TO',s:'Les Soprano',c:'série 🇺🇸'},
+{n:'Tyrion',i:'TY',s:'Game of Thrones',c:'série 🇺🇸'},
+{n:'Ragnar',i:'RA',s:'Vikings',c:'série 🇺🇸'},
+/* ANIMÉS */
+{n:'Light Yagami',i:'LY',s:'Death Note',c:'animé 🇯🇵'},
+{n:'Gojo Satoru',i:'GS',s:'Jujutsu Kaisen',c:'animé 🇯🇵'},
+{n:'Eren Jäger',i:'EJ',s:'L\'Attaque des Titans',c:'animé 🇯🇵'},
+{n:'Itachi',i:'IT',s:'Naruto',c:'animé 🇯🇵'},
+{n:'Aizen',i:'AZ',s:'Bleach',c:'animé 🇯🇵'},
+{n:'Lelouch',i:'LL',s:'Code Geass',c:'animé 🇯🇵'},
+{n:'Tanjiro',i:'TJ',s:'Demon Slayer',c:'animé 🇯🇵'},
+{n:'Luffy',i:'LF',s:'One Piece',c:'animé 🇯🇵'},
+/* DESSINS ANIMÉS */
+{n:'Tag',i:'TG',s:'Foot de Rue',c:'dessin animé ⚽'},
+{n:'Gabriel',i:'GA',s:'Foot de Rue',c:'dessin animé ⚽'},
+{n:'Bloom',i:'BL',s:'Winx Club',c:'dessin animé 🧚'},
+{n:'Stella',i:'ST',s:'Winx Club',c:'dessin animé 🧚'},
+{n:'Scar',i:'SC',s:'Le Roi Lion',c:'dessin animé 🦁'},
+{n:'Megamind',i:'MM',s:'Megamind',c:'dessin animé 🧠'},
+{n:'Shrek',i:'SH',s:'Shrek',c:'dessin animé 🟢'},
+{n:'Syndrome',i:'SY',s:'Les Indestructibles',c:'dessin animé 💥'},
+{n:'Adrien',i:'AC',s:'Miraculous',c:'dessin animé 🐞'},
+{n:'Marinette',i:'MN',s:'Miraculous',c:'dessin animé 🐞'}
+]
+
+function goChoose(){
+if(!CLIENTS||!CLIENTS.length){go('home');return}
+var el=document.getElementById('choices');el.innerHTML='';
+var pick=[];
+while(pick.length<3){var r=CLIENTS[Math.floor(Math.random()*CLIENTS.length)];if(pick.indexOf(r)===-1)pick.push(r)}
+pick.forEach(function(c,i){
+var d=document.createElement('div');
+d.style.cssText='display:flex;align-items:center;gap:14px;padding:16px;background:#161622;border:2px solid rgba(255,255,255,.07);border-radius:16px;cursor:pointer';
+d.innerHTML='<div style="width:56px;height:56px;border-radius:50%;border:3px solid #FF7A2E;background:linear-gradient(135deg,#2D1B69,#1E1245);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:900;color:#fff">'+c.i+'</div><div style="flex:1"><div style="font-size:16px;font-weight:800">'+c.n+'</div><div style="font-size:12px;color:#8888A0">'+c.s+'</div><div style="font-size:10px;font-weight:700;color:#FF7A2E;margin-top:4px;text-transform:uppercase">'+c.c+'</div></div>';
+d.onclick=function(){me.client=c;document.getElementById('my-clients').innerHTML='<div style="display:flex;align-items:center;gap:12px;padding:12px;background:#161622;border:1px solid rgba(255,255,255,.07);border-radius:14px"><div style="width:46px;height:46px;border-radius:50%;border:3px solid #FF7A2E;background:linear-gradient(135deg,#2D1B69,#1E1245);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:#fff">'+c.i+'</div><div><div style="font-size:13px;font-weight:700">'+c.n+'</div><div style="font-size:11px;color:#505068">'+c.s+'</div></div></div>';/* ===== AUDIO - PeerJS ===== */
+var myPeer=null;
+var myStream=null;
+var audioOn=false;
+var peers={};
+var roomPeerId=null;
+
+function initAudio(){
+var s=document.createElement('script');
+s.src='https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js';
+s.onload=function(){
+myPeer=new Peer();
+myPeer.on('open',function(id){
+roomPeerId=id;
+});
+myPeer.on('call',function(call){
+if(myStream){call.answer(myStream)}else{call.answer()}
+call.on('stream',function(rs){playRemote(rs)});
+peers[call.peer]=call;
+});
+};
+s.onerror=function(){};
+document.head.appendChild(s);
+}
+
+function toggleAudio(){
+if(audioOn){
+stopAudio();
+}else{
+startAudio();
+}
+}
+
+function startAudio(){
+navigator.mediaDevices.getUserMedia({audio:true,video:false}).then(function(stream){
+myStream=stream;
+audioOn=true;
+document.getElementById('mic-btn').style.background='#FF4757';
+document.getElementById('mic-btn').style.borderColor='#FF4757';
+var mi=document.getElementById('mic-ico');if(mi)mi.setAttribute('stroke','#fff');
+document.getElementById('s-def').classList.add('speaking');
+
+/* Call all known peers */
+Object.keys(peers).forEach(function(pid){
+var call=myPeer.call(pid,stream);
+call.on('stream',function(rs){playRemote(rs)});
+});
+}).catch(function(e){
+
+});
+}
+
+function stopAudio(){
+if(myStream){
+myStream.getTracks().forEach(function(t){t.stop()});
+myStream=null;
+}
+audioOn=false;
+document.getElementById('mic-btn').style.background='#1E1E2E';
+document.getElementById('mic-btn').style.borderColor='rgba(255,255,255,.12)';
+var mi2=document.getElementById('mic-ico');if(mi2)mi2.setAttribute('stroke','#8888A0');
+document.getElementById('s-def').classList.remove('speaking');
+}
+
+function playRemote(stream){
+var audio=document.getElementById('remote-audio');
+if(audio){
+audio.srcObject=stream;
+audio.play().catch(function(){});
+}
+}
+
+function connectToRoom(hostPeerId){
+if(!myPeer)return;
+var call=myPeer.call(hostPeerId,myStream||new MediaStream());
+call.on('stream',function(rs){playRemote(rs)});
+peers[hostPeerId]=call;
+}
+
+function disconnectAudio(){
+stopAudio();
+Object.keys(peers).forEach(function(pid){
+if(peers[pid])peers[pid].close();
+});
+peers={};
+}
+
+initAudio();
+
+/* ===== FIREBASE MULTIPLAYER ===== */
+function initFirebase(){
+var s1=document.createElement('script');
+s1.src='https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js';
+s1.onload=function(){
+var s2=document.createElement('script');
+s2.src='https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js';
+s2.onload=function(){
+try{
+firebase.initializeApp({
+apiKey:"AIzaSyCAsL1P1YDGWfZMBzQdZdp4xd6zjgoGK9g",
+authDomain:"guette-a9b5d.firebaseapp.com",
+projectId:"guette-a9b5d",
+databaseURL:"https://guette-a9b5d-default-rtdb.europe-west1.firebasedatabase.app"
+});
+window.db=firebase.database();
+console.log('Firebase OK');
+}catch(e){}
+};
+document.head.appendChild(s2);
+};
+s1.onerror=function(){};
+document.head.appendChild(s1);
+}
+initFirebase();
+
+/* Share peer IDs via Firebase for audio */
+function publishPeerId(roomId){
+if(!window.db||!myPeer)return;
+myPeer.on('open',function(id){
+var ref=window.db.ref('rooms/'+roomId+'/peers/'+myUid);
+ref.set({peerId:id,name:me.name||'Maître'});
+ref.onDisconnect().remove();
+});
+/* If already open */
+if(myPeer.id){
+var ref=window.db.ref('rooms/'+roomId+'/peers/'+myUid);
+ref.set({peerId:myPeer.id,name:me.name||'Maître'});
+ref.onDisconnect().remove();
+}
+/* Listen for other peers and call them */
+window.db.ref('rooms/'+roomId+'/peers').on('child_added',function(snap){
+var data=snap.val();
+if(snap.key===myUid)return;
+if(!myPeer)return;
+/* Call them with our stream or empty */
+setTimeout(function(){
+var call=myPeer.call(data.peerId,myStream||new MediaStream());
+call.on('stream',function(rs){playRemote(rs)});
+peers[data.peerId]=call;
+},1000);
+});
+}
+
+
+/* Join a room and listen for real comments */
+var roomListener=null;
+
+
+function leaveRoom(){
+if(!window.db||!currentRoom)return;
+window.db.ref('rooms/'+currentRoom+'/players').off();
+window.db.ref('rooms/'+currentRoom+'/comments').off();
+currentRoom=null;
+}
+
+var myUid='u'+Math.random().toString(36).substr(2,9);
+function setUid(email){myUid=email.replace(/[^a-zA-Z0-9]/g,'_')}
+
+function sendComToFirebase(name,text,color){
+if(!window.db||!currentRoom)return;
+window.db.ref('rooms/'+currentRoom+'/comments').push({
+uid:myUid,name:name,text:text,color:color,ts:Date.now()
+});
+}
+
+/* Fix mobile keyboard pushing input */
+if(window.visualViewport){
+window.visualViewport.addEventListener('resize',function(){
+var bar=document.querySelector('[style*="position:sticky"]');
+if(bar)bar.style.bottom='0px';
+});
+}
+buildHome();
+go('home')};
+el.appendChild(d);
+});
+go('choose');
+}
+
+var CASES={
+ghost:{n:'Ghost — Abus de confiance',t:'Power',q:'Tasha accuse Ghost d\'avoir vidé leurs comptes joints pour financer sa campagne politique',a:'Tasha',d:'Ghost',v:'LIVE',dur:'long',pt:600,dt:600,ar:'PARTIE CIVILE',dos:'Tasha St. Patrick accuse Ghost d\'abus de confiance aggravé. Il a transféré 2,8 millions depuis leurs comptes joints vers des sociétés-écrans pour sa campagne politique. Les relevés bancaires montrent 14 virements en 3 mois. Tasha dit ne jamais avoir signé d\'autorisation. Ghost affirme qu\'elle savait.'},
+murder:{n:'Annalise — Abus de faiblesse',t:'Murder',q:'Michaela accuse Annalise de l\'avoir manipulée pendant 3 ans',a:'Michaela',d:'Annalise',v:'LIVE',dur:'court',pt:300,dt:300,ar:'PARTIE CIVILE',dos:'Michaela Pratt accuse Annalise Keating d\'avoir exploité sa vulnérabilité d\'étudiante boursière pour la contraindre à des activités illégales. Elle menaçait de détruire sa carrière. Trois anciens étudiants témoignent de pressions similaires.'},
+topboy:{n:'Dushane — Extorsion',t:'Top Boy',q:'Jaq accuse Dushane de l\'avoir forcée à dealer en menaçant sa sœur',a:'Jaq',d:'Dushane',v:'LIVE',dur:'court',pt:300,dt:300,ar:'PARTIE CIVILE',dos:'Jaq affirme que Dushane l\'a contrainte à intégrer son réseau en menaçant sa sœur Lauryn. Elle possède un message vocal compromettant. La défense affirme que Jaq a rejoint le réseau volontairement pour l\'argent.'},
+shelby:{n:'Shelby — Empoisonnement',t:'Peaky Blinders',q:'Arthur accuse Tommy de l\'avoir exposé à l\'opium pour le contrôler',a:'Arthur',d:'Tommy Shelby',v:'LIVE',dur:'long',pt:600,dt:600,ar:'PARTIE CIVILE',dos:'Arthur accuse Tommy de lui avoir fourni de l\'opium régulièrement en sachant qu\'il développerait une addiction. Le but : le garder docile. Le médecin confirme l\'addiction mais ne peut établir l\'intention.'},
+light:{n:'Light — Manipulation sentimentale',t:'Death Note',q:'Misa accuse Light de l\'avoir utilisée puis abandonnée',a:'Misa',d:'Light Yagami',v:'LIVE',dur:'long',pt:600,dt:600,ar:'PARTIE CIVILE',dos:'Misa Amane accuse Light Yagami de manipulation affective. Elle a sacrifié la moitié de son espérance de vie pour lui. Light simulait une relation uniquement pour exploiter ses capacités. Rem témoigne que Light n\'a jamais eu de sentiments pour Misa.'},
+prof:{n:'Le Professeur — Mise en danger',t:'Casa de Papel',q:'Nairobi accuse le Professeur de l\'avoir envoyée au front sciemment',a:'Nairobi',d:'Le Professeur',v:'LIVE',dur:'court',pt:300,dt:300,ar:'PARTIE CIVILE',dos:'Nairobi accuse le Professeur de l\'avoir placée en première ligne lors du braquage en sachant que les snipers la viseraient. Lui restait en sécurité dans son hangar. Elle a reçu une balle. Helsinki confirme que Nairobi avait été prévenue des risques.'},
+ndiaye:{n:'Succession Ndiaye',t:'Héritage',q:'Les cadets accusent leur frère de falsification de testament',a:'Maître Sow',d:'Maître Diallo',v:'LIVE',dur:'court',pt:300,dt:300,ar:'PROCUREUR',dos:'Les cadets Ndiaye accusent Mamadou d\'avoir isolé leur père Alzheimer de 84 ans pour lui faire signer un nouveau testament. Le père est décédé 3 semaines après. L\'infirmière a des déclarations contradictoires.'},
+kimmie:{n:'Kimmie — Vol d\'empire',t:'Beauty in Black',q:'Mallory accuse Kimmie d\'avoir manipulé Horace pour voler l\'empire Bellarie',a:'Mallory',d:'Kimmie',v:'LIVE',dur:'long',pt:600,dt:600,ar:'PARTIE CIVILE',dos:'Mallory Bellarie accuse Kimmie d\'avoir séduit et manipulé son ex-mari Horace Bellarie pour se faire nommer directrice de Beauty in Black. Kimmie, ancienne danseuse, a épousé Horace et hérité du contrôle de l\'entreprise familiale en 6 mois. Mallory affirme que Kimmie avait planifié cette prise de pouvoir depuis le début. Kimmie rétorque qu\'elle a transformé l\'entreprise et doublé le chiffre d\'affaires. Roy et Charles, les fils Bellarie, ont des témoignages contradictoires.'},
+coulibaly:{n:'Affaire Coulibaly',t:'Politique',q:'L\'État accuse Coulibaly de 47 emplois fictifs',a:'Maître Koné',d:'Maître Traoré',v:'LIVE',dur:'long',pt:600,dt:600,ar:'PROCUREUR',dos:'L\'Inspection Générale accuse l\'ex-ministre Coulibaly d\'avoir créé 47 postes fictifs. 12 des 47 personnes n\'ont jamais mis les pieds au ministère selon les registres d\'entrée.'},
+/* FOOT DE RUE */
+tag:{n:'Tag — Vol de stratégie',t:'Foot de Rue',q:'Gabriel accuse Tag d\'avoir volé le cahier de tactiques des Blue Foxes pour gagner le tournoi',a:'Gabriel',d:'Tag',v:'LIVE',dur:'court',pt:300,dt:300,ar:'PARTIE CIVILE',dos:'Gabriel accuse Tag d\'avoir subtilisé son cahier de tactiques avant la finale du Mondial de Foot de Rue. Ce cahier contenait 3 mois de stratégies inédites. Tag a utilisé la combinaison secrète "Tempête Solaire" pendant le match — une tactique que seul Gabriel connaissait. Tag dit l\'avoir inventée lui-même. Eloise a vu Tag près du sac de Gabriel la veille du match.'},
+/* WINX */
+bloom:{n:'Bloom — Trahison magique',t:'Winx Club',q:'Stella accuse Bloom d\'avoir absorbé la magie de Solaria sans permission pour vaincre les Trix',a:'Stella',d:'Bloom',v:'LIVE',dur:'court',pt:300,dt:300,ar:'PARTIE CIVILE',dos:'Stella accuse Bloom d\'avoir secrètement puisé dans le pouvoir du Soleil de Solaria pour amplifier sa flamme du Dragon. Depuis cet événement, les pouvoirs de Stella ont diminué de moitié. Bloom affirme que c\'était involontaire et que le flux magique était naturel. Tecna a mesuré un transfert d\'énergie anormal ce jour-là.'},
+/* MIRACULOUS */
+adrien:{n:'Adrien — Double identité',t:'Miraculous',q:'Marinette accuse Adrien d\'avoir caché son identité de Chat Noir mettant Paris en danger',a:'Marinette',d:'Adrien',v:'LIVE',dur:'court',pt:300,dt:300,ar:'PARTIE CIVILE',dos:'Marinette, en tant que Ladybug, accuse Adrien d\'avoir dissimulé son identité de Chat Noir pendant 2 ans. Ce secret a causé des erreurs de coordination lors de 3 attaques majeures. Adrien rétorque que Marinette faisait exactement la même chose. Maître Fu témoigne que le secret était nécessaire pour la sécurité des Miraculous.'},
+/* ROI LION */
+scar:{n:'Scar — Régicide',t:'Le Roi Lion',q:'Simba accuse Scar d\'avoir assassiné Mufasa et d\'avoir menti au royaume pendant des années',a:'Simba',d:'Scar',v:'LIVE',dur:'long',pt:600,dt:600,ar:'PARTIE CIVILE',dos:'Simba accuse son oncle Scar d\'avoir provoqué la mort de Mufasa en organisant la stampede dans le canyon. Scar a ensuite fait croire à Simba qu\'il était responsable et l\'a chassé du royaume. Scar a régné pendant des années en laissant les hyènes détruire la Terre des Lions. Zazu a été emprisonné pour avoir voulu témoigner. Rafiki possède des preuves.'},
+/* NARUTO */
+itachi:{n:'Itachi — Massacre du clan',t:'Naruto',q:'Sasuke accuse Itachi d\'avoir massacré le clan Uchiha de sang-froid',a:'Sasuke',d:'Itachi',v:'LIVE',dur:'long',pt:600,dt:600,ar:'PARTIE CIVILE',dos:'Sasuke accuse son frère Itachi d\'avoir exterminé tout le clan Uchiha en une nuit, y compris leurs parents. Itachi affirme avoir agi sur ordre du conseil de Konoha pour empêcher un coup d\'état qui aurait déclenché une guerre civile. Un document classé secret défense confirme l\'ordre. Mais Itachi a-t-il eu le choix ? Danzō, le commanditaire, est décédé.'},
+/* ONE PIECE */
+luffy:{n:'Luffy — Piraterie',t:'One Piece',q:'La Marine accuse Luffy d\'avoir détruit Enies Lobby et attaqué le Gouvernement Mondial',a:'Amiral Akainu',d:'Luffy',v:'LIVE',dur:'long',pt:600,dt:600,ar:'PROCUREUR',dos:'La Marine accuse Monkey D. Luffy d\'avoir détruit le tribunal d\'Enies Lobby, bâtiment gouvernemental, pour libérer une criminelle en fuite, Nico Robin. Luffy affirme que Robin était innocente et que le Gouvernement voulait la tuer pour ses connaissances. Les dégâts sont estimés à des milliards de Berrys. Robin détenait le secret des Poneglyphes.'},
+/* JUJUTSU KAISEN */
+gojo:{n:'Gojo — Insubordination',t:'Jujutsu Kaisen',q:'Le Conseil accuse Gojo de protéger Yuji Itadori, hôte du Roi des Fléaux',a:'Le Conseil',d:'Gojo Satoru',v:'LIVE',dur:'court',pt:300,dt:300,ar:'PROCUREUR',dos:'Le Conseil des Exorcistes accuse Gojo Satoru d\'insubordination grave pour avoir protégé Yuji Itadori, hôte de Sukuna. Gojo refuse l\'exécution d\'Itadori et affirme pouvoir le contrôler. Le Conseil estime que Gojo met en danger toute la communauté des exorcistes. Gojo argue que tuer Itadori priverait le monde d\'un atout crucial contre Sukuna.'},
+/* AFRIQUE DU SUD */
+queen:{n:'Queen Sono — Haute trahison',t:'Queen Sono',q:'Le SOG accuse Queen d\'avoir transmis des secrets d\'État à un agent ennemi',a:'Le Directeur',d:'Queen Sono',v:'LIVE',dur:'court',pt:300,dt:300,ar:'PROCUREUR',dos:'Le SOG (agence de renseignement sud-africaine) accuse Queen Sono d\'avoir partagé des documents classifiés avec Ekaterina, agent russe. Queen affirme que les documents étaient nécessaires pour sauver des otages. Le protocole d\'urgence autorise-t-il le partage d\'informations ? 3 otages ont été libérés grâce à cette action.'},
+/* CÔTE D\'IVOIRE */
+boris:{n:'Docteur Boris — Négligence',t:'Docteur Boris',q:'La famille Kouamé accuse le Dr Boris de négligence médicale ayant causé le décès de leur mère',a:'Famille Kouamé',d:'Dr Boris',v:'LIVE',dur:'court',pt:300,dt:300,ar:'PARTIE CIVILE',dos:'La famille Kouamé accuse le Docteur Boris d\'avoir prescrit un traitement inadapté à leur mère de 67 ans. Elle est décédée 48h après. Le dossier médical montre que Boris a ignoré une allergie mentionnée dans le carnet de santé. Boris affirme que le carnet n\'était pas disponible au moment de la prescription et que l\'urgence justifiait sa décision.'},
+/* NIGERIA */
+eniola:{n:'Eniola — Corruption',t:'King of Boys',q:'Le Sénateur accuse Eniola Salami d\'avoir acheté les élections locales de Lagos',a:'Sénateur Adeola',d:'Eniola Salami',v:'LIVE',dur:'long',pt:600,dt:600,ar:'PROCUREUR',dos:'Le Sénateur Adeola accuse Eniola Salami d\'avoir distribué 500 millions de Nairas pour acheter des votes dans 3 circonscriptions de Lagos. Des vidéos montrent des enveloppes distribuées par ses hommes. Eniola affirme qu\'il s\'agissait de dons humanitaires pendant la période électorale. 12 témoins ont des versions contradictoires.'},
+/* LUPIN */
+assane:{n:'Assane — Usurpation d\'identité',t:'Lupin',q:'Le Commissaire accuse Assane Diop d\'avoir usurpé 7 identités pour infiltrer le cercle de Pellegrini',a:'Commissaire Guédira',d:'Assane Diop',v:'LIVE',dur:'court',pt:300,dt:300,ar:'PROCUREUR',dos:'Le Commissaire Guédira accuse Assane Diop de 7 usurpations d\'identité, intrusion dans des propriétés privées et vol du collier de Marie-Antoinette. Assane argue que toutes ses actions visaient à prouver l\'innocence de son père, Babakar Diop, injustement emprisonné par Pellegrini. Le collier a été rendu. Pellegrini est depuis tombé.'},
+/* LA HAINE */
+vinz:{n:'Vinz — Détention d\'arme',t:'La Haine',q:'Le Procureur accuse Vinz de détention illégale de l\'arme de service d\'un policier',a:'Procureur',d:'Vinz',v:'LIVE',dur:'court',pt:300,dt:300,ar:'PROCUREUR',dos:'Le Procureur accuse Vinz de détention illégale d\'arme à feu après avoir trouvé l\'arme de service d\'un policier perdue lors des émeutes. Vinz affirme l\'avoir ramassée pour éviter qu\'un enfant la trouve et comptait la rendre. Hubert et Saïd témoignent que Vinz n\'a jamais utilisé l\'arme. L\'arme a été retrouvée chargée.'},
+/* SHREK */
+shrek:{n:'Shrek — Trouble à l\'ordre public',t:'Shrek',q:'Lord Farquaad accuse Shrek d\'avoir envahi Duloc et kidnappé la Princesse Fiona',a:'Lord Farquaad',d:'Shrek',v:'LIVE',dur:'court',pt:300,dt:300,ar:'PROCUREUR',dos:'Lord Farquaad accuse Shrek d\'intrusion dans le château de Duloc, de destruction de propriété et d\'enlèvement de la Princesse Fiona. Shrek affirme que Farquaad lui avait promis de lui rendre son marais en échange de cette mission. Le contrat verbal n\'a jamais été honoré par Farquaad. L\'Âne est témoin de l\'accord.'},
+/* DEMON SLAYER */
+tanjiro:{n:'Tanjiro — Complicité',t:'Demon Slayer',q:'Le Corps des Pourfendeurs accuse Tanjiro de protéger un démon : sa sœur Nezuko',a:'Le Pilier du Vent',d:'Tanjiro',v:'LIVE',dur:'court',pt:300,dt:300,ar:'PROCUREUR',dos:'Le Corps des Pourfendeurs accuse Tanjiro Kamado de haute trahison pour avoir protégé et transporté un démon, Nezuko, en violation directe du code des pourfendeurs. Tanjiro affirme que Nezuko n\'a jamais attaqué un humain et qu\'elle combat même d\'autres démons. Le Maître Ubuyashiki a observé Nezuko résister à du sang humain pendant 2 ans.'}
+}
+
+var SOLOS=[
+{t:'Ghost — Le SMS impossible',s:'Power',d:'Moyen',timer:1200,
+dos:'Ghost est accusé d\'avoir envoyé un SMS à Lobos pour organiser une livraison le 15 mars à 23h47 depuis son téléphone personnel.\n\nCependant, le rapport de surveillance de la police indique que Ghost était sous escorte au commissariat du 15 mars à 21h00 jusqu\'au 16 mars à 6h00 pour un interrogatoire.\n\nLe SMS a été envoyé depuis la tour relais de Manhattan. Le commissariat est situé dans le Queens.\n\nL\'accusation affirme que Ghost aurait pu utiliser un second téléphone, mais aucun second appareil n\'a été retrouvé lors de la fouille.',
+vice:'Ghost ne pouvait pas avoir envoyé ce SMS : il était au commissariat dans le Queens au moment de l\'envoi, et le SMS provient d\'une tour relais de Manhattan. Impossible d\'être à deux endroits en même temps.',
+indices:['SMS envoyé le 15 mars à 23h47','Ghost au commissariat de 21h à 6h','Tour relais Manhattan vs commissariat Queens']},
+
+{t:'Annalise — Le témoignage décalé',s:'Murder',d:'Difficile',timer:1200,
+dos:'Le témoin principal, Crawford, affirme avoir vu Annalise entrer dans la maison de Sam le soir du meurtre, le 12 novembre, à 22h15. Il dit qu\'il rentrait du travail à pied.\n\nCrawford travaille comme agent de sécurité de nuit à l\'hôpital St. Mary. Son planning, fourni par l\'hôpital, montre qu\'il a pointé à 21h30 le 12 novembre et a terminé à 6h le 13 novembre.\n\nL\'hôpital St. Mary est à 45 minutes en voiture de la maison de Sam. Crawford dit ne pas avoir de voiture.\n\nL\'accusation n\'a pas commenté cette incohérence.',
+vice:'Crawford ne pouvait pas être témoin : il a pointé à l\'hôpital à 21h30, soit 45 minutes avant l\'heure où il dit avoir vu Annalise. Sans voiture et à 45 min de route, il ne pouvait pas être devant la maison de Sam à 22h15.',
+indices:['Témoin dit : 22h15 devant la maison','Il a pointé à l\'hôpital à 21h30','45 min de trajet, pas de voiture']},
+
+{t:'Dushane — L\'argent fantôme',s:'Top Boy',d:'Moyen',timer:1200,
+dos:'Sully accuse Dushane d\'avoir détourné 200 000£ de leurs bénéfices communs entre janvier et mars.\n\nLes relevés du compte commun montrent 3 retraits : 70 000£ le 15 janvier, 80 000£ le 8 février, et 50 000£ le 2 mars. Total : 200 000£.\n\nMais le rapport de la brigade financière indique que le compte commun avait un solde de 120 000£ au 1er janvier.\n\nDushane ne conteste pas les retraits mais nie toute malversation.',
+vice:'Impossible de retirer 200 000£ d\'un compte qui ne contenait que 120 000£ au 1er janvier. Le premier retrait de 70 000£ laisse 50 000£, le deuxième de 80 000£ est impossible. Les relevés sont falsifiés.',
+indices:['Solde au 1er janvier : 120 000£','Total des retraits : 200 000£','Le 2ème retrait dépasse le solde restant']},
+
+{t:'Tommy Shelby — L\'alibi chronologique',s:'Peaky Blinders',d:'Expert',timer:1200,
+dos:'Tommy Shelby est accusé d\'avoir rencontré le conseiller Campbell au pub Garrison le 20 octobre à 14h pour lui remettre un pot-de-vin.\n\nLe registre du pub montre que Tommy a commandé un whisky à 14h10. Le barman confirme sa présence.\n\nMais le journal Birmingham Mail du 20 octobre rapporte que Tommy Shelby a inauguré la nouvelle aile de l\'hippodrome de Birmingham à 13h30, avec une photo datée. La cérémonie a duré jusqu\'à 15h selon le journal.\n\nL\'hippodrome est à 40 minutes du Garrison en voiture.',
+vice:'Tommy ne pouvait pas être au pub à 14h : il était à l\'inauguration de l\'hippodrome de 13h30 à 15h (prouvé par le journal avec photo). L\'hippodrome est à 40 min du Garrison. Soit le registre du pub est faux, soit le barman ment.',
+indices:['Pub Garrison : 14h10','Inauguration hippodrome : 13h30-15h','40 minutes entre les deux lieux']}
+]
+
+/* SOLO DECRYPTAGE */
+var soloI=null;var soloIdx=-1;
+function startSolo(idx){
+soloIdx=idx;var s=SOLOS[idx];
+document.getElementById('sl-title').textContent=s.t;
+document.getElementById('sl-series').textContent=s.s;
+document.getElementById('sl-diff').textContent=s.d;
+document.getElementById('sl-dos').textContent=s.dos;
+document.getElementById('sl-answer').value='';
+document.getElementById('solo-result').style.display='none';
+var indEl=document.getElementById('sl-indices');indEl.innerHTML='';
+s.indices.forEach(function(ind,i){
+var d=document.createElement('div');
+d.style.cssText='padding:8px 12px;background:rgba(124,92,252,.08);border:1px solid rgba(124,92,252,.15);border-radius:10px;font-size:12px;color:#A78BFA';
+d.innerHTML='<strong>'+(i+1)+'.</strong> '+ind;
+indEl.appendChild(d);
+});
+var left=s.timer;
+document.getElementById('sl-bar').style.width='100%';
+clearInterval(soloI);
+soloI=setInterval(function(){
+left--;
+var m=Math.floor(left/60),ss=left%60;
+document.getElementById('sl-timer').textContent=String(m).padStart(2,'0')+':'+String(ss).padStart(2,'0');
+document.getElementById('sl-bar').style.width=(left/s.timer*100)+'%';
+if(left<=0){clearInterval(soloI);submitSolo()}
+},1000);
+go('solo-game');
+}
+function submitSolo(){
+clearInterval(soloI);
+var answer=document.getElementById('sl-answer').value.trim();
+var s=SOLOS[soloIdx];
+var kw=['irrecevable','prescri','scellé','mandat','avocat','contradictoire','contamin','illégal','nullité','vice','procédure','modifié','enregistr','custody','suspendu','inhumain'];
+var score=0;kw.forEach(function(k){if(answer.toLowerCase().indexOf(k)!==-1)score++});
+var win=score>=2;
+document.getElementById('sl-ico').textContent=win?'🏆':'❌';
+document.getElementById('sl-vtitle').textContent=win?'Bien vu, Maître !':'Vice non identifié';
+document.getElementById('sl-vtext').textContent=win?'Vous avez identifié le vice de procédure. Le dossier s\'effondre.':'Vous n\'avez pas trouvé le vice principal.';
+document.getElementById('sl-correct').textContent=s.vice;
+document.getElementById('solo-result').style.display='flex';
+}
+function quitSolo(){clearInterval(soloI);document.getElementById('solo-result').style.display='none';go('home')}
+
+/* DUEL 1V1 */
+var duelDur='court';
+function pickDur(d){
+duelDur=d;
+document.getElementById('dur-court').style.borderColor=d==='court'?'#4ECB71':'rgba(255,255,255,.07)';
+document.getElementById('dur-long').style.borderColor=d==='long'?'#FF7A2E':'rgba(255,255,255,.07)';
+}
+function createDuel(){
+var topic=document.getElementById('duel-topic').value.trim();
+if(!topic){document.getElementById('duel-topic').style.borderColor='#FF4757';return}
+var duelId='duel-'+Date.now();
+var link=window.location.href.split('?')[0]+'?duel='+duelId;
+document.getElementById('duel-link').value=link;
+if(window.db){
+window.db.ref('duels/'+duelId).set({
+topic:topic,dur:duelDur,creator:me.name||'Maître',createdAt:Date.now(),status:'waiting'
+});
+}
+}
+function copyDuelLink(){
+var inp=document.getElementById('duel-link');
+inp.select();
+try{document.execCommand('copy')}catch(e){}
+inp.style.borderColor='#4ECB71';
+setTimeout(function(){inp.style.borderColor='rgba(255,255,255,.07)'},2000);
+}
+
+/* UPDATE USER STATS */
+/* REQUEST WORD */
+function toggleViewers(){
+var panel=document.getElementById('viewers-panel');
+if(panel){
+panel.style.display=panel.style.display==='none'?'block':'none';
+}
+}
+
+function requestWord(){
+var btn=document.getElementById('req-btn');
+btn.textContent='Parole demandée...';
+btn.style.borderColor='#FFA04E';
+btn.style.color='#FFA04E';
+btn.onclick=null;
+/* Notify judge via Firebase */
+if(window.db&&currentRoom){
+window.db.ref('rooms/'+currentRoom+'/requests').push({
+uid:myUid,
+name:me.name||'',
+role:myRole,
+timestamp:Date.now()
+});
+}
+/* Also show in chat for judge */
+var label=myRole==='defense'?'Défense':'Accusation';
+sendComToFirebase(label+' · '+(me.name||''),'demande la parole',myRole==='defense'?'#4ECB71':'#FF4757');
+/* Reset after 5s */
+setTimeout(function(){
+btn.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FFD23F" stroke-width="2.5" stroke-linecap="round"><path d="M12 1v14M5 8l7-7 7 7"/></svg>Demander la parole';
+btn.style.borderColor='rgba(255,210,63,.2)';
+btn.style.color='#FFD23F';
+btn.onclick=requestWord;
+},5000);
+}
+
+/* Listen for word requests (judge only) */
+function listenRequests(){
+if(!window.db||!currentRoom||myRole!=='juge')return;
+window.db.ref('rooms/'+currentRoom+'/requests').on('child_added',function(snap){
+var r=snap.val();
+var label=r.role==='defense'?'Défense':'Accusation';
+var color=r.role==='defense'?'#4ECB71':'#FF4757';
+addC(label+' · '+(r.name||''),'demande la parole',color,true);
+});
+}
+
+function addWin(){
+me.wins=(me.wins||0)+1;
+me.points=(me.points||0)+4;
+document.getElementById('p-w').textContent=me.wins;
+if(window.db){
+window.db.ref('users/'+myUid+'/wins').set(me.wins);
+window.db.ref('users/'+myUid+'/points').set(me.points);
+}
+}
+function addLoss(){
+me.losses=(me.losses||0)+1;
+me.points=(me.points||0)+1;
+if(window.db){
+window.db.ref('users/'+myUid+'/losses').set(me.losses);
+window.db.ref('users/'+myUid+'/points').set(me.points);
+}
+}
+
+function sendReact(emoji){
+/* Show reaction on YOUR bubble in the listeners row */
+var row=document.getElementById('listeners-row');
+if(!row)return;
+/* Find my bubble */
+var bubbles=row.children;
+for(var i=0;i<bubbles.length;i++){
+var nameEl=bubbles[i].querySelector('div:last-child');
+if(nameEl&&nameEl.textContent===(me.name||'')){
+var av=bubbles[i].querySelector('div:first-child');
+if(av){
+/* Show emoji above bubble */
+var r=document.createElement('div');
+r.style.cssText='position:absolute;top:-20px;left:50%;transform:translateX(-50%);font-size:18px;animation:reactPop 2s forwards;pointer-events:none';
+av.style.position='relative';
+av.appendChild(r);
+r.textContent=emoji;
+setTimeout(function(){r.remove()},2000);
+}
+break;
+}
+}
+/* Broadcast reaction to Firebase so others see it on your bubble */
+if(window.db&&currentRoom){
+window.db.ref('rooms/'+currentRoom+'/reactions/'+myUid).set({
+emoji:emoji,name:me.name||'',ts:Date.now()
+});
+/* Auto-clear after 3s */
+setTimeout(function(){
+window.db.ref('rooms/'+currentRoom+'/reactions/'+myUid).remove();
+},3000);
+}
+}
+
+function postVC(vid){
+var inp=document.getElementById('vc-i'+vid);
+var t=inp.value.trim();if(!t||t.length>140)return;
+inp.value='';
+var el=document.getElementById('vc-'+vid);
+var colors=['#FF7A2E','#FF6B9D','#7C5CFC','#4ECB71','#38BDF8'];
+var c=colors[Math.floor(Math.random()*colors.length)];
+var d=document.createElement('div');
+d.style.cssText='display:flex;gap:8px';
+d.innerHTML='<div style="font-size:11px;font-weight:700;color:'+c+';white-space:nowrap">'+(me.name||'Maître')+'</div><div style="font-size:12px;color:#8888A0">'+t+'</div>';
+el.appendChild(d);el.scrollTop=el.scrollHeight;
+if(window.db){window.db.ref('verdicts/v'+vid+'/comments').push({name:me.name||'Maître',text:t,ts:Date.now()})}
+}
+
+function buildHome(){
+var h=document.getElementById('home-content');h.innerHTML='';
+var html='';
+
+/* HERO CARD */
+html+='<div style="border-radius:20px;overflow:hidden;position:relative;min-height:200px;display:flex;flex-direction:column;justify-content:flex-end;padding:22px;background:linear-gradient(160deg,#2D1B69,#1E1245,#150E38);border:2px solid #FF6B9D;box-shadow:0 4px 30px rgba(255,107,157,.12);cursor:pointer;margin-bottom:20px" onclick="joinCase(\'kimmie\')">';
+html+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:auto"><div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1.8px;color:#FF6B9D;background:rgba(255,107,157,.12);padding:5px 12px;border-radius:99px;border:1px solid rgba(255,107,157,.12)">Beauty in Black · Netflix</div><div style="font-size:11px;font-weight:800;color:#FF4757">● LIVE</div></div>';
+html+='<div style="font-size:24px;font-weight:900;color:#fff;line-height:1.25;margin:20px 0 4px">Kimmie est accusée d\'avoir <em style=\"font-style:normal;color:#FF6B9D\">volé</em> l\'empire Bellarie</div>';
+html+='<div style="font-size:12px;color:#8888A0;margin-bottom:14px">Mallory veut récupérer ce qui lui appartient</div>';
+html+='<div style="display:flex;align-items:center;gap:16px"><div style="text-align:center"><div style="width:48px;height:48px;border-radius:50%;border:2.5px solid #4ECB71;background:linear-gradient(135deg,#1A3D28,#122E1E);display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:800;color:#fff;margin:0 auto 4px">KI</div><div style="font-size:11px;font-weight:700">Défense</div></div><div style="font-size:12px;font-weight:900;color:#FF6B9D;opacity:.6">VS</div><div style="text-align:center"><div style="width:48px;height:48px;border-radius:50%;border:2.5px solid #FF4757;background:linear-gradient(135deg,#3D1A1A,#2E1212);display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:800;color:#fff;margin:0 auto 4px">MA</div><div style="font-size:11px;font-weight:700">Accusation</div></div></div>';
+html+='</div>';
+
+/* EN DIRECT - SCROLL */
+html+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><div style="font-size:13px;font-weight:800;color:#8888A0;text-transform:uppercase;letter-spacing:1.5px">Audiences en direct</div><div style="font-size:11px;color:#FF7A2E;font-weight:600">● LIVE</div></div>';
+html+='<div style="display:flex;gap:12px;overflow-x:auto;padding-bottom:20px;-webkit-overflow-scrolling:touch">';
+var cards=[
+{id:'light',tag:'Death Note',q:'Misa accuse Light de l\'avoir <em style=\"font-style:normal;color:#FF7A2E\">manipulée</em>',dur:'10 min',places:'2 places'},
+{id:'murder',tag:'Murder',q:'Michaela accuse Annalise d\'<em style=\"font-style:normal;color:#FF7A2E\">abus de faiblesse</em>',dur:'5 min',places:'1 place'},
+{id:'prof',tag:'Casa de Papel',q:'Nairobi accuse le Professeur de <em style=\"font-style:normal;color:#FF7A2E\">mise en danger</em>',dur:'5 min',places:'Complet'},
+{id:'shelby',tag:'Peaky Blinders',q:'Arthur accuse Tommy de l\'avoir <em style=\"font-style:normal;color:#FF7A2E\">empoisonné</em>',dur:'10 min',places:'3 places'},
+{id:'topboy',tag:'Top Boy',q:'Jaq accuse Dushane d\'<em style=\"font-style:normal;color:#FF7A2E\">extorsion</em>',dur:'5 min',places:'1 place'},
+{id:'coulibaly',tag:'Politique',q:'47 <em style=\"font-style:normal;color:#FF7A2E\">emplois fictifs</em> : Coulibaly',dur:'10 min',places:'3 places'},
+{id:'ndiaye',tag:'Héritage',q:'Les cadets accusent d\'avoir <em style=\"font-style:normal;color:#FF7A2E\">falsifié</em> le testament',dur:'5 min',places:'2 places'}
+];
+cards.forEach(function(c){
+html+='<div style="min-width:260px;border-radius:18px;padding:18px;display:flex;flex-direction:column;min-height:170px;background:linear-gradient(160deg,#2D1B69,#1E1245);border:2px solid rgba(255,210,63,.25);cursor:pointer;flex-shrink:0" onclick="joinCase(\''+c.id+'\')">';
+html+='<div style="display:flex;justify-content:space-between;margin-bottom:auto"><div style="font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:1.5px;color:#FFA04E">'+c.tag+'</div><div style="font-size:9px;font-weight:700;color:#8888A0;background:rgba(255,255,255,.06);padding:2px 8px;border-radius:6px">'+c.dur+'</div></div>';
+html+='<div style="font-size:15px;font-weight:800;color:#fff;line-height:1.3;margin:12px 0 10px">'+c.q+'</div>';
+html+='<div style="display:flex;justify-content:space-between;align-items:center"><div style="font-size:10px;font-weight:800;color:#FF4757">● LIVE</div><div style="font-size:10px;font-weight:700;color:#4ECB71">'+c.places+'</div></div>';
+html+='</div>';
+});
+html+='</div>';
+
+/* SÉRIES & FILMS — Personnages à gagner */
+html+='<div style="font-size:13px;font-weight:800;color:#8888A0;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:12px">Séries & Films</div>';
+html+='<div style="display:flex;gap:12px;overflow-x:auto;padding-bottom:20px;-webkit-overflow-scrolling:touch">';
+var caseMap={GH:'ghost',AK:'murder',DU:'topboy',TS:'shelby',LY:'light',PR:'prof',QS:'queen',DB:'boris',ES:'eniola',AD:'assane',VZ:'vinz',SU:'topboy',OP:'ghost',TO:'ghost',TY:'ghost',RA:'ghost',OM:'vinz',AB:'vinz',VA:'vinz',ME:'vinz',OS:'assane',DD:'assane',MR:'assane',TH:'ndiaye',CY:'boris',DA:'boris',GO:'boris',EF:'eniola',NO:'eniola',AM:'eniola',OB:'eniola',KA:'eniola',RK:'queen',TY:'queen',MD:'assane'};
+var seriesFilms=CLIENTS.filter(function(c){return c.c.indexOf('série')!==-1||c.c.indexOf('film')!==-1});
+seriesFilms.forEach(function(c){
+var cid=caseMap[c.i]||'ghost';
+html+='<div style="display:flex;flex-direction:column;align-items:center;gap:6px;min-width:72px;flex-shrink:0;cursor:pointer" onclick="joinCase(\''+cid+'\')">';
+html+='<div class="ring" style="width:64px;height:64px;font-size:18px">'+c.i+'<div class="dot"></div></div>';
+html+='<div style="font-size:10px;font-weight:700;text-align:center;max-width:70px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+c.n+'</div>';
+html+='<div style="font-size:8px;color:#FFA04E;font-weight:600">'+c.c+'</div></div>';
+});
+html+='</div>';
+
+/* ANIMÉS */
+html+='<div style="font-size:13px;font-weight:800;color:#8888A0;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:12px">Animés</div>';
+html+='<div style="display:flex;gap:12px;overflow-x:auto;padding-bottom:20px;-webkit-overflow-scrolling:touch">';
+var animeMap={LY:'light',GS:'gojo',EJ:'tanjiro',IT:'itachi',AZ:'itachi',LL:'light',TJ:'tanjiro',LF:'luffy'};
+var animes=CLIENTS.filter(function(c){return c.c.indexOf('animé')!==-1});
+animes.forEach(function(c){
+var cid=animeMap[c.i]||'light';
+html+='<div style="display:flex;flex-direction:column;align-items:center;gap:6px;min-width:72px;flex-shrink:0;cursor:pointer" onclick="joinCase(\''+cid+'\')">';
+html+='<div class="ring" style="width:64px;height:64px;font-size:18px;border-color:#FF6B9D;box-shadow:0 0 18px rgba(255,107,157,.2)">'+c.i+'<div class="dot"></div></div>';
+html+='<div style="font-size:10px;font-weight:700;text-align:center">'+c.n+'</div>';
+html+='<div style="font-size:8px;color:#FF6B9D;font-weight:600">'+c.s+'</div></div>';
+});
+html+='</div>';
+
+/* DESSINS ANIMÉS */
+html+='<div style="font-size:13px;font-weight:800;color:#8888A0;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:12px">Dessins Animés</div>';
+html+='<div style="display:flex;gap:12px;overflow-x:auto;padding-bottom:20px;-webkit-overflow-scrolling:touch">';
+var cartoonMap={TG:'tag',GA:'tag',BL:'bloom',ST:'bloom',SC:'scar',MM:'shrek',SH:'shrek',SY:'shrek',AC:'adrien',MN:'adrien'};
+var cartoons=CLIENTS.filter(function(c){return c.c.indexOf('dessin')!==-1});
+cartoons.forEach(function(c){
+var cid=cartoonMap[c.i]||'shrek';
+html+='<div style="display:flex;flex-direction:column;align-items:center;gap:6px;min-width:72px;flex-shrink:0;cursor:pointer" onclick="joinCase(\''+cid+'\')">';
+html+='<div class="ring" style="width:64px;height:64px;font-size:18px;border-color:#4ECB71;box-shadow:0 0 18px rgba(78,203,113,.2)">'+c.i+'<div class="dot"></div></div>';
+html+='<div style="font-size:10px;font-weight:700;text-align:center">'+c.n+'</div>';
+html+='<div style="font-size:8px;color:#4ECB71;font-weight:600">'+c.s+'</div></div>';
+});
+html+='</div>';
+
+/* DÉCRYPTAGE SOLO */
+html+='<div style="font-size:13px;font-weight:800;color:#8888A0;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:12px">Décryptage · Trouvez l\'incohérence</div>';
+html+='<div style="display:flex;gap:12px;overflow-x:auto;padding-bottom:20px;-webkit-overflow-scrolling:touch">';
+var solos=[{t:'Le SMS impossible',s:'Power',d:'Moyen'},{t:'Le témoignage décalé',s:'Murder',d:'Difficile'},{t:'L\'argent fantôme',s:'Top Boy',d:'Moyen'},{t:'L\'alibi chronologique',s:'Peaky Blinders',d:'Expert'}];
+solos.forEach(function(s,si){
+html+='<div style="min-width:200px;border-radius:16px;padding:16px;background:linear-gradient(160deg,#2D1B69,#1E1245);border:2px solid #7C5CFC;cursor:pointer;flex-shrink:0" onclick="startSolo('+si+')">';
+html+='<div style="font-size:8px;font-weight:800;text-transform:uppercase;letter-spacing:1.5px;color:#A78BFA;background:rgba(124,92,252,.1);padding:3px 8px;border-radius:6px;border:1px solid rgba(124,92,252,.15);display:inline-block;margin-bottom:8px">INCOHÉRENCE</div>';
+html+='<div style="font-size:14px;font-weight:800;color:#fff;line-height:1.3;margin-bottom:6px">'+s.t+'</div>';
+html+='<div style="font-size:10px;font-weight:700;color:#A78BFA">20 min · '+s.d+'</div>';
+html+='<div style="font-size:9px;color:#505068;margin-top:4px">'+s.s+'</div></div>';
+});
+html+='</div>';
+
+/* EN ATTENTE */
+html+='<div style="font-size:13px;font-weight:800;color:#8888A0;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:12px">En attente · 3 joueurs min.</div>';
+html+='<div style="display:flex;gap:14px;overflow-x:auto;padding-bottom:20px;-webkit-overflow-scrolling:touch">';
+[{i:'SU',n:'Sully',c:'1/3'},{i:'TE',n:'Tommy E.',c:'2/3'},{i:'OP',n:'Olivia',c:'0/3'}].forEach(function(w){
+html+='<div style="display:flex;flex-direction:column;align-items:center;gap:6px;min-width:75px;flex-shrink:0"><div class="ring" style="border-color:#505068;box-shadow:none;opacity:.5">'+w.i+'</div><div style="font-size:11px;font-weight:700">'+w.n+'</div><div style="font-size:10px;color:#FF7A2E;font-weight:600">'+w.c+'</div></div>';
+});
+html+='</div>';
+
+html+='<div style="height:20px"></div>';
+h.innerHTML=html;
+}
+
+/* TRACK PREFERENCES */
+function trackView(id){
+try{
+var v=JSON.parse(localStorage.getItem('gV')||'{}');
+v[id]=(v[id]||0)+1;
+localStorage.setItem('gV',JSON.stringify(v));
+}catch(e){}
+}
+function getTopCases(){
+try{
+var v=JSON.parse(localStorage.getItem('gV')||'{}');
+return Object.entries(v).sort(function(a,b){return b[1]-a[1]}).map(function(e){return e[0]});
+}catch(e){return[]}
+}
+
+function joinCase(id){
+trackView(id);
+var c=CASES[id];if(!c)return;
+curCase=id;
+document.getElementById('rp-case').textContent=c.n;
+document.getElementById('rp-type').textContent=c.t+(c.dur==='long'?' · 10 min':' · 5 min');
+go('role-pick');
+loadRoles(id);
+}
+
+var curCase=null;var prepI=null;var debI=null;var comI=null;
+var myRole='defense';
+
+function pickRole(role){claimRole(role)}
+
+var roleListener=null;
+function loadRoles(caseId){
+/* Listen for taken roles in Firebase */
+if(!window.db)return;
+if(roleListener)window.db.ref('rooms/'+caseId+'/roles').off();
+roleListener=window.db.ref('rooms/'+caseId+'/roles');
+roleListener.on('value',function(snap){
+var data=snap.val()||{};
+updateRoleUI('juge',data.juge);
+updateRoleUI('defense',data.defense);
+updateRoleUI('accusation',data.accusation);
+});
+/* Show upcoming cases */
+buildUpcoming();
+}
+
+function updateRoleUI(role,data){
+var statusEl=document.getElementById('role-'+(role==='defense'?'def':role==='accusation'?'acc':'juge')+'-status');
+var cardEl=document.getElementById('role-'+(role==='juge'?'juge':role));
+if(!statusEl)return;
+if(data&&data.uid!==myUid){
+statusEl.textContent='Pris par '+data.name;
+statusEl.style.color='#FF4757';
+statusEl.style.background='rgba(255,71,87,.1)';
+if(cardEl){cardEl.style.opacity='0.5';cardEl.onclick=null}
+}else if(data&&data.uid===myUid){
+statusEl.textContent='✓ Vous';
+statusEl.style.color='#4ECB71';
+statusEl.style.background='rgba(78,203,113,.1)';
+}else{
+statusEl.textContent='Libre';
+statusEl.style.color='#4ECB71';
+statusEl.style.background='rgba(78,203,113,.1)';
+if(cardEl){cardEl.style.opacity='1'}
+}
+}
+
+function claimRole(role){
+var c=CASES[curCase];
+if(role==='spectateur'){
+myRole='spectateur';
+enterAud();
+return;
+}
+/* Check if role is taken in Firebase */
+if(window.db){
+var roleRef=window.db.ref('rooms/'+curCase+'/roles/'+role);
+roleRef.once('value',function(snap){
+var data=snap.val();
+if(data&&data.uid!==myUid){
+/* Role already taken */
+return;
+}
+/* Claim the role */
+roleRef.set({uid:myUid,name:me.name||'Maître'});
+roleRef.onDisconnect().remove();
+myRole=role;
+if(role==='juge'){
+myRole='juge';
+enterAud();
+}else{
+document.getElementById('pr-name').textContent=c.n;
+document.getElementById('pr-type').textContent=c.t;
+document.getElementById('pr-dos').textContent=c.dos;
+startPrep(c.pt);
+go('prep');
+}
+});
+}else{
+/* Offline mode */
+myRole=role;
+var c=CASES[curCase];
+if(!c){go('home');return}
+if(role==='juge'){
+enterAud();
+}else{
+document.getElementById('pr-name').textContent=c.n;
+document.getElementById('pr-type').textContent=c.t;
+document.getElementById('pr-dos').textContent=c.dos;
+startPrep(c.pt);
+go('prep');
+}
+}
+}
+
+function buildUpcoming(){
+var el=document.getElementById('upcoming-cases');if(!el)return;
+el.innerHTML='';
+var keys=Object.keys(CASES);
+keys.forEach(function(k){
+if(k===curCase)return;
+var c=CASES[k];
+var d=document.createElement('div');
+d.style.cssText='display:flex;align-items:center;gap:12px;padding:12px;background:#161622;border:1px solid rgba(255,255,255,.07);border-radius:14px;cursor:pointer';
+d.innerHTML='<div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#2D1B69,#1E1245);border:2px solid #FFD23F;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#fff">'+c.d.substring(0,2).toUpperCase()+'</div><div style="flex:1"><div style="font-size:13px;font-weight:700">'+c.n+'</div><div style="font-size:10px;color:#505068">'+c.t+'</div></div><div style="display:flex;gap:4px"><div style="width:8px;height:8px;border-radius:50%;background:#4ECB71" title="Défense libre"></div><div style="width:8px;height:8px;border-radius:50%;background:#FF4757" title="Accusation libre"></div><div style="width:8px;height:8px;border-radius:50%;background:#FFD23F" title="Juge libre"></div></div>';
+d.onclick=function(){curCase=k;document.getElementById('rp-case').textContent=c.n;document.getElementById('rp-type').textContent=c.t;loadRoles(k)};
+el.appendChild(d);
+});
+}
+function startPrep(secs){
+var left=secs;
+clearInterval(prepI);
+updPrep(left);
+prepI=setInterval(function(){left--;updPrep(left);if(left<=0){clearInterval(prepI);enterAud()}},1000);
+}
+function updPrep(s){var m=Math.floor(s/60);var ss=s%60;document.getElementById('pr-timer').textContent=String(m).padStart(2,'0')+':'+String(ss).padStart(2,'0')}
+function enterAud(){
+clearInterval(prepI);
+var c=CASES[curCase];
+document.getElementById('a-name').textContent=c.n;
+document.getElementById('a-type').textContent=c.t;
+document.getElementById('a-viewers').textContent='LIVE';
+/* Set names based on role */
+if(myRole==='defense'){
+document.getElementById('s-dn').textContent=me.name||'Vous';
+document.getElementById('s-def').textContent=(me.name||'VO').substring(0,2).toUpperCase();
+document.getElementById('s-an').textContent='En attente';
+}else if(myRole==='accusation'){
+document.getElementById('s-an').textContent=me.name||'Vous';
+document.getElementById('s-acc').textContent=(me.name||'VO').substring(0,2).toUpperCase();
+document.getElementById('s-dn').textContent='En attente';
+}else if(myRole==='juge'){
+document.getElementById('pres-name').textContent=me.name||'Vous';
+}
+/* Label under President */
+document.getElementById('pres-label').textContent='PRÉSIDENT';
+/* Show judge controls only for judge */
+var jc=document.getElementById('juge-controls');
+if(myRole==='juge'){jc.style.display='flex'}else{jc.style.display='none'}
+document.getElementById('coms').innerHTML='';
+var myA=document.getElementById('my-args');if(myA)myA.innerHTML='';
+go('audience');
+joinRoom(curCase);
+publishPeerId(curCase);
+addC('Président','L\'audience est ouverte. '+c.q+'.','#FFD23F');
+startTurnDebate();
+if(myRole!=='juge')listenVerdict();
+if(myRole==='juge')listenRequests();
+}
+/* TURN-BASED DEBATE - JUDGE CONTROLS */
+var turnRound=0;
+var turnSide='defense';
+var turnLeft=60;
+var turnTotal=3;
+var roundsDef=0;
+var roundsAcc=0;
+var turnInt=null;
+var paused=false;
+
+function startTurnDebate(){
+turnRound=0;turnSide='intro';turnLeft=0;roundsDef=0;roundsAcc=0;paused=false;
+/* Intro phase: Judge presents the case */
+var badge=document.getElementById('turn-badge');
+if(badge){badge.textContent='PRÉSENTATION DE L\'AFFAIRE';badge.style.background='rgba(255,210,63,.1)';badge.style.color='#FFD23F';badge.style.border='1px solid rgba(255,210,63,.2)'}
+document.getElementById('a-timer').textContent='--:--';
+document.getElementById('a-timer').style.color='#FFD23F';
+if(myRole==='juge'){
+document.getElementById('ci').placeholder='Présentez l\'affaire aux parties...';
+/* Show start button for judge */
+var jc=document.getElementById('juge-controls');
+if(jc){
+jc.innerHTML='<button style="flex:1;padding:10px;background:rgba(78,203,113,.1);border:1px solid rgba(78,203,113,.2);border-radius:10px;color:#4ECB71;font-size:12px;font-weight:700;cursor:pointer" onclick="judgeStartDebate()">Donner la parole à la Défense</button><button style="flex:1;padding:10px;background:rgba(255,71,87,.1);border:1px solid rgba(255,71,87,.2);border-radius:10px;color:#FF4757;font-size:12px;font-weight:700;cursor:pointer" onclick="judgeStartAccusation()">Donner la parole à l\'Accusation</button>';
+}
+}else{
+document.getElementById('ci').placeholder='Le Président présente l\'affaire...';
+}
+}
+
+function judgeEndAudience(){
+endDebate();
+}
+function judgeStartDebate(){
+turnRound=1;turnSide='defense';turnLeft=60;
+showTurnBanner();
+runTurnTimer();
+/* Restore judge controls */
+var jc=document.getElementById('juge-controls');
+if(jc){
+jc.innerHTML='<button style="flex:1;padding:8px;background:rgba(78,203,113,.1);border:1px solid rgba(78,203,113,.2);border-radius:10px;color:#4ECB71;font-size:11px;font-weight:700;cursor:pointer" onclick="judgeGiveWord(\'defense\')">Défense</button><button style="padding:8px 12px;background:rgba(255,210,63,.1);border:1px solid rgba(255,210,63,.2);border-radius:10px;color:#FFD23F;font-size:11px;font-weight:700;cursor:pointer" onclick="judgePause()"><span id="pause-label">Pause</span></button><button style="flex:1;padding:8px;background:rgba(255,71,87,.1);border:1px solid rgba(255,71,87,.2);border-radius:10px;color:#FF4757;font-size:11px;font-weight:700;cursor:pointer" onclick="judgeGiveWord(\'accusation\')">Accusation</button><button style="padding:8px;background:rgba(255,71,87,.06);border:1px solid rgba(255,71,87,.15);border-radius:10px;color:#FF4757;font-size:10px;font-weight:700;cursor:pointer" onclick="judgeEndAudience()">Fin</button>';
+}
+}
+function judgeStartAccusation(){
+turnRound=1;turnSide='accusation';turnLeft=60;
+showTurnBanner();
+runTurnTimer();
+var jc=document.getElementById('juge-controls');
+if(jc){
+jc.innerHTML='<button style="flex:1;padding:8px;background:rgba(78,203,113,.1);border:1px solid rgba(78,203,113,.2);border-radius:10px;color:#4ECB71;font-size:11px;font-weight:700;cursor:pointer" onclick="judgeGiveWord(\'defense\')">Défense</button><button style="padding:8px 12px;background:rgba(255,210,63,.1);border:1px solid rgba(255,210,63,.2);border-radius:10px;color:#FFD23F;font-size:11px;font-weight:700;cursor:pointer" onclick="judgePause()"><span id="pause-label">Pause</span></button><button style="flex:1;padding:8px;background:rgba(255,71,87,.1);border:1px solid rgba(255,71,87,.2);border-radius:10px;color:#FF4757;font-size:11px;font-weight:700;cursor:pointer" onclick="judgeGiveWord(\'accusation\')">Accusation</button><button style="padding:8px;background:rgba(255,71,87,.06);border:1px solid rgba(255,71,87,.15);border-radius:10px;color:#FF4757;font-size:10px;font-weight:700;cursor:pointer" onclick="judgeEndAudience()">Fin</button>';
+}
+}
+
+function showTurnBanner(){
+var side=turnSide;
+var label=side==='defense'?'DÉFENSE · Tour '+turnRound+'/3':'ACCUSATION · Tour '+turnRound+'/3';
+var color=side==='defense'?'#4ECB71':'#FF4757';
+var badge=document.getElementById('turn-badge');
+if(badge){badge.textContent=label;badge.style.background=side==='defense'?'rgba(78,203,113,.1)':'rgba(255,71,87,.1)';badge.style.color=color;badge.style.border='1px solid '+(side==='defense'?'rgba(78,203,113,.2)':'rgba(255,71,87,.2)')}
+addC('Président',label,color);
+/* Also show turn info in arg-zone for lawyers */
+var argEl=document.getElementById('my-args');
+if(argEl&&(myRole==='defense'||myRole==='accusation')){
+var td=document.createElement('div');
+td.style.cssText='text-align:center;padding:8px;font-size:11px;font-weight:700;color:'+color+';letter-spacing:1px';
+td.textContent=label;
+argEl.appendChild(td);
+}
+document.getElementById('a-timer').style.color=color;
+/* Input state */
+updateInput();
+}
+
+function updateInput(){
+var canSpeak=(myRole===turnSide)||(myRole==='juge');
+var isSpec=(myRole==='spectateur');
+if(turnSide==='intro'&&myRole!=='juge'&&!isSpec){
+document.getElementById('ci').placeholder='Le Président présente l\'affaire...';
+}else if(paused){
+document.getElementById('ci').placeholder='Audience en pause...';
+}else if(isSpec){
+document.getElementById('ci').placeholder='Commenter...';
+}else if(canSpeak){
+document.getElementById('ci').placeholder='Votre argument...';
+}else{
+document.getElementById('ci').placeholder='En attente de votre tour...';
+}
+}
+
+function runTurnTimer(){
+clearInterval(turnInt);
+turnInt=setInterval(function(){
+if(paused)return;
+turnLeft--;
+var m=Math.floor(turnLeft/60),s=turnLeft%60;
+document.getElementById('a-timer').textContent=String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+document.getElementById('a-bar').style.width=(turnLeft/60*100)+'%';
+if(turnLeft<=10){document.getElementById('a-timer').style.color='#FF4757'}
+if(turnLeft<=0){
+clearInterval(turnInt);
+nextTurn();
+}
+},1000);
+}
+
+function nextTurn(){
+if(turnSide==='defense'){roundsDef++;turnSide='accusation'}
+else{roundsAcc++;turnSide='defense';turnRound++}
+if(roundsDef>=turnTotal&&roundsAcc>=turnTotal){endDebate();return}
+turnLeft=60;
+showTurnBanner();
+runTurnTimer();
+}
+
+/* JUDGE CONTROLS */
+function judgeGiveWord(side){
+if(myRole!=='juge')return;
+clearInterval(turnInt);
+turnSide=side;
+turnLeft=60;
+showTurnBanner();
+runTurnTimer();
+addC('Président','La parole est à la '+(side==='defense'?'défense':'accusation')+'.','#FFD23F');
+/* Broadcast via Firebase */
+if(window.db&&currentRoom){
+window.db.ref('rooms/'+currentRoom+'/turn').set({side:side,at:Date.now()});
+}
+}
+
+function judgePause(){
+if(myRole!=='juge')return;
+paused=!paused;
+document.getElementById('pause-label').textContent=paused?'Reprendre':'Pause';
+if(paused){
+addC('Président','Silence. L\'audience est suspendue.','#FFD23F');
+}else{
+addC('Président','L\'audience reprend.','#FFD23F');
+}
+updateInput();
+/* Broadcast */
+if(window.db&&currentRoom){
+window.db.ref('rooms/'+currentRoom+'/paused').set(paused);
+}
+}
+
+function endDebate(){
+addC('Président','L\'audience est terminée. Le verdict va être rendu.','#FFD23F');
+document.getElementById('a-timer').textContent='FIN';
+document.getElementById('a-timer').style.color='#FFD23F';
+document.getElementById('a-bar').style.width='0%';
+var badge=document.getElementById('turn-badge');
+if(badge){badge.textContent='VERDICT';badge.style.background='rgba(255,210,63,.1)';badge.style.color='#FFD23F';badge.style.border='1px solid rgba(255,210,63,.2)'}
+/* Show verdict panel to judge, waiting screen to others */
+if(myRole==='juge'){
+document.getElementById('verdict-panel').style.display='flex';
+document.getElementById('ci').placeholder='Rédigez votre verdict ci-dessus';
+}else{
+document.getElementById('ci').placeholder='En attente du verdict...';
+document.getElementById('verdict-wait').style.display='flex';
+/* Show wait in arg zone too */
+var argEl=document.getElementById('my-args');
+if(argEl){
+var wd=document.createElement('div');
+wd.style.cssText='text-align:center;padding:16px;font-size:13px;font-weight:700;color:#FFD23F';
+wd.textContent='Le Président rédige son verdict...';
+argEl.appendChild(wd);
+}
+}
+}
+
+function publishVerdict(){
+var decision=document.querySelector('input[name="vdecision"]:checked');
+if(!decision)return;
+var motivation=document.getElementById('v-motivation').value.trim();
+if(!motivation)return;
+var isGuilty=decision.value==='coupable';
+var color=isGuilty?'#FF4757':'#4ECB71';
+var label=isGuilty?'COUPABLE':'ACQUITTÉ';
+
+/* Hide panel */
+document.getElementById('verdict-panel').style.display='none';
+
+/* Show verdict in chat */
+addC('Président','━━━━ VERDICT ━━━━','#FFD23F');
+addC('Président',label+' — '+motivation,color);
+
+/* Broadcast to Firebase */
+if(window.db&&currentRoom){
+var c=CASES[curCase];
+window.db.ref('rooms/'+currentRoom+'/verdict').set({
+decision:label,
+motivation:motivation,
+judge:me.name||'Président',
+caseName:c?c.n:'',
+caseType:c?c.t:'',
+timestamp:Date.now()
+});
+/* Save to verdicts feed */
+window.db.ref('verdicts').push({
+decision:label,
+motivation:motivation,
+judge:me.name||'Président',
+caseName:c?c.n:'',
+caseType:c?c.t:'',
+timestamp:Date.now()
+});
+}
+
+/* Show result to everyone */
+setTimeout(function(){
+addC('Président','L\'audience est levée.','#FFD23F');
+},2000);
+
+/* Add verdict to the public verdicts page */
+var c=CASES[curCase];
+var vdScroll=document.getElementById('vd-scroll');
+if(vdScroll){
+/* Remove empty state if present */
+var emptyState=vdScroll.querySelector('[style*="min-height:300px"]');
+if(emptyState)emptyState.remove();
+
+var vCard=document.createElement('div');
+vCard.style.cssText='min-height:calc(100dvh - 150px);scroll-snap-align:start;display:flex;flex-direction:column;padding:20px;border-bottom:1px solid rgba(255,255,255,.06)';
+var badgeColor=isGuilty?'rgba(255,71,87,.08)':'rgba(78,203,113,.08)';
+var badgeBorder=isGuilty?'rgba(255,71,87,.2)':'rgba(78,203,113,.2)';
+var pct=Math.floor(50+Math.random()*25);
+var otherPct=100-pct;
+vCard.innerHTML='<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px"><div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#3D3520,#2A2418);border:2px solid #FFD23F;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#FFD23F">PR</div><div style="flex:1"><div style="font-size:14px;font-weight:700;color:#FFD23F">Président '+(me.name||'')+'</div><div style="font-size:10px;color:#505068">'+(c?c.t:'')+'</div></div><div style="font-size:10px;font-weight:800;padding:5px 12px;border-radius:8px;background:'+badgeColor+';color:'+color+';border:1px solid '+badgeBorder+'">'+label+'</div></div><div style="font-size:22px;font-weight:900;line-height:1.3;margin-bottom:8px">'+(c?c.n:'Affaire')+'</div><div style="font-size:14px;color:#8888A0;line-height:1.6;margin-bottom:16px">'+motivation+'</div><div style="display:flex;gap:8px;margin-bottom:6px"><div style="flex:1;height:8px;background:rgba(78,203,113,.12);border-radius:99px;overflow:hidden"><div style="width:'+(isGuilty?otherPct:pct)+'%;height:100%;background:#4ECB71;border-radius:99px"></div></div><div style="flex:1;height:8px;background:rgba(255,71,87,.12);border-radius:99px;overflow:hidden"><div style="width:'+(isGuilty?pct:otherPct)+'%;height:100%;background:#FF4757;border-radius:99px"></div></div></div><div style="display:flex;justify-content:space-between;margin-bottom:16px"><div style="font-size:11px;color:#4ECB71;font-weight:700">'+(isGuilty?otherPct:pct)+'% Acquitté</div><div style="font-size:11px;color:#FF4757;font-weight:700">'+(isGuilty?pct:otherPct)+'% Coupable</div></div><div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end"><div style="font-size:11px;font-weight:700;color:#505068;margin-bottom:8px">Réactions</div><div style="display:flex;flex-direction:column;gap:6px;max-height:140px;overflow-y:auto;margin-bottom:8px" id="vc-new-'+Date.now()+'"></div><div style="display:flex;gap:8px"><input class="inp" maxlength="140" placeholder="Votre avis (140 car.)" style="padding:10px 12px;font-size:12px;border-radius:99px"><button style="padding:8px 14px;background:linear-gradient(135deg,#FF7A2E,#FFA04E);border:none;border-radius:99px;color:#fff;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap">Poster</button></div></div>';
+vdScroll.insertBefore(vCard,vdScroll.firstChild);
+}
+}
+
+/* Listen for verdict from judge (for non-judges) */
+function listenVerdict(){
+if(!window.db||!currentRoom)return;
+window.db.ref('rooms/'+currentRoom+'/verdict').on('value',function(snap){
+var v=snap.val();
+if(!v)return;
+document.getElementById('verdict-wait').style.display='none';
+var color=v.decision==='COUPABLE'?'#FF4757':'#4ECB71';
+addC('Président','━━━━ VERDICT ━━━━','#FFD23F');
+addC('Président',v.decision+' — '+v.motivation,color);
+setTimeout(function(){addC('Président','L\'audience est levée.','#FFD23F')},2000);
+/* Add to verdicts feed */
+var c=CASES[curCase];
+var vdScroll=document.getElementById('vd-scroll');
+if(vdScroll&&c){
+var emptyState=vdScroll.querySelector('[style*="min-height:300px"]');
+if(emptyState)emptyState.remove();
+var isG=v.decision==='COUPABLE';
+var pct=Math.floor(50+Math.random()*25);var oP=100-pct;
+var vCard=document.createElement('div');
+vCard.style.cssText='min-height:calc(100dvh - 150px);scroll-snap-align:start;display:flex;flex-direction:column;padding:20px;border-bottom:1px solid rgba(255,255,255,.06)';
+vCard.innerHTML='<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px"><div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#3D3520,#2A2418);border:2px solid #FFD23F;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#FFD23F">PR</div><div style="flex:1"><div style="font-size:14px;font-weight:700;color:#FFD23F">Président '+(v.judge||'')+'</div><div style="font-size:10px;color:#505068">'+c.t+'</div></div><div style="font-size:10px;font-weight:800;padding:5px 12px;border-radius:8px;background:rgba('+(isG?'255,71,87':'78,203,113')+',.08);color:'+(isG?'#FF4757':'#4ECB71')+';border:1px solid rgba('+(isG?'255,71,87':'78,203,113')+',.2)">'+v.decision+'</div></div><div style="font-size:22px;font-weight:900;line-height:1.3;margin-bottom:8px">'+c.n+'</div><div style="font-size:14px;color:#8888A0;line-height:1.6;margin-bottom:16px">'+v.motivation+'</div>';
+vdScroll.insertBefore(vCard,vdScroll.firstChild);
+}
+});
+}
+
+function addC(name,text,color,forceShow){
+/* Defense & Accusation only see: president (gold) + their own messages */
+if(!forceShow && (myRole==='defense'||myRole==='accusation')){
+var isPresident=(color==='#FFD23F');
+var isOwn=(name===(me.name||''));
+var isEmoji=/^[\p{Emoji}\s]+$/u.test(text);
+if(!isPresident && !isOwn && !isEmoji)return;
+}
+var el=document.getElementById('coms');
+var d=document.createElement('div');d.className='com';
+var now=new Date();var ts=String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
+var safeName=String(name||'').replace(/</g,'&lt;');var safeText=String(text||'').replace(/</g,'&lt;');
+d.innerHTML='<div style="width:26px;height:26px;border-radius:50%;background:'+color+';display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:#fff;flex-shrink:0">'+name.substring(0,2).toUpperCase()+'</div><div style="flex:1;min-width:0"><div style="display:flex;align-items:center;gap:6px"><span style="font-size:11px;font-weight:700;color:'+color+'">'+name+'</span><span style="font-size:9px;color:#505068">'+ts+'</span></div><div style="font-size:13px;color:rgba(255,255,255,.9);line-height:1.4;margin-top:2px">'+safeText+'</div></div>';
+el.appendChild(d);
+while(el.children.length>25)el.removeChild(el.firstChild);
+/* Always scroll to show newest message */
+requestAnimationFrame(function(){el.scrollTop=el.scrollHeight});
+}
+/* CONTENT FILTER */
+var BLOCKED=['putain','merde','connard','connasse','salope','nique','pute','fuck','shit','bitch','asshole','nigger','nigga'];
+function cleanMsg(t){
+if(!t)return'';
+var c=String(t).replace(/<[^>]*>/g,'').replace(/[<>]/g,'');
+var low=c.toLowerCase();
+for(var i=0;i<BLOCKED.length;i++){if(low.indexOf(BLOCKED[i])!==-1)return'[message filtré]'}
+return c.length>300?c.substring(0,300):c;
+}
+
+function sendCom(){
+var inp=document.getElementById('ci');var t=cleanMsg(inp.value.trim());if(!t)return;
+if(paused&&myRole!=='juge'){inp.placeholder='Audience en pause';return}
+/* Spectateurs commentent en gris */
+if(myRole==='spectateur'){
+inp.value='';
+addC(me.name||'Spectateur',t,'#8888A0');
+sendComToFirebase(me.name||'Spectateur',t,'#8888A0');
+return;
+}
+/* Juge parle toujours en doré */
+if(myRole==='juge'){
+inp.value='';
+addC('Président '+( me.name||''),t,'#FFD23F');
+sendComToFirebase('Président '+(me.name||''),t,'#FFD23F');
+return;
+}
+/* Defense/Accusation: only during their turn */
+if(myRole!==turnSide){inp.placeholder='Attendez votre tour...';return}
+inp.value='';
+var color=myRole==='defense'?'#4ECB71':'#FF4757';
+var label=myRole==='defense'?'Défense':'Accusation';
+/* Show in their private arg zone */
+var argEl=document.getElementById('my-args');
+if(argEl){
+var ad=document.createElement('div');
+ad.style.cssText='padding:10px 14px;background:rgba('+(myRole==='defense'?'78,203,113':'255,71,87')+',.08);border:1px solid rgba('+(myRole==='defense'?'78,203,113':'255,71,87')+',.15);border-radius:12px';
+ad.innerHTML='<div style="font-size:10px;font-weight:700;color:'+color+';margin-bottom:3px">'+label+'</div><div style="font-size:13px;color:#fff;line-height:1.5">'+t+'</div>';
+argEl.appendChild(ad);
+requestAnimationFrame(function(){argEl.scrollTop=argEl.scrollHeight});
+}
+/* Send to Firebase so judge and spectators see it */
+sendComToFirebase(label+' · '+(me.name||''),t,color);
+
+}
+
+
+function startFakeComments(){}
+function leaveAud(){
+clearInterval(debI);clearInterval(comI);clearInterval(turnInt);clearInterval(prepI);clearInterval(soloI);
+disconnectAudio();
+if(window.db&&currentRoom){
+window.db.ref('rooms/'+currentRoom+'/players/'+myUid).remove();
+if(myRole&&myRole!=='spectateur')window.db.ref('rooms/'+currentRoom+'/roles/'+myRole).remove();
+window.db.ref('rooms/'+currentRoom+'/players').off();
+window.db.ref('rooms/'+currentRoom+'/comments').off();
+window.db.ref('rooms/'+currentRoom+'/reactions').off();
+}
+currentRoom=null;
+go('home');
+}
+
+
+function toggleAudio(){
+if(audioOn){
+stopAudio();
+}else{
+startAudio();
+}
+}
+
+function startAudio(){
+navigator.mediaDevices.getUserMedia({audio:true,video:false}).then(function(stream){
+myStream=stream;
+audioOn=true;
+document.getElementById('mic-btn').style.background='#FF4757';
+document.getElementById('mic-btn').style.borderColor='#FF4757';
+var mi=document.getElementById('mic-ico');if(mi)mi.setAttribute('stroke','#fff');
+document.getElementById('s-def').classList.add('speaking');
+
+/* Call all known peers */
+Object.keys(peers).forEach(function(pid){
+var call=myPeer.call(pid,stream);
+call.on('stream',function(rs){playRemote(rs)});
+});
+}).catch(function(e){
+
+});
+}
+
+function stopAudio(){
+if(myStream){
+myStream.getTracks().forEach(function(t){t.stop()});
+myStream=null;
+}
+audioOn=false;
+document.getElementById('mic-btn').style.background='#1E1E2E';
+document.getElementById('mic-btn').style.borderColor='rgba(255,255,255,.12)';
+var mi2=document.getElementById('mic-ico');if(mi2)mi2.setAttribute('stroke','#8888A0');
+document.getElementById('s-def').classList.remove('speaking');
+}
+
+function playRemote(stream){
+var audio=document.getElementById('remote-audio');
+if(audio){
+audio.srcObject=stream;
+audio.play().catch(function(){});
+}
+}
+
+function connectToRoom(hostPeerId){
+if(!myPeer)return;
+var call=myPeer.call(hostPeerId,myStream||new MediaStream());
+call.on('stream',function(rs){playRemote(rs)});
+peers[hostPeerId]=call;
+}
+
+function disconnectAudio(){
+stopAudio();
+Object.keys(peers).forEach(function(pid){
+if(peers[pid])peers[pid].close();
+});
+peers={};
+}
+
+initAudio();
+
+/* ===== FIREBASE MULTIPLAYER ===== */
+function initFirebase(){
+var s1=document.createElement('script');
+s1.src='https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js';
+s1.onload=function(){
+var s2=document.createElement('script');
+s2.src='https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js';
+s2.onload=function(){
+try{
+firebase.initializeApp({
+apiKey:"AIzaSyCAsL1P1YDGWfZMBzQdZdp4xd6zjgoGK9g",
+authDomain:"guette-a9b5d.firebaseapp.com",
+projectId:"guette-a9b5d",
+databaseURL:"https://guette-a9b5d-default-rtdb.europe-west1.firebasedatabase.app"
+});
+window.db=firebase.database();
+console.log('Firebase OK');
+}catch(e){}
+};
+document.head.appendChild(s2);
+};
+s1.onerror=function(){};
+document.head.appendChild(s1);
+}
+initFirebase();
+
+/* Share peer IDs via Firebase for audio */
+function publishPeerId(roomId){
+if(!window.db||!myPeer)return;
+myPeer.on('open',function(id){
+var ref=window.db.ref('rooms/'+roomId+'/peers/'+myUid);
+ref.set({peerId:id,name:me.name||'Maître'});
+ref.onDisconnect().remove();
+});
+/* If already open */
+if(myPeer.id){
+var ref=window.db.ref('rooms/'+roomId+'/peers/'+myUid);
+ref.set({peerId:myPeer.id,name:me.name||'Maître'});
+ref.onDisconnect().remove();
+}
+/* Listen for other peers and call them */
+window.db.ref('rooms/'+roomId+'/peers').on('child_added',function(snap){
+var data=snap.val();
+if(snap.key===myUid)return;
+if(!myPeer)return;
+/* Call them with our stream or empty */
+setTimeout(function(){
+var call=myPeer.call(data.peerId,myStream||new MediaStream());
+call.on('stream',function(rs){playRemote(rs)});
+peers[data.peerId]=call;
+},1000);
+});
+}
+
+
+/* Join a room and listen for real comments */
+var currentRoom=null;
+var roomListener=null;
+
+function joinRoom(caseId){
+currentRoom=caseId;
+if(!window.db)return;
+/* Clear old messages */
+window.db.ref('rooms/'+caseId+'/comments').remove();
+window.db.ref('rooms/'+caseId+'/requests').remove();
+window.db.ref('rooms/'+caseId+'/verdict').remove();
+/* Register as player */
+var playerRef=window.db.ref('rooms/'+caseId+'/players/'+myUid);
+playerRef.set({name:me.name||'',role:myRole||'spectateur',joined:Date.now()});
+playerRef.onDisconnect().remove();
+/* Listen for player count */
+window.db.ref('rooms/'+caseId+'/players').on('value',function(snap){
+var count=snap.numChildren();
+var el=document.getElementById('a-viewers');
+if(el)el.textContent=count;
+
+/* Mini avatars in top bar (show first 3) */
+var avEl=document.getElementById('viewer-avatars');
+if(avEl){
+avEl.innerHTML='';
+var i=0;
+snap.forEach(function(child){
+if(i>=3)return;
+var p=child.val();
+var colors={juge:'#FFD23F',defense:'#4ECB71',accusation:'#FF4757',spectateur:'#8888A0'};
+var c=colors[p.role]||'#8888A0';
+var d=document.createElement('div');
+d.style.cssText='width:22px;height:22px;border-radius:50%;background:'+c+';border:2px solid #0C0C12;margin-left:'+(i>0?'-6px':'0')+';display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:800;color:#fff;position:relative;z-index:'+(3-i);
+d.textContent=(p.name||'?').substring(0,2).toUpperCase();
+avEl.appendChild(d);
+i++;
+});
+}
+
+/* Full viewers list in panel */
+var listEl=document.getElementById('viewers-list');
+if(listEl){
+listEl.innerHTML='';
+snap.forEach(function(child){
+var p=child.val();
+var colors={juge:'#FFD23F',defense:'#4ECB71',accusation:'#FF4757',spectateur:'#8888A0'};
+var c=colors[p.role]||'#8888A0';
+var labels={juge:'Président',defense:'Défense',accusation:'Accusation',spectateur:'Spectateur'};
+var d=document.createElement('div');
+d.style.cssText='display:flex;align-items:center;gap:8px;padding:6px 10px;background:rgba(255,255,255,.03);border-radius:10px';
+d.innerHTML='<div style="width:28px;height:28px;border-radius:50%;background:'+c+'22;border:1.5px solid '+c+';display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:'+c+'">'+(p.name||'?').substring(0,2).toUpperCase()+'</div><div><div style="font-size:11px;font-weight:700;color:#fff">'+(p.name||'Anonyme')+'</div><div style="font-size:9px;color:'+c+';font-weight:600">'+(labels[p.role]||'Spectateur')+'</div></div>';
+listEl.appendChild(d);
+});
+}
+
+/* Listener bubbles at bottom */
+var row=document.getElementById('listeners-row');
+if(row){
+row.innerHTML='';
+snap.forEach(function(child){
+var p=child.val();
+var colors={juge:'#FFD23F',defense:'#4ECB71',accusation:'#FF4757',spectateur:'#8888A0'};
+var c=colors[p.role]||'#8888A0';
+var d=document.createElement('div');
+d.style.cssText='display:flex;flex-direction:column;align-items:center;gap:3px;min-width:48px;flex-shrink:0';
+d.innerHTML='<div style="width:36px;height:36px;border-radius:50%;background:'+c+'22;border:2px solid '+c+';display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:'+c+';position:relative">'+(p.name||'?').substring(0,2).toUpperCase()+'</div><div style="font-size:8px;color:'+c+';font-weight:700;max-width:48px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(p.name||'')+'</div>';
+row.appendChild(d);
+});
+}
+});
+/* Listen for comments */
+if(roomListener)window.db.ref('rooms/'+currentRoom+'/comments').off();
+/* Listen for reactions on bubbles */
+window.db.ref('rooms/'+caseId+'/reactions').on('child_changed',function(snap){
+var r=snap.val();
+if(snap.key===myUid)return;
+var row=document.getElementById('listeners-row');
+if(!row)return;
+var bubbles=row.children;
+for(var i=0;i<bubbles.length;i++){
+var nameEl=bubbles[i].querySelector('div:last-child');
+if(nameEl&&nameEl.textContent===(r.name||'')){
+var av=bubbles[i].querySelector('div:first-child');
+if(av){
+var re=document.createElement('div');
+re.style.cssText='position:absolute;top:-20px;left:50%;transform:translateX(-50%);font-size:18px;animation:reactPop 2s forwards;pointer-events:none';
+av.style.position='relative';
+av.appendChild(re);
+re.textContent=r.emoji;
+setTimeout(function(){re.remove()},2000);
+}
+break;
+}
+}
+});
+window.db.ref('rooms/'+caseId+'/comments').orderByChild('ts').limitToLast(50).on('child_added',function(snap){
+var m=snap.val();
+if(m.uid===myUid)return;
+addC(cleanMsg(m.name),cleanMsg(m.text),m.color||'#7C5CFC');
+});
+}
+
+function leaveRoom(){
+if(!window.db||!currentRoom)return;
+window.db.ref('rooms/'+currentRoom+'/players').off();
+window.db.ref('rooms/'+currentRoom+'/comments').off();
+currentRoom=null;
+}
+
+var myUid='u'+Math.random().toString(36).substr(2,9);
+function setUid(email){myUid=email.replace(/[^a-zA-Z0-9]/g,'_')}
+
+function sendComToFirebase(name,text,color){
+if(!window.db||!currentRoom)return;
+window.db.ref('rooms/'+currentRoom+'/comments').push({
+uid:myUid,name:name,text:text,color:color,ts:Date.now()
+});
+}
+
+/* Fix mobile keyboard pushing input */
+if(window.visualViewport){
+window.visualViewport.addEventListener('resize',function(){
+var bar=document.querySelector('[style*="position:sticky"]');
+if(bar)bar.style.bottom='0px';
+});
+}
+buildHome();
+</script>
+</body>
+</html>
