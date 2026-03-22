@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0C0C12">
+<title>D'brief</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{overflow:hidden;height:100%}
+body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;color:#F0F0F5;background:#08080C;-webkit-tap-highlight-color:rgba(255,122,46,0.2)}
+button{touch-action:manipulation;pointer-events:auto;font-family:inherit}
+#app{width:min(430px,100vw);height:min(932px,100dvh);background:#0C0C12;position:relative;overflow:hidden;margin:0 auto}
+.P{position:absolute;inset:0;display:none;flex-direction:column;background:#0C0C12;overflow-y:auto}
+.P.on{display:flex;animation:fadeIn .2s ease-out}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.btn{width:100%;padding:14px;border-radius:14px;border:none;font-size:16px;font-weight:700;cursor:pointer}
+.bp{background:linear-gradient(135deg,#FF7A2E,#FFA04E);color:#fff}
+.bs{background:#1E1E2E;color:#F0F0F5;border:1.5px solid rgba(255,255,255,.1)}
+.inp{width:100%;padding:14px;background:#161622;border:1.5px solid rgba(255,255,255,.1);border-radius:14px;color:#F0F0F5;font-size:15px;outline:none;font-family:inherit}
+.inp:focus{border-color:#FF7A2E}
+.tab{display:flex;background:#0C0C12;border-top:1px solid rgba(255,255,255,.07);padding:8px 0 4px}
+.ti{flex:1;text-align:center;padding:6px 0;cursor:pointer}
+.ti span{font-size:11px;font-weight:600;color:#505068}
+.ti.on span{color:#FF7A2E}
+.card{padding:16px;background:linear-gradient(135deg,#161622,#1A1630);border:2px solid rgba(255,122,46,.3);border-radius:18px;margin-bottom:10px;cursor:pointer;box-shadow:0 0 12px rgba(255,122,46,.06)}
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- SPLASH -->
+<div class="P on" id="splash">
+<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;text-align:center">
+<div style="font-size:46px;font-weight:900;margin-bottom:4px;letter-spacing:-2px"><span style="background:linear-gradient(135deg,#FF7A2E,#FFD23F,#A78BFA);-webkit-background-clip:text;-webkit-text-fill-color:transparent">D'brief</span></div>
+<div style="color:#8888A0;font-size:16px;margin-bottom:32px;max-width:280px;line-height:1.5">Défendez vos personnages préférés</div>
+<button class="btn bp" style="margin-bottom:12px;font-size:18px;padding:16px;box-shadow:0 4px 20px rgba(255,122,46,.3)" onclick="go('signup')">Créer un compte</button>
+<button class="btn bs" onclick="go('login')">Se connecter</button>
+</div>
+</div>
+
+<!-- SIGNUP -->
+<div class="P" id="signup">
+<div style="flex:1;display:flex;flex-direction:column;padding:24px;justify-content:center;gap:14px">
+<div style="font-size:28px;font-weight:900;margin-bottom:8px">Créer un compte</div>
+<input class="inp" id="su-n" placeholder="Votre nom">
+<input class="inp" id="su-e" type="email" placeholder="Adresse e-mail">
+<input class="inp" id="su-p" type="password" placeholder="Mot de passe (6 car. min)">
+<div id="su-err" style="display:none;font-size:12px"></div>
+<button class="btn bp" onclick="doSignup()">S'inscrire</button>
+<button class="btn bs" onclick="go('splash')">Retour</button>
+</div>
+</div>
+
+<!-- LOGIN -->
+<div class="P" id="login">
+<div style="flex:1;display:flex;flex-direction:column;padding:24px;justify-content:center;gap:14px">
+<div style="font-size:28px;font-weight:900;margin-bottom:8px">Se connecter</div>
+<input class="inp" id="li-e" type="email" placeholder="Adresse e-mail">
+<input class="inp" id="li-p" type="password" placeholder="Mot de passe">
+<div id="li-err" style="display:none;font-size:12px"></div>
+<button class="btn bp" onclick="doLogin()">Connexion</button>
+<button class="btn bs" onclick="go('splash')">Retour</button>
+</div>
+</div>
+
+<!-- HOME -->
+<div class="P" id="home">
+<div style="flex:1;padding:16px;overflow-y:auto" id="home-content"></div>
+<div class="tab">
+<div class="ti on" onclick="switchTab('home')"><span>Accueil</span></div>
+<div class="ti" onclick="switchTab('verdicts')"><span>Verdicts</span></div>
+<div class="ti" onclick="switchTab('profil')"><span>Profil</span></div>
+</div>
+</div>
+
+<!-- VERDICTS -->
+<div class="P" id="verdicts">
+<div style="flex:1;overflow-y:auto;padding:16px" id="vd-list">
+<div style="text-align:center;padding:60px 20px;color:#505068">
+<div style="font-size:48px;margin-bottom:12px;opacity:.3">⚖</div>
+<div style="font-size:16px;font-weight:700">Aucun verdict</div>
+</div>
+</div>
+<div class="tab">
+<div class="ti" onclick="switchTab('home')"><span>Accueil</span></div>
+<div class="ti on" onclick="switchTab('verdicts')"><span>Verdicts</span></div>
+<div class="ti" onclick="switchTab('profil')"><span>Profil</span></div>
+</div>
+</div>
+
+<!-- PROFIL -->
+<div class="P" id="profil">
+<div style="flex:1;padding:24px;overflow-y:auto">
+<div style="text-align:center;margin-bottom:24px">
+<div style="width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,#FF7A2E,#FF6B9D);display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:900;color:#fff;margin:0 auto 10px" id="p-avatar">?</div>
+<div style="font-size:22px;font-weight:900" id="p-name">—</div>
+</div>
+<div style="display:flex;gap:12px;margin-bottom:24px">
+<div style="flex:1;padding:16px;background:#161622;border-radius:14px;text-align:center"><div style="font-size:22px;font-weight:900;color:#FF7A2E" id="p-w">0</div><div style="font-size:11px;color:#505068">Victoires</div></div>
+<div style="flex:1;padding:16px;background:#161622;border-radius:14px;text-align:center"><div style="font-size:22px;font-weight:900;color:#FF7A2E" id="p-pts">0</div><div style="font-size:11px;color:#505068">Points</div></div>
+</div>
+<button class="btn bs" onclick="go('splash')">Déconnexion</button>
+</div>
+<div class="tab">
+<div class="ti" onclick="switchTab('home')"><span>Accueil</span></div>
+<div class="ti" onclick="switchTab('verdicts')"><span>Verdicts</span></div>
+<div class="ti on" onclick="switchTab('profil')"><span>Profil</span></div>
+</div>
+</div>
+
+<!-- DUEL: WAITING -->
+<div class="P" id="duel-wait">
+<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;text-align:center">
+<div style="font-size:20px;font-weight:900;margin-bottom:8px" id="dw-name"></div>
+<div style="font-size:13px;color:#8888A0;margin-bottom:24px;line-height:1.5" id="dw-q"></div>
+<div style="display:flex;gap:16px;margin-bottom:24px">
+<div style="text-align:center"><div style="width:52px;height:52px;border-radius:50%;border:3px solid #4ECB71;background:rgba(78,203,113,.08);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:#4ECB71" id="dw-def">?</div><div style="font-size:9px;font-weight:700;color:#4ECB71;margin-top:4px">DÉFENSE</div><div style="font-size:11px;font-weight:600;color:#fff;margin-top:2px" id="dw-def-name">En attente...</div></div>
+<div style="font-size:12px;font-weight:900;color:rgba(255,122,46,.3);align-self:center">VS</div>
+<div style="text-align:center"><div style="width:52px;height:52px;border-radius:50%;border:3px solid #FF4757;background:rgba(255,71,87,.08);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:#FF4757" id="dw-acc">?</div><div style="font-size:9px;font-weight:700;color:#FF4757;margin-top:4px">ACCUSATION</div><div style="font-size:11px;font-weight:600;color:#fff;margin-top:2px" id="dw-acc-name">En attente...</div></div>
+</div>
+<div style="font-size:13px;color:#FFD23F;margin-bottom:16px" id="dw-status">En attente d'un adversaire...</div>
+<div style="font-size:11px;color:#505068;margin-bottom:16px" id="dw-spectators">0 spectateur(s)</div>
+<button class="btn bs" onclick="leaveDuel()">Quitter</button>
+</div>
+</div>
+
+<!-- DUEL: DOSSIER -->
+<div class="P" id="duel-dossier">
+<div style="flex:1;padding:20px;overflow-y:auto">
+<div style="font-size:20px;font-weight:900;margin-bottom:4px" id="dd-name"></div>
+<div style="font-size:12px;color:#505068;margin-bottom:16px" id="dd-type"></div>
+<div style="padding:14px;background:rgba(255,210,63,.05);border:1px solid rgba(255,210,63,.12);border-radius:14px;margin-bottom:16px">
+<div style="font-size:10px;font-weight:700;color:#FFD23F;letter-spacing:1.5px;margin-bottom:6px">VOTRE RÔLE</div>
+<div style="font-size:16px;font-weight:800;margin-bottom:4px" id="dd-role"></div>
+</div>
+<div style="padding:14px;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.06);border-radius:14px;margin-bottom:16px">
+<div style="font-size:10px;font-weight:700;color:#8888A0;letter-spacing:1.5px;margin-bottom:6px">DOSSIER</div>
+<div style="font-size:14px;color:#8888A0;line-height:1.7" id="dd-dos"></div>
+</div>
+<div style="font-size:32px;font-weight:900;color:#FFA04E;text-align:center;margin-bottom:8px" id="dd-timer">05:00</div>
+<div style="font-size:11px;color:#505068;text-align:center;margin-bottom:16px">Temps de préparation</div>
+</div>
+<div style="padding:16px"><button class="btn bp" onclick="goToSubmit()">Soumettre mon argument</button></div>
+</div>
+
+<!-- DUEL: SUBMIT ARGUMENT -->
+<div class="P" id="duel-submit">
+<div style="flex:1;padding:20px;display:flex;flex-direction:column">
+<div style="font-size:20px;font-weight:900;margin-bottom:4px" id="ds-name"></div>
+<div style="font-size:14px;font-weight:700;margin-bottom:12px" id="ds-role"></div>
+<div style="font-size:12px;color:#8888A0;margin-bottom:12px">Rédigez votre argument principal. Soyez convaincant.</div>
+<textarea id="ds-arg" style="flex:1;width:100%;padding:14px;background:#161622;border:1.5px solid rgba(255,255,255,.1);border-radius:14px;color:#F0F0F5;font-size:15px;font-family:inherit;outline:none;resize:none;line-height:1.6" placeholder="Votre argument..."></textarea>
+<div style="font-size:11px;color:#505068;text-align:right;margin-top:4px" id="ds-count">0 caractères</div>
+</div>
+<div style="padding:16px"><button class="btn bp" onclick="submitArgument()">Soumettre</button></div>
+</div>
+
+<!-- DUEL: VOTE (spectators) -->
+<div class="P" id="duel-vote">
+<div style="flex:1;padding:20px;overflow-y:auto">
+<div style="font-size:20px;font-weight:900;margin-bottom:4px" id="dv-name"></div>
+<div style="font-size:12px;color:#505068;margin-bottom:20px" id="dv-q"></div>
+<!-- Argument Défense -->
+<div style="padding:16px;background:rgba(78,203,113,.05);border:2px solid rgba(78,203,113,.15);border-radius:16px;margin-bottom:12px">
+<div style="font-size:10px;font-weight:700;color:#4ECB71;letter-spacing:1.5px;margin-bottom:6px">DÉFENSE</div>
+<div style="font-size:12px;font-weight:600;color:#fff;margin-bottom:8px" id="dv-def-name"></div>
+<div style="font-size:14px;color:#8888A0;line-height:1.6" id="dv-def-arg">En attente...</div>
+</div>
+<!-- Argument Accusation -->
+<div style="padding:16px;background:rgba(255,71,87,.05);border:2px solid rgba(255,71,87,.15);border-radius:16px;margin-bottom:20px">
+<div style="font-size:10px;font-weight:700;color:#FF4757;letter-spacing:1.5px;margin-bottom:6px">ACCUSATION</div>
+<div style="font-size:12px;font-weight:600;color:#fff;margin-bottom:8px" id="dv-acc-name"></div>
+<div style="font-size:14px;color:#8888A0;line-height:1.6" id="dv-acc-arg">En attente...</div>
+</div>
+<!-- Vote buttons -->
+<div style="font-size:14px;font-weight:800;text-align:center;margin-bottom:12px">Qui est le plus convaincant ?</div>
+<div style="display:flex;gap:10px" id="dv-buttons">
+<button style="flex:1;padding:16px;background:rgba(78,203,113,.08);border:2px solid #4ECB71;border-radius:14px;color:#4ECB71;font-size:16px;font-weight:800;cursor:pointer" onclick="vote('defense')">Défense</button>
+<button style="flex:1;padding:16px;background:rgba(255,71,87,.08);border:2px solid #FF4757;border-radius:14px;color:#FF4757;font-size:16px;font-weight:800;cursor:pointer" onclick="vote('accusation')">Accusation</button>
+</div>
+<div id="dv-voted" style="display:none;text-align:center;padding:16px;color:#FFD23F;font-weight:700">Vote enregistré ! En attente du verdict...</div>
+</div>
+</div>
+
+<!-- DUEL: VERDICT -->
+<div class="P" id="duel-verdict">
+<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;text-align:center">
+<div style="font-size:14px;font-weight:800;color:#FFD23F;letter-spacing:3px;margin-bottom:16px">VERDICT</div>
+<div style="font-size:36px;font-weight:900;margin-bottom:8px" id="dvr-decision"></div>
+<div style="font-size:18px;color:#8888A0;margin-bottom:24px" id="dvr-name"></div>
+<div style="display:flex;gap:8px;width:100%;margin-bottom:8px">
+<div style="flex:1;height:10px;background:rgba(78,203,113,.15);border-radius:99px;overflow:hidden"><div style="height:100%;background:#4ECB71;border-radius:99px" id="dvr-bar-def"></div></div>
+<div style="flex:1;height:10px;background:rgba(255,71,87,.15);border-radius:99px;overflow:hidden"><div style="height:100%;background:#FF4757;border-radius:99px" id="dvr-bar-acc"></div></div>
+</div>
+<div style="display:flex;justify-content:space-between;width:100%;margin-bottom:24px">
+<div style="font-size:13px;font-weight:700;color:#4ECB71" id="dvr-pct-def">0%</div>
+<div style="font-size:13px;font-weight:700;color:#FF4757" id="dvr-pct-acc">0%</div>
+</div>
+<!-- Best argument -->
+<div style="padding:16px;background:#161622;border-radius:14px;width:100%;text-align:left;margin-bottom:20px">
+<div style="font-size:10px;font-weight:700;color:#FFD23F;letter-spacing:1.5px;margin-bottom:6px">MEILLEUR ARGUMENT</div>
+<div style="font-size:12px;font-weight:600;margin-bottom:4px" id="dvr-best-name"></div>
+<div style="font-size:13px;color:#8888A0;line-height:1.5" id="dvr-best-arg"></div>
+</div>
+<button class="btn bp" onclick="go('home')">Retour à l'accueil</button>
+</div>
+</div>
+
+</div>
+
+<script>
+/* NAV */
+function go(id){document.querySelectorAll('.P').forEach(function(p){p.classList.remove('on')});document.getElementById(id).classList.add('on')}
+function switchTab(id){go(id)}
+
+/* STATE */
+var me={name:'',email:'',wins:0,losses:0,points:0};
+var myUid='u'+Math.random().toString(36).substr(2,9);
+var myRole='';var curCase='';var currentRoom=null;
+var prepI;
+
+function setUid(email){myUid=email.replace(/[^a-zA-Z0-9]/g,'_')}
+
+/* FILTER */
+var BLOCKED=['putain','merde','connard','connasse','salope','nique','pute','fuck','shit','bitch','asshole','nigger','nigga'];
+function cleanMsg(t){if(!t)return'';var c=String(t).replace(/<[^>]*>/g,'');var low=c.toLowerCase();for(var i=0;i<BLOCKED.length;i++){if(low.indexOf(BLOCKED[i])!==-1)return'[filtré]'}return c.length>500?c.substring(0,500):c}
+
+/* CASES */
+var CASES={
+kimmie:{n:'Kimmie vs Mallory',t:'Beauty in Black',q:'Mallory accuse Kimmie d\'avoir infiltré la famille pour voler l\'empire Bellarie',dos:'Mallory, ex-femme de Roy Bellarie, accuse Kimmie d\'avoir infiltré la famille pour s\'emparer de Beauty in Black. Kimmie a gagné la confiance de Horace, le patriarche. Mallory affirme que tout était calculé. Kimmie répond qu\'elle a doublé le chiffre d\'affaires.'},
+kimmie2:{n:'Kimmie vs Roy',t:'Beauty in Black',q:'Roy accuse Kimmie d\'avoir manipulé son père pour prendre le pouvoir',dos:'Roy accuse Kimmie d\'avoir profité de la fragilité d\'Horace pour prendre le contrôle. Kimmie affirme que c\'est Horace qui l\'a choisie.'},
+ghost:{n:'Ghost vs Tasha',t:'Power',q:'Tasha accuse Ghost d\'avoir vidé leurs comptes pour sa campagne politique',dos:'Tasha accuse James "Ghost" d\'avoir effectué 14 virements en 3 mois depuis leurs comptes joints pour sa campagne. Ghost affirme que c\'était un investissement pour leur avenir commun.'},
+ghost2:{n:'Ghost vs Tommy',t:'Power',q:'Tommy accuse Ghost d\'avoir trahi leur amitié d\'enfance',dos:'Tommy Egan accuse Ghost d\'avoir renié leurs années de galère ensemble pour se créer une image. Ghost répond que grandir ce n\'est pas trahir.'},
+harvey:{n:'Harvey vs Mike',t:'Suits',q:'Mike accuse Harvey de l\'avoir utilisé comme pion jetable',dos:'Mike Ross accuse son mentor Harvey Specter de l\'avoir embauché illégalement et sacrifié quand ça devenait gênant. Harvey répond qu\'il a tout risqué pour Mike.'},
+harvey2:{n:'Harvey vs Le Barreau',t:'Suits',q:'Le Barreau accuse Harvey de manquement grave à la déontologie',dos:'Le Barreau accuse Harvey d\'avoir embauché un faux avocat et utilisé des méthodes d\'intimidation. Harvey plaide que ses clients ont toujours été bien défendus.'},
+shelby:{n:'Tommy vs Arthur',t:'Peaky Blinders',q:'Arthur accuse Tommy d\'utiliser sa famille comme pions sacrifiables',dos:'Arthur accuse Tommy de traiter les Shelby comme des pions. Tommy répond que chaque décision a protégé la famille.'},
+shelby2:{n:'Tommy vs Alfie',t:'Peaky Blinders',q:'Alfie accuse Tommy de ne connaître ni la loyauté ni la parole donnée',dos:'Alfie accuse Tommy de trahir ses alliés. Tommy répond qu\'Alfie l\'a trahi en premier.'},
+dushane:{n:'Dushane vs Jaq',t:'Top Boy',q:'Jaq accuse Dushane de l\'avoir forcée à dealer en menaçant sa sœur',dos:'Jaq accuse Dushane d\'avoir utilisé sa sœur Lauryn comme levier. Dushane affirme que Jaq a rejoint le réseau de son plein gré.'},
+annalise:{n:'Annalise vs Michaela',t:'Murder',q:'Michaela accuse Annalise de l\'avoir psychologiquement détruite',dos:'Michaela accuse Annalise de manipulation psychologique. Annalise répond que Michaela cherche un bouc émissaire.'},
+emily:{n:'Emily vs Camille',t:'Emily in Paris',q:'Camille accuse Emily d\'avoir volé son copain ET son travail',dos:'Camille accuse Emily d\'avoir détruit sa vie parisienne. Emily plaide que l\'amour ne se contrôle pas.'},
+penelope:{n:'Penelope vs Eloise',t:'Bridgerton',q:'Eloise accuse Penelope d\'avoir ruiné sa réputation en tant que Lady Whistledown',dos:'Eloise accuse Penelope d\'avoir détruit des réputations. Penelope répond que Whistledown a donné une voix aux femmes.'},
+wednesday:{n:'Wednesday vs Nevermore',t:'Wednesday',q:'Le conseil accuse Wednesday de mise en danger de tout l\'établissement',dos:'Le conseil accuse Wednesday d\'avoir mis en danger ses camarades. Wednesday rétorque qu\'elle a sauvé l\'école trois fois.'},
+olivia:{n:'Olivia vs Fitz',t:'Scandal',q:'Fitz accuse Olivia d\'avoir truqué l\'élection présidentielle',dos:'Le président Grant accuse Olivia d\'avoir manipulé les résultats de Defiance. Olivia répond que sans elle, Fitz ne serait rien.'},
+professeur:{n:'Le Professeur vs Berlin',t:'La Casa de Papel',q:'Berlin accuse le Professeur d\'avoir toujours préféré le plan à ses soldats',dos:'Berlin accuse son frère de les avoir traités comme des pièces d\'échecs. Le Professeur répond que sans discipline ils seraient tous morts.'},
+joe:{n:'Joe vs Love',t:'You',q:'Love accuse Joe d\'être un tueur en série déguisé en romantique',dos:'Love accuse Joe de masquer ses pulsions derrière le romantisme. Joe répond qu\'il fait tout par amour.'},
+walter:{n:'Walter vs Jesse',t:'Breaking Bad',q:'Jesse accuse Walter d\'avoir détruit sa vie',dos:'Jesse accuse Walter de manipulation et d\'avoir empoisonné un enfant. Walter répond qu\'il a donné un but à Jesse.'},
+tony:{n:'Tony vs Carmela',t:'Les Soprano',q:'Carmela accuse Tony de mettre ses enfants en danger depuis 20 ans',dos:'Carmela accuse Tony d\'avoir exposé leurs enfants à la violence. Tony répond que Carmela a profité de l\'argent.'},
+lupin:{n:'Assane vs Juliette',t:'Lupin',q:'Juliette accuse Assane d\'avoir détruit des innocents par vengeance',dos:'Juliette accuse Assane d\'avoir orchestré la chute de sa famille. Assane répond que Hubert a fait accuser son père à tort.'},
+scar:{n:'Scar vs Simba',t:'Le Roi Lion',q:'Simba accuse Scar d\'avoir assassiné Mufasa',dos:'Simba accuse Scar d\'avoir provoqué la stampede. Scar plaide que c\'était un accident.'},
+eleven:{n:'Eleven vs Brenner',t:'Stranger Things',q:'Eleven accuse Brenner d\'avoir volé son enfance au nom de la science',dos:'Eleven accuse Brenner de l\'avoir enfermée dans un laboratoire. Brenner répond qu\'il l\'a protégée.'},
+squid:{n:'Gi-hun vs Le Meneur',t:'Squid Game',q:'Gi-hun accuse le vieil homme d\'avoir regardé des gens mourir pour se divertir',dos:'Gi-hun accuse Oh Il-nam d\'avoir créé un jeu mortel par ennui. Il-nam répond que chaque joueur a choisi librement.'},
+tyrion:{n:'Tyrion vs Cersei',t:'Game of Thrones',q:'Cersei accuse Tyrion d\'avoir assassiné leur père',dos:'Cersei accuse Tyrion d\'avoir tué Tywin par rancœur. Tyrion répond que Tywin l\'a condamné pour un crime qu\'il n\'avait pas commis.'}
+};
+
+/* SIGNUP */
+function doSignup(){
+var n=document.getElementById('su-n').value.trim();
+var e=document.getElementById('su-e').value.trim();
+var p=document.getElementById('su-p').value;
+var err=document.getElementById('su-err');
+if(!n||!e||p.length<6){err.style.display='block';err.textContent='Remplissez tous les champs (mdp 6 car. min)';err.style.color='#FF4757';return}
+setUid(e);
+err.style.display='block';err.textContent='Création...';err.style.color='#FFD23F';
+if(window.db){
+window.db.ref('users/'+myUid).once('value',function(snap){
+if(snap.val()&&snap.val().email){err.textContent='Ce mail est déjà utilisé.';err.style.color='#FF4757';return}
+me.name=n;me.email=e;me.wins=0;me.points=0;
+document.getElementById('p-name').textContent=n;
+document.getElementById('p-avatar').textContent=n.substring(0,2).toUpperCase();
+window.db.ref('users/'+myUid).set({name:n,email:e,password:p,wins:0,points:0,joined:Date.now()});
+err.style.display='none';buildHome();go('home');
+});
+}else{
+me.name=n;me.email=e;me.wins=0;me.points=0;
+document.getElementById('p-name').textContent=n;
+document.getElementById('p-avatar').textContent=n.substring(0,2).toUpperCase();
+err.style.display='none';buildHome();go('home');
+setTimeout(function(){if(window.db)window.db.ref('users/'+myUid).set({name:n,email:e,password:p,wins:0,points:0,joined:Date.now()})},3000);
+}
+}
+
+/* LOGIN */
+function doLogin(){
+var e=document.getElementById('li-e').value.trim();
+var p=document.getElementById('li-p').value;
+var err=document.getElementById('li-err');
+if(!e||p.length<6){err.style.display='block';err.textContent='Remplissez tous les champs';err.style.color='#FF4757';return}
+setUid(e);
+if(!window.db){err.style.display='block';err.textContent='Connexion...';err.style.color='#FFD23F';setTimeout(function(){if(window.db)doLogin();else{err.textContent='Erreur réseau'}},2000);return}
+window.db.ref('users/'+myUid).once('value',function(snap){
+var d=snap.val();
+if(d&&d.email){
+if(d.password&&d.password!==p){err.style.display='block';err.textContent='Mot de passe incorrect.';err.style.color='#FF4757';return}
+me.name=d.name||'';me.email=d.email;me.wins=d.wins||0;me.points=d.points||0;
+document.getElementById('p-name').textContent=me.name;
+document.getElementById('p-avatar').textContent=(me.name||'?').substring(0,2).toUpperCase();
+var pw=document.getElementById('p-w');if(pw)pw.textContent=me.wins;
+var pp=document.getElementById('p-pts');if(pp)pp.textContent=me.points;
+err.style.display='none';buildHome();go('home');
+}else{err.style.display='block';err.textContent='Aucun compte trouvé.';err.style.color='#FF4757'}
+});
+}
+
+/* HOME */
+function buildHome(){
+var h=document.getElementById('home-content');
+var html='<div style="font-size:24px;font-weight:900;margin-bottom:4px">Bonjour '+(me.name||'')+'</div>';
+html+='<div style="font-size:13px;color:#505068;margin-bottom:20px">Choisissez un duel</div>';
+var ids=Object.keys(CASES);
+for(var i=0;i<ids.length;i++){
+var c=CASES[ids[i]];
+html+='<div class="card" onclick="joinDuel(\''+ids[i]+'\')"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><div style="font-size:10px;font-weight:700;color:#FF7A2E;letter-spacing:1px">'+c.t+'</div><div style="font-size:9px;color:#4ECB71;font-weight:700">DUEL</div></div><div style="font-size:16px;font-weight:800;margin-bottom:4px">'+c.n+'</div><div style="font-size:12px;color:#8888A0;line-height:1.5">'+c.q+'</div></div>';
+}
+h.innerHTML=html;
+}
+
+/* JOIN DUEL */
+function joinDuel(id){
+curCase=id;var c=CASES[id];if(!c)return;
+currentRoom=id;
+document.getElementById('dw-name').textContent=c.n;
+document.getElementById('dw-q').textContent=c.q;
+go('duel-wait');
+if(!window.db)return;
+/* Try to get a role */
+window.db.ref('rooms/'+id+'/roles/defense').once('value',function(sd){
+if(!sd.val()){
+myRole='defense';
+window.db.ref('rooms/'+id+'/roles/defense').set({uid:myUid,name:me.name||''});
+window.db.ref('rooms/'+id+'/roles/defense').onDisconnect().remove();
+}else if(sd.val().uid===myUid){
+myRole='defense';
+}else{
+window.db.ref('rooms/'+id+'/roles/accusation').once('value',function(sa){
+if(!sa.val()){
+myRole='accusation';
+window.db.ref('rooms/'+id+'/roles/accusation').set({uid:myUid,name:me.name||''});
+window.db.ref('rooms/'+id+'/roles/accusation').onDisconnect().remove();
+}else if(sa.val().uid===myUid){
+myRole='accusation';
+}else{
+myRole='spectateur';
+}
+});
+}
+});
+/* Register as player */
+window.db.ref('rooms/'+id+'/players/'+myUid).set({name:me.name||'',role:myRole||'spectateur',joined:Date.now()});
+window.db.ref('rooms/'+id+'/players/'+myUid).onDisconnect().remove();
+/* Listen for both players */
+window.db.ref('rooms/'+id+'/roles').on('value',function(snap){
+var r=snap.val()||{};
+if(r.defense){document.getElementById('dw-def').textContent=(r.defense.name||'?').substring(0,2).toUpperCase();document.getElementById('dw-def-name').textContent=r.defense.name||'Joueur 1'}
+if(r.accusation){document.getElementById('dw-acc').textContent=(r.accusation.name||'?').substring(0,2).toUpperCase();document.getElementById('dw-acc-name').textContent=r.accusation.name||'Joueur 2'}
+if(r.defense&&r.accusation){
+document.getElementById('dw-status').textContent='Duel prêt !';
+setTimeout(function(){startDuel()},2000);
+}
+});
+/* Count spectators */
+window.db.ref('rooms/'+id+'/players').on('value',function(snap){
+var c=snap.numChildren();
+document.getElementById('dw-spectators').textContent=c+' personne(s)';
+});
+}
+
+/* START DUEL */
+function startDuel(){
+var c=CASES[curCase];if(!c)return;
+if(myRole==='spectateur'){
+/* Spectators go to vote page and wait */
+document.getElementById('dv-name').textContent=c.n;
+document.getElementById('dv-q').textContent=c.q;
+go('duel-vote');
+listenArguments();
+return;
+}
+/* Players see dossier */
+document.getElementById('dd-name').textContent=c.n;
+document.getElementById('dd-type').textContent=c.t;
+document.getElementById('dd-dos').textContent=c.dos;
+document.getElementById('dd-role').textContent=myRole==='defense'?'DÉFENSE — Vous défendez':'ACCUSATION — Vous accusez';
+document.getElementById('dd-role').style.color=myRole==='defense'?'#4ECB71':'#FF4757';
+go('duel-dossier');
+/* Start prep timer */
+var left=300;
+clearInterval(prepI);
+prepI=setInterval(function(){
+left--;if(left<=0){clearInterval(prepI);left=0}
+document.getElementById('dd-timer').textContent=String(Math.floor(left/60)).padStart(2,'0')+':'+String(left%60).padStart(2,'0');
+},1000);
+}
+
+/* GO TO SUBMIT */
+function goToSubmit(){
+clearInterval(prepI);
+var c=CASES[curCase];
+document.getElementById('ds-name').textContent=c.n;
+document.getElementById('ds-role').textContent=myRole==='defense'?'Vous êtes la DÉFENSE':'Vous êtes l\'ACCUSATION';
+document.getElementById('ds-role').style.color=myRole==='defense'?'#4ECB71':'#FF4757';
+go('duel-submit');
+document.getElementById('ds-arg').oninput=function(){
+document.getElementById('ds-count').textContent=this.value.length+' caractères';
+};
+}
+
+/* SUBMIT ARGUMENT */
+function submitArgument(){
+var arg=cleanMsg(document.getElementById('ds-arg').value.trim());
+if(!arg||arg.length<10){alert('Argument trop court (min 10 caractères)');return}
+if(!window.db||!currentRoom)return;
+window.db.ref('rooms/'+currentRoom+'/arguments/'+myRole).set({
+name:me.name||'',text:arg,uid:myUid,ts:Date.now()
+});
+/* Go to vote page to watch */
+var c=CASES[curCase];
+document.getElementById('dv-name').textContent=c.n;
+document.getElementById('dv-q').textContent=c.q;
+go('duel-vote');
+listenArguments();
+}
+
+/* LISTEN FOR ARGUMENTS */
+function listenArguments(){
+if(!window.db||!currentRoom)return;
+window.db.ref('rooms/'+currentRoom+'/arguments').on('value',function(snap){
+var a=snap.val()||{};
+if(a.defense){
+document.getElementById('dv-def-name').textContent=a.defense.name||'Défense';
+document.getElementById('dv-def-arg').textContent=a.defense.text;
+}
+if(a.accusation){
+document.getElementById('dv-acc-name').textContent=a.accusation.name||'Accusation';
+document.getElementById('dv-acc-arg').textContent=a.accusation.text;
+}
+});
+/* Listen for verdict */
+window.db.ref('rooms/'+currentRoom+'/verdict').on('value',function(snap){
+var v=snap.val();
+if(v)showVerdict(v);
+});
+}
+
+/* VOTE */
+function vote(side){
+if(!window.db||!currentRoom)return;
+window.db.ref('rooms/'+currentRoom+'/votes/'+myUid).set({side:side,ts:Date.now()});
+document.getElementById('dv-buttons').style.display='none';
+document.getElementById('dv-voted').style.display='block';
+/* Check if enough votes to trigger verdict */
+setTimeout(checkVerdict,2000);
+}
+
+/* CHECK VERDICT */
+function checkVerdict(){
+if(!window.db||!currentRoom)return;
+window.db.ref('rooms/'+currentRoom+'/votes').once('value',function(snap){
+var votes=snap.val();
+if(!votes)return;
+var def=0,acc=0;
+Object.keys(votes).forEach(function(k){
+if(votes[k].side==='defense')def++;
+else acc++;
+});
+var total=def+acc;
+if(total<1)return;
+var pctDef=Math.round(def/total*100);
+var pctAcc=100-pctDef;
+var decision=pctDef>=50?'NON COUPABLE':'COUPABLE';
+var color=pctDef>=50?'#4ECB71':'#FF4757';
+/* Save verdict */
+window.db.ref('rooms/'+currentRoom+'/verdict').set({
+decision:decision,pctDef:pctDef,pctAcc:pctAcc,total:total,ts:Date.now()
+});
+/* Save to public verdicts */
+var c=CASES[curCase];
+window.db.ref('verdicts').push({
+decision:decision,pctDef:pctDef,pctAcc:pctAcc,caseName:c?c.n:'',ts:Date.now()
+});
+});
+}
+
+/* SHOW VERDICT */
+function showVerdict(v){
+var c=CASES[curCase];
+document.getElementById('dvr-decision').textContent=v.decision;
+document.getElementById('dvr-decision').style.color=v.decision==='COUPABLE'?'#FF4757':'#4ECB71';
+document.getElementById('dvr-name').textContent=c?c.n:'';
+document.getElementById('dvr-bar-def').style.width=v.pctDef+'%';
+document.getElementById('dvr-bar-acc').style.width=v.pctAcc+'%';
+document.getElementById('dvr-pct-def').textContent=v.pctDef+'% Défense';
+document.getElementById('dvr-pct-acc').textContent=v.pctAcc+'% Accusation';
+/* Show best argument */
+if(window.db&&currentRoom){
+window.db.ref('rooms/'+currentRoom+'/arguments').once('value',function(snap){
+var a=snap.val()||{};
+var best=v.pctDef>=50?a.defense:a.accusation;
+if(best){
+document.getElementById('dvr-best-name').textContent=best.name||'';
+document.getElementById('dvr-best-arg').textContent=best.text||'';
+}
+});
+}
+go('duel-verdict');
+}
+
+/* LEAVE DUEL */
+function leaveDuel(){
+if(window.db&&currentRoom){
+window.db.ref('rooms/'+currentRoom+'/players/'+myUid).remove();
+if(myRole&&myRole!=='spectateur')window.db.ref('rooms/'+currentRoom+'/roles/'+myRole).remove();
+window.db.ref('rooms/'+currentRoom+'/roles').off();
+window.db.ref('rooms/'+currentRoom+'/players').off();
+window.db.ref('rooms/'+currentRoom+'/arguments').off();
+window.db.ref('rooms/'+currentRoom+'/verdict').off();
+}
+currentRoom=null;myRole='';
+go('home');
+}
+
+buildHome();
+
+/* FIREBASE */
+(function(){
+try{
+var s1=document.createElement('script');
+s1.src='https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js';
+s1.onload=function(){
+var s2=document.createElement('script');
+s2.src='https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js';
+s2.onload=function(){
+try{
+firebase.initializeApp({apiKey:'AIzaSyCAsL1P1YDGWfZMBzQdZdp4xd6zjgoGK9g',databaseURL:'https://guette-a9b5d-default-rtdb.europe-west1.firebasedatabase.app',projectId:'guette-a9b5d'});
+window.db=firebase.database();
+}catch(e){}
+};s2.onerror=function(){};document.head.appendChild(s2);
+};s1.onerror=function(){};document.head.appendChild(s1);
+}catch(e){}
+})();
+</script>
+</body>
+</html>
