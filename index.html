@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0C0C12">
+<title>D'brief</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<!-- v3.0 -->
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{overflow:hidden;height:100%}
+body{font-family:'Outfit',sans-serif;color:#F0F0F5;background:#08080C;-webkit-tap-highlight-color:rgba(255,122,46,0.2)}
+button{touch-action:manipulation;pointer-events:auto;font-family:inherit}
+#app{width:min(430px,100vw);height:min(932px,100dvh);background:#0C0C12;position:relative;overflow:hidden;margin:0 auto}
+.P{position:absolute;inset:0;display:none;flex-direction:column;background:#0C0C12;overflow-y:auto}
+.P.on{display:flex;animation:fadeIn .2s ease-out}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes splashFadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes scrollHint{0%,100%{opacity:.15;transform:translateY(0)}50%{opacity:.3;transform:translateY(6px)}}
+@keyframes splashGlow{0%{opacity:0;transform:scale(.5)}50%{opacity:1;transform:scale(1)}100%{opacity:.5;transform:scale(1.2)}}
+@keyframes pulse-dot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.7)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+.btn{width:100%;padding:14px;border-radius:14px;border:none;font-size:16px;font-weight:700;cursor:pointer}
+.bp{background:linear-gradient(135deg,#FF7A2E,#FFA04E);color:#fff}
+.bs{background:#1E1E2E;color:#F0F0F5;border:1.5px solid rgba(255,255,255,.1)}
+.inp{width:100%;padding:14px;background:#161622;border:1.5px solid rgba(255,255,255,.1);border-radius:14px;color:#F0F0F5;font-size:15px;outline:none;font-family:inherit}
+.inp:focus{border-color:#FF7A2E}
+.tab{display:flex;background:#0C0C12;border-top:1px solid rgba(255,255,255,.07);padding:8px 0 4px}
+.ti{flex:1;text-align:center;padding:6px 0;cursor:pointer}
+.ti span{font-size:11px;font-weight:600;color:#505068}
+.ti.on span{color:#FF7A2E}
+.card{padding:16px;background:linear-gradient(135deg,#161622,#1A1630);border:2px solid rgba(255,122,46,.3);border-radius:18px;margin-bottom:10px;cursor:pointer;box-shadow:0 0 12px rgba(255,122,46,.06)}
+
+/* LIGHT MODE (default) */
+:root{–bg:#FFFFFF;–bg2:#F5F5FA;–card:#FFFFFF;–card-border:rgba(0,0,0,.06);–text:#1A1A2E;–text2:#6B6B80;–text3:#9999AA;–tab-bg:#FFFFFF;–tab-border:rgba(0,0,0,.06)}
+/* DARK MODE */
+.dark{–bg:#0C0C12;–bg2:#161622;–card:#161622;–card-border:rgba(255,255,255,.06);–text:#F0F0F5;–text2:#8888A0;–text3:#505068;–tab-bg:#0C0C12;–tab-border:rgba(255,255,255,.07)}
+#app{background:var(–bg)}
+.P{background:var(–bg)}
+.tab{background:var(–tab-bg);border-top:1px solid var(–tab-border)}
+.inp{background:var(–bg2);border-color:var(–card-border);color:var(–text)}
+</style>
+
+</head>
+<body>
+<div id="app">
+
+<!-- TRUE SPLASH (2 sec) -->
+
+<div class="P" id="splash-intro" style="background:#08070E">
+<div style="flex:1;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden">
+<!-- Glow -->
+<div style="position:absolute;width:250px;height:250px;background:radial-gradient(circle,rgba(167,139,250,.12),transparent 70%);pointer-events:none;animation:splashGlow 2s ease-in-out"></div>
+<!-- Logo -->
+<div style="opacity:0;animation:splashFadeIn .8s ease-out .2s forwards">
+<div style="font-family:'Inter',sans-serif;font-size:52px;font-weight:900;letter-spacing:-1px;text-align:center"><span style="background:linear-gradient(135deg,#FF7A2E,#A78BFA);-webkit-background-clip:text;-webkit-text-fill-color:transparent">D'brief</span></div>
+</div>
+</div>
+</div>
+
+<!-- SPLASH (with buttons) -->
+
+<div class="P on" id="splash" style="background:#08070E;display:flex !important;flex-direction:column">
+<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;text-align:center;position:relative;overflow:hidden">
+<!-- Subtle glow -->
+<div style="position:absolute;top:30%;left:50%;transform:translateX(-50%);width:200px;height:200px;background:radial-gradient(circle,rgba(167,139,250,.08),transparent 70%);pointer-events:none"></div>
+<!-- Logo -->
+<div style="margin-bottom:12px;position:relative">
+<div style="font-family:'Inter',sans-serif;font-size:48px;font-weight:900;letter-spacing:-1px"><span style="background:linear-gradient(135deg,#FF7A2E,#A78BFA);-webkit-background-clip:text;-webkit-text-fill-color:transparent">D'brief</span></div>
+</div>
+<div style="color:rgba(255,255,255,.4);font-size:15px;margin-bottom:40px;max-width:260px;line-height:1.5;font-weight:500">Défendez vos personnages préférés</div>
+<button class="btn bp" style="margin-bottom:12px;font-size:17px;padding:16px;box-shadow:0 4px 20px rgba(255,122,46,.25);max-width:320px" onclick="go('signup')">Créer un compte</button>
+<button style="width:100%;max-width:320px;padding:14px;border-radius:14px;border:1.5px solid rgba(255,255,255,.1);background:transparent;color:rgba(255,255,255,.6);font-size:16px;font-weight:700;cursor:pointer" onclick="go('login')">Se connecter</button>
+</div>
+</div>
+
+<!-- SIGNUP -->
+
+<div class="P" id="signup">
+<div style="flex:1;display:flex;flex-direction:column;padding:24px;justify-content:center;gap:14px">
+<div style="font-size:28px;font-weight:900;margin-bottom:8px;color:var(--text)">Créer un compte</div>
+<input class="inp" id="su-n" placeholder="Votre nom">
+<input class="inp" id="su-e" type="email" placeholder="Adresse e-mail">
+<input class="inp" id="su-p" type="password" placeholder="Mot de passe (6 car. min)">
+<input class="inp" id="su-cab" placeholder="Nom du cabinet ou code d'invitation (CAB-XXXX)">
+<div id="su-err" style="display:none;font-size:12px"></div>
+<button class="btn bp" onclick="doSignup()">S'inscrire</button>
+<button class="btn bs" onclick="go('splash')">Retour</button>
+</div>
+</div>
+
+<!-- LOGIN -->
+
+<div class="P" id="login">
+<div style="flex:1;display:flex;flex-direction:column;padding:24px;justify-content:center;gap:14px">
+<div style="font-size:28px;font-weight:900;margin-bottom:8px;color:var(--text)">Se connecter</div>
+<input class="inp" id="li-e" type="email" placeholder="Adresse e-mail">
+<input class="inp" id="li-p" type="password" placeholder="Mot de passe">
+<div id="li-err" style="display:none;font-size:12px"></div>
+<button class="btn bp" onclick="doLogin()">Connexion</button>
+<button class="btn bs" onclick="go('splash')">Retour</button>
+</div>
+</div>
+
+<!-- HOME -->
+
+<div class="P" id="home">
+<div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch" id="home-scroll">
+
+<!-- HEADER -->
+
+<div style="padding:16px 16px 0;display:flex;align-items:center;justify-content:space-between">
+<div style="font-size:26px;font-weight:900;letter-spacing:-1px"><span style="font-family:'Inter',sans-serif;background:linear-gradient(135deg,#FF7A2E,#A78BFA);-webkit-background-clip:text;-webkit-text-fill-color:transparent">D'brief</span></div>
+<div style="display:flex;align-items:center;gap:8px">
+<div style="font-size:11px;font-weight:700;color:var(--text2);max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" id="h-cabinet"></div>
+<div style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#FF7A2E,#A78BFA);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#fff;cursor:pointer" id="h-avatar" onclick="switchTab('profil')"></div>
+</div>
+</div>
+
+<!-- SEARCH -->
+
+<div style="padding:12px 16px">
+<div style="display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--bg2);border:1.5px solid var(--card-border);border-radius:14px">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2.5" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+<input id="search-input" type="text" placeholder="Rechercher une série..." style="flex:1;background:none;border:none;color:var(--text);font-size:14px;outline:none;font-family:inherit" oninput="filterCases(this.value)">
+</div>
+</div>
+
+<!-- VERDICT FEED BANNER -->
+
+<div id="verdict-feed" style="padding:0 16px 8px;display:none">
+<div id="verdict-feed-inner" style="display:flex;gap:8px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding:4px 0;scrollbar-width:none"></div>
+</div>
+
+<!-- HERO CARD -->
+
+<div style="padding:0 16px 12px" id="hero-wrap"></div>
+
+<!-- AFFAIRES -->
+
+<div style="padding:0 16px 16px">
+<div style="font-size:10px;font-weight:800;color:var(--text3);letter-spacing:2px;margin-bottom:10px">TOUTES LES AFFAIRES</div>
+<div id="cases-list"></div>
+</div>
+
+</div>
+<div class="tab">
+<div class="ti on" onclick="switchTab('home')"><span>Accueil</span></div>
+<div class="ti" onclick="switchTab('verdicts')"><span>Verdicts</span></div>
+<div class="ti" onclick="switchTab('profil')"><span>Profil</span></div>
+</div>
+</div>
+
+<!-- VERDICTS -->
+
+<div class="P" id="verdicts">
+<div style="flex:1;display:flex;flex-direction:column;overflow:hidden">
+
+<!-- TABS -->
+
+<div style="display:flex;padding:16px 16px 0;gap:0">
+<button id="vt-encours" style="flex:1;padding:10px;font-size:13px;font-weight:800;border:none;cursor:pointer;background:none;color:#FF7A2E;border-bottom:2px solid #FF7A2E" onclick="switchVerdictTab('encours')">En cours</button>
+<button id="vt-termines" style="flex:1;padding:10px;font-size:13px;font-weight:800;border:none;cursor:pointer;background:none;color:var(--text3);border-bottom:2px solid transparent" onclick="switchVerdictTab('termines')">Terminés</button>
+</div>
+
+<!-- EN COURS -->
+
+<div id="vd-encours" style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:12px 16px">
+<div id="vd-encours-list"></div>
+<div id="vd-encours-empty" style="text-align:center;padding:60px 20px">
+<div style="font-size:32px;margin-bottom:12px;opacity:.2">⏳</div>
+<div style="font-size:15px;font-weight:700;color:var(--text3)">Aucun duel en attente</div>
+</div>
+</div>
+
+<!-- TERMINÉS -->
+
+<div id="vd-termines" style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:12px 16px;display:none">
+<div id="vd-termines-list"></div>
+<div id="vd-termines-empty" style="text-align:center;padding:60px 20px">
+<div style="font-size:32px;margin-bottom:12px;opacity:.2">⚖</div>
+<div style="font-size:15px;font-weight:700;color:var(--text3)">Aucun verdict</div>
+</div>
+</div>
+
+</div>
+<div class="tab">
+<div class="ti" onclick="switchTab('home')"><span>Accueil</span></div>
+<div class="ti on" onclick="switchTab('verdicts')"><span>Verdicts</span></div>
+<div class="ti" onclick="switchTab('profil')"><span>Profil</span></div>
+</div>
+</div>
+
+<!-- PROFIL -->
+
+<div class="P" id="profil">
+<div style="flex:1;overflow-y:auto;padding:0">
+
+<!-- CABINET HEADER -->
+
+<div style="background:linear-gradient(135deg,#1A1535,#0E0B1F);padding:24px 20px 20px;position:relative;overflow:hidden">
+<!-- Glow -->
+<div style="position:absolute;top:-20px;left:50%;transform:translateX(-50%);width:200px;height:100px;background:radial-gradient(ellipse,rgba(167,139,250,.1),transparent 70%);pointer-events:none"></div>
+<!-- Cabinet name -->
+<div style="font-size:10px;font-weight:700;color:#A78BFA;letter-spacing:2px;margin-bottom:6px;position:relative">CABINET</div>
+<div style="font-size:24px;font-weight:900;color:#fff;margin-bottom:4px;position:relative" id="pc-cabinet-name">Mon Cabinet</div>
+<div style="font-size:13px;color:#8888A0;margin-bottom:16px;position:relative"><span id="pc-score">0</span> victoires collectives</div>
+<!-- Members row -->
+<div style="display:flex;gap:8px;margin-bottom:14px;position:relative" id="pc-members"></div>
+<!-- Invite button (creator only) -->
+<!-- Cabinet code -->
+<div id="pc-code-wrap" style="display:none;margin-bottom:10px;position:relative">
+<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:rgba(255,122,46,.06);border:1px solid rgba(255,122,46,.12);border-radius:12px">
+<div><div style="font-size:9px;font-weight:700;color:#FF7A2E;letter-spacing:1px;margin-bottom:2px">CODE D'INVITATION</div>
+<div style="font-size:18px;font-weight:900;color:#fff;letter-spacing:3px" id="pc-code">—</div></div>
+<button style="padding:6px 12px;background:rgba(167,139,250,.1);border:1px solid rgba(167,139,250,.2);border-radius:8px;color:#A78BFA;font-size:11px;font-weight:700;cursor:pointer" onclick="shareCabCode()">Partager</button>
+</div>
+</div>
+<div id="pc-invite-wrap" style="display:none;position:relative">
+<button style="width:100%;padding:10px;background:rgba(167,139,250,.1);border:1.5px solid rgba(167,139,250,.2);border-radius:12px;color:#A78BFA;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px" onclick="shareCabCode()">
+<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#A78BFA" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+Inviter un membre
+</button>
+</div>
+</div>
+
+<!-- JOUEUR -->
+
+<div style="padding:20px">
+<!-- Avatar + name -->
+<div style="display:flex;align-items:center;gap:14px;margin-bottom:20px">
+<div style="width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,#FF7A2E,#A78BFA);display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:900;color:#fff;flex-shrink:0" id="p-avatar">?</div>
+<div style="flex:1">
+<div style="font-size:20px;font-weight:900" id="p-name">—</div>
+
+</div>
+<button style="padding:6px 12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:8px;color:#8888A0;font-size:11px;font-weight:600;cursor:pointer" onclick="editName()">Modifier</button>
+</div>
+
+<!-- Stats -->
+
+<div style="display:flex;gap:10px;margin-bottom:20px">
+<div style="flex:1;padding:14px;background:#161622;border-radius:14px;text-align:center">
+<div style="font-size:24px;font-weight:900;color:#FF7A2E" id="p-w">0</div>
+<div style="font-size:10px;color:#505068;margin-top:2px">Victoires</div>
+</div>
+<div style="flex:1;padding:14px;background:#161622;border-radius:14px;text-align:center">
+<div style="font-size:24px;font-weight:900;color:#A78BFA" id="p-duels">0</div>
+<div style="font-size:10px;color:#505068;margin-top:2px">Duels</div>
+</div>
+<div style="flex:1;padding:14px;background:#161622;border-radius:14px;text-align:center">
+<div style="font-size:24px;font-weight:900;color:#FFD23F" id="p-ratio">—</div>
+<div style="font-size:10px;color:#505068;margin-top:2px">Ratio</div>
+</div>
+</div>
+
+<!-- Historique -->
+
+<div style="font-size:14px;font-weight:800;margin-bottom:10px">Historique</div>
+<div id="p-history" style="display:flex;flex-direction:column;gap:8px;margin-bottom:20px">
+<div style="text-align:center;padding:20px;color:#505068;font-size:12px">Aucun duel pour le moment</div>
+</div>
+
+<!-- Actions -->
+
+<!-- Dark mode toggle -->
+
+<div style="display:flex;align-items:center;justify-content:space-between;padding:14px;background:var(--bg2);border-radius:14px;margin-bottom:10px">
+<div style="font-size:14px;font-weight:600;color:var(--text)">Mode sombre</div>
+<label style="position:relative;width:44px;height:24px;cursor:pointer">
+<input type="checkbox" id="dark-toggle" style="display:none" onchange="toggleDarkMode(this.checked)">
+<div style="width:44px;height:24px;background:var(--card-border);border-radius:99px;transition:.3s" id="toggle-track"></div>
+<div style="position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.2);transition:.3s" id="toggle-thumb"></div>
+</label>
+</div>
+<button class="btn bs" style="margin-bottom:10px" onclick="try{localStorage.removeItem('dbrief_user')}catch(e){};go('splash')">Déconnexion</button>
+</div>
+
+</div>
+<div class="tab">
+<div class="ti" onclick="switchTab('home')"><span>Accueil</span></div>
+<div class="ti" onclick="switchTab('verdicts')"><span>Verdicts</span></div>
+<div class="ti on" onclick="switchTab('profil')"><span>Profil</span></div>
+</div>
+</div>
+
+<!-- DUEL: WAITING -->
+
+<div class="P" id="duel-wait" style="background:linear-gradient(135deg,#1A0E3A 0%,#2D1B69 30%,#3D1F0E 70%,#1A0E3A 100%)">
+<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;text-align:center;position:relative;overflow:hidden">
+<!-- Glows -->
+<div style="position:absolute;top:10%;left:10%;width:150px;height:150px;background:radial-gradient(circle,rgba(167,139,250,.1),transparent 70%);pointer-events:none"></div>
+<div style="position:absolute;bottom:10%;right:10%;width:150px;height:150px;background:radial-gradient(circle,rgba(255,122,46,.1),transparent 70%);pointer-events:none"></div>
+
+<!-- Series + Case -->
+
+<div style="font-size:10px;font-weight:800;color:#A78BFA;letter-spacing:3px;margin-bottom:8px" id="dw-type"></div>
+<div style="font-size:22px;font-weight:900;color:#fff;margin-bottom:6px" id="dw-name"></div>
+<div style="font-size:13px;color:rgba(255,255,255,.5);margin-bottom:30px;max-width:300px;line-height:1.5" id="dw-q"></div>
+
+<!-- Two profiles side by side -->
+
+<div style="display:flex;align-items:center;gap:20px;margin-bottom:24px">
+<!-- Defense -->
+<div style="display:flex;flex-direction:column;align-items:center;gap:6px">
+<div style="width:60px;height:60px;border-radius:50%;border:3px solid #4ECB71;background:rgba(78,203,113,.08);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:900;color:#4ECB71" id="dw-def">?</div>
+<div style="font-size:9px;font-weight:800;color:#4ECB71;letter-spacing:1px">DÉFENSE</div>
+<div style="font-size:12px;font-weight:600;color:#fff;max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" id="dw-def-name">En attente...</div>
+</div>
+<!-- VS -->
+<div style="display:flex;flex-direction:column;align-items:center;gap:4px">
+<div style="font-size:16px;font-weight:900;background:linear-gradient(135deg,#FF7A2E,#A78BFA);-webkit-background-clip:text;-webkit-text-fill-color:transparent">VS</div>
+<div style="width:30px;height:1px;background:linear-gradient(90deg,#4ECB71,transparent,#FF4757)"></div>
+</div>
+<!-- Accusation -->
+<div style="display:flex;flex-direction:column;align-items:center;gap:6px">
+<div style="width:60px;height:60px;border-radius:50%;border:3px solid #FF4757;background:rgba(255,71,87,.08);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:900;color:#FF4757" id="dw-acc">?</div>
+<div style="font-size:9px;font-weight:800;color:#FF4757;letter-spacing:1px">ACCUSATION</div>
+<div style="font-size:12px;font-weight:600;color:#fff;max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" id="dw-acc-name">En attente...</div>
+</div>
+</div>
+
+<!-- Status -->
+
+<div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:10px">
+<div style="width:10px;height:10px;border:2px solid #FFD23F;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite"></div>
+<div style="font-size:13px;color:#FFD23F;font-weight:600" id="dw-status">En attente d'un adversaire...</div>
+</div>
+<div style="font-size:12px;font-weight:700;margin-bottom:8px;color:rgba(255,255,255,.6)" id="dw-myrole"></div>
+<div style="font-size:11px;color:rgba(255,255,255,.3);margin-bottom:20px" id="dw-spectators">0 personne(s)</div>
+<button style="padding:10px 32px;background:rgba(255,255,255,.06);border:1.5px solid rgba(255,255,255,.1);border-radius:12px;color:rgba(255,255,255,.5);font-size:13px;font-weight:600;cursor:pointer" onclick="leaveDuel()">Quitter</button>
+</div>
+</div>
+
+<!-- DUEL: DOSSIER -->
+
+<div class="P" id="duel-dossier" style="background:linear-gradient(180deg,#1A0E3A 0%,#0E0B1F 100%)">
+<div style="flex:1;display:flex;flex-direction:column;padding:0;overflow-y:auto">
+
+<!-- Timer circle top -->
+
+<div style="padding:24px 0 16px;text-align:center;flex-shrink:0;position:relative">
+<div style="position:absolute;top:0;left:50%;transform:translateX(-50%);width:200px;height:100px;background:radial-gradient(ellipse,rgba(255,122,46,.06),transparent);pointer-events:none"></div>
+<div style="position:relative;width:100px;height:100px;margin:0 auto">
+<!-- Circle track -->
+<svg width="100" height="100" viewBox="0 0 100 100" style="transform:rotate(-90deg)">
+<circle cx="50" cy="50" r="44" fill="none" stroke="rgba(255,255,255,.06)" stroke-width="4"/>
+<circle cx="50" cy="50" r="44" fill="none" stroke="url(#timerGrad)" stroke-width="4" stroke-linecap="round" stroke-dasharray="276.5" id="dd-circle" style="transition:stroke-dashoffset 1s linear"/>
+<defs><linearGradient id="timerGrad"><stop offset="0%" stop-color="#FF7A2E"/><stop offset="100%" stop-color="#A78BFA"/></linearGradient></defs>
+</svg>
+<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:700;color:#fff;font-variant-numeric:tabular-nums" id="dd-timer" style="font-family:'Outfit',sans-serif">—</div>
+</div>
+<div style="font-size:10px;font-weight:700;color:rgba(255,255,255,.3);letter-spacing:2px;margin-top:8px">PRISE DE CONNAISSANCE</div>
+</div>
+
+<!-- Case info -->
+
+<div style="padding:0 20px;flex:1">
+<!-- Series badge -->
+<div style="display:inline-flex;padding:4px 12px;background:linear-gradient(135deg,rgba(255,122,46,.1),rgba(167,139,250,.1));border:1px solid rgba(167,139,250,.15);border-radius:99px;margin-bottom:12px">
+<div style="font-size:10px;font-weight:700;color:#A78BFA;letter-spacing:1px" id="dd-type"></div>
+</div>
+
+<!-- Case name -->
+
+<div style="font-size:24px;font-weight:900;color:#fff;margin-bottom:6px;line-height:1.2" id="dd-name"></div>
+
+<!-- Role badge -->
+
+<div style="display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:10px;margin-bottom:16px" id="dd-role-wrap">
+<div style="width:8px;height:8px;border-radius:50%" id="dd-role-dot"></div>
+<div style="font-size:12px;font-weight:800" id="dd-role"></div>
+</div>
+
+<!-- Dossier -->
+
+<div style="padding:16px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:16px;margin-bottom:16px">
+<div style="display:flex;align-items:center;gap:6px;margin-bottom:10px">
+<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FFD23F" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>
+<div style="font-size:10px;font-weight:700;color:#FFD23F;letter-spacing:1.5px">DOSSIER DE L'AFFAIRE</div>
+</div>
+<div style="font-size:14px;color:rgba(255,255,255,.6);line-height:1.7" id="dd-dos"></div>
+</div>
+
+<!-- Tips -->
+
+<div style="padding:12px;background:rgba(167,139,250,.05);border:1px solid rgba(167,139,250,.1);border-radius:12px;margin-bottom:16px">
+<div style="font-size:11px;color:#A78BFA;line-height:1.6"><b>Conseil :</b> Lisez attentivement les faits. Vous aurez 6 minutes et 300 caractères pour convaincre.</div>
+</div>
+</div>
+
+</div>
+<div style="padding:16px;flex-shrink:0"><button style="width:100%;padding:14px;border-radius:14px;border:none;font-size:16px;font-weight:800;cursor:pointer;background:linear-gradient(135deg,#FF7A2E,#A78BFA);color:#fff;box-shadow:0 4px 20px rgba(167,139,250,.2)" onclick="goToSubmit()">Je suis prêt — Rédiger</button></div>
+</div>
+
+<!-- DUEL: SUBMIT ARGUMENT -->
+
+<div class="P" id="duel-submit" style="background:linear-gradient(180deg,#1A0E3A 0%,#0E0B1F 100%)">
+<div style="flex:1;display:flex;flex-direction:column;padding:0;overflow:hidden">
+
+<!-- Timer + opponent status -->
+
+<div style="padding:20px 20px 12px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
+<!-- My timer -->
+<div style="display:flex;align-items:center;gap:12px">
+<div style="position:relative;width:56px;height:56px">
+<svg width="56" height="56" viewBox="0 0 56 56" style="transform:rotate(-90deg)">
+<circle cx="28" cy="28" r="24" fill="none" stroke="rgba(255,255,255,.06)" stroke-width="3"/>
+<circle cx="28" cy="28" r="24" fill="none" stroke="url(#subTimer)" stroke-width="3" stroke-linecap="round" stroke-dasharray="150.8" id="ds-circle" style="transition:stroke-dashoffset 1s linear"/>
+<defs><linearGradient id="subTimer"><stop offset="0%" stop-color="#FF7A2E"/><stop offset="100%" stop-color="#A78BFA"/></linearGradient></defs>
+</svg>
+<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:900;color:#fff;font-variant-numeric:tabular-nums" id="ds-timer">06:00</div>
+</div>
+<div>
+<div style="font-size:13px;font-weight:800;color:#fff" id="ds-role2"></div>
+<div style="font-size:10px;color:rgba(255,255,255,.4)" id="ds-name2"></div>
+</div>
+</div>
+<!-- Opponent status -->
+<div style="display:flex;align-items:center;gap:6px;padding:6px 12px;background:rgba(255,255,255,.04);border-radius:99px" id="ds-opp-status">
+<div style="width:6px;height:6px;border-radius:50%;background:#FFD23F;animation:pulse-dot 2s infinite" id="ds-opp-dot"></div>
+<div style="font-size:10px;font-weight:700;color:rgba(255,255,255,.4)" id="ds-opp-text">Adversaire rédige...</div>
+</div>
+</div>
+
+<!-- Char counter -->
+
+<div style="padding:0 20px 8px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0">
+<div style="font-size:11px;color:rgba(255,255,255,.3)" id="ds-count">0 / 300</div>
+<div style="font-size:11px;color:rgba(255,255,255,.2)">Soyez percutant</div>
+</div>
+
+<!-- Text area -->
+
+<div style="flex:1;padding:0 20px;overflow:hidden">
+<textarea id="ds-arg" style="width:100%;height:100%;padding:16px;background:rgba(255,255,255,.03);border:1.5px solid rgba(255,255,255,.08);border-radius:16px;color:#fff;font-size:16px;font-family:inherit;outline:none;resize:none;line-height:1.6" placeholder="Votre argument en 300 caractères..." maxlength="300" oninput="updateCharCount()"></textarea>
+</div>
+
+</div>
+<div style="padding:12px 20px 16px;flex-shrink:0"><button style="width:100%;padding:14px;border-radius:14px;border:none;font-size:16px;font-weight:800;cursor:pointer;background:linear-gradient(135deg,#FF7A2E,#A78BFA);color:#fff;box-shadow:0 4px 20px rgba(167,139,250,.2)" id="submit-btn" onclick="submitArgument()">Soumettre mon argument</button></div>
+</div>
+
+<!-- DUEL: VOTE (spectators) -->
+
+<div class="P" id="duel-vote">
+<div style="flex:1;padding:20px;overflow-y:auto">
+<div style="font-size:20px;font-weight:900;margin-bottom:4px" id="dv-name"></div>
+<div style="font-size:12px;color:#505068;margin-bottom:20px" id="dv-q"></div>
+<!-- Argument Défense -->
+<div style="padding:16px;background:rgba(78,203,113,.05);border:2px solid rgba(78,203,113,.15);border-radius:16px;margin-bottom:12px">
+<div style="font-size:10px;font-weight:700;color:#4ECB71;letter-spacing:1.5px;margin-bottom:6px">DÉFENSE</div>
+<div style="font-size:12px;font-weight:600;color:#fff;margin-bottom:8px" id="dv-def-name"></div>
+<div style="font-size:14px;color:#8888A0;line-height:1.6" id="dv-def-arg">En attente...</div>
+</div>
+<!-- Argument Accusation -->
+<div style="padding:16px;background:rgba(255,71,87,.05);border:2px solid rgba(255,71,87,.15);border-radius:16px;margin-bottom:20px">
+<div style="font-size:10px;font-weight:700;color:#FF4757;letter-spacing:1.5px;margin-bottom:6px">ACCUSATION</div>
+<div style="font-size:12px;font-weight:600;color:#fff;margin-bottom:8px" id="dv-acc-name"></div>
+<div style="font-size:14px;color:#8888A0;line-height:1.6" id="dv-acc-arg">En attente...</div>
+</div>
+<!-- Vote buttons -->
+<div style="font-size:14px;font-weight:800;text-align:center;margin-bottom:12px" id="dv-vote-title">Qui est le plus convaincant ?</div>
+<div style="display:flex;gap:10px" id="dv-buttons">
+<button style="flex:1;padding:16px;background:rgba(78,203,113,.08);border:2px solid #4ECB71;border-radius:14px;color:#4ECB71;font-size:16px;font-weight:800;cursor:pointer" onclick="vote('defense')">Défense</button>
+<button style="flex:1;padding:16px;background:rgba(255,71,87,.08);border:2px solid #FF4757;border-radius:14px;color:#FF4757;font-size:16px;font-weight:800;cursor:pointer" onclick="vote('accusation')">Accusation</button>
+</div>
+<div id="dv-voted" style="display:none;text-align:center;padding:16px;color:#FFD23F;font-weight:700">Vote enregistré ! En attente du verdict...</div>
+<div style="padding:16px"><button style="width:100%;padding:14px;border-radius:14px;border:none;background:linear-gradient(135deg,#FF7A2E,#A78BFA);color:#fff;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:8px" onclick="shareVerdict()">Partager mon verdict</button><button style="width:100%;padding:14px;border-radius:14px;border:1.5px solid rgba(255,255,255,.1);background:transparent;color:rgba(255,255,255,.5);font-size:14px;font-weight:600;cursor:pointer" onclick="leaveDuel()">Retour à l'accueil</button></div>
+</div>
+</div>
+
+<!-- DUEL: VERDICT -->
+
+<div class="P" id="duel-verdict">
+<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;text-align:center">
+<div style="font-size:14px;font-weight:800;color:#FFD23F;letter-spacing:3px;margin-bottom:16px">VERDICT</div>
+<div style="font-size:36px;font-weight:900;margin-bottom:8px" id="dvr-decision"></div>
+<div style="font-size:18px;color:#8888A0;margin-bottom:24px" id="dvr-name"></div>
+<div style="display:flex;gap:8px;width:100%;margin-bottom:8px">
+<div style="flex:1;height:10px;background:rgba(78,203,113,.15);border-radius:99px;overflow:hidden"><div style="height:100%;background:#4ECB71;border-radius:99px" id="dvr-bar-def"></div></div>
+<div style="flex:1;height:10px;background:rgba(255,71,87,.15);border-radius:99px;overflow:hidden"><div style="height:100%;background:#FF4757;border-radius:99px" id="dvr-bar-acc"></div></div>
+</div>
+<div style="display:flex;justify-content:space-between;width:100%;margin-bottom:24px">
+<div style="font-size:13px;font-weight:700;color:#4ECB71" id="dvr-pct-def">0%</div>
+<div style="font-size:13px;font-weight:700;color:#FF4757" id="dvr-pct-acc">0%</div>
+</div>
+<!-- Best argument -->
+<div style="padding:16px;background:#161622;border-radius:14px;width:100%;text-align:left;margin-bottom:20px">
+<div style="font-size:10px;font-weight:700;color:#FFD23F;letter-spacing:1.5px;margin-bottom:6px">MEILLEUR ARGUMENT</div>
+<div style="font-size:12px;font-weight:600;margin-bottom:4px" id="dvr-best-name"></div>
+<div style="font-size:13px;color:#8888A0;line-height:1.5" id="dvr-best-arg"></div>
+</div>
+<button class="btn bp" onclick="go('home')">Retour à l'accueil</button>
+</div>
+</div>
+
+<!-- D'BRIEF PRO -->
+
+<div class="P" id="pro">
+<div style="flex:1;overflow-y:auto;padding:0">
+<!-- Header gradient -->
+<div style="background:linear-gradient(135deg,#1A0E3A,#2D1B69,#3D1F0E);padding:32px 24px;text-align:center;position:relative;overflow:hidden">
+<div style="position:absolute;top:-20px;right:-20px;width:150px;height:150px;background:radial-gradient(circle,rgba(255,210,63,.1),transparent);pointer-events:none"></div>
+<div style="font-family:'Inter',sans-serif;font-size:32px;font-weight:900;margin-bottom:4px"><span style="background:linear-gradient(135deg,#FFD23F,#FFA04E);-webkit-background-clip:text;-webkit-text-fill-color:transparent">D'brief Pro</span></div>
+<div style="font-size:13px;color:rgba(255,255,255,.4)">Passez au niveau supérieur</div>
+</div>
+
+<!-- Avantages -->
+
+<div style="padding:20px">
+<!-- Avantage 1 -->
+<div style="display:flex;gap:14px;padding:16px;background:var(--card);border:1px solid var(--card-border);border-radius:16px;margin-bottom:10px">
+<div style="width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,rgba(167,139,250,.15),rgba(167,139,250,.05));display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:18px">⚖</div>
+<div><div style="font-size:14px;font-weight:800;color:var(--text);margin-bottom:2px">Affaires exclusives</div><div style="font-size:12px;color:var(--text2);line-height:1.5">Fanon, Achebe, Hampâté Bâ et des séries rares</div></div>
+</div>
+<!-- Avantage 2 -->
+<div style="display:flex;gap:14px;padding:16px;background:var(--card);border:1px solid var(--card-border);border-radius:16px;margin-bottom:10px">
+<div style="width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,rgba(255,122,46,.15),rgba(255,122,46,.05));display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:18px">✍</div>
+<div><div style="font-size:14px;font-weight:800;color:var(--text);margin-bottom:2px">Créez vos affaires</div><div style="font-size:12px;color:var(--text2);line-height:1.5">Inventez vos propres procès et défiez la communauté</div></div>
+</div>
+<!-- Avantage 3 -->
+<div style="display:flex;gap:14px;padding:16px;background:var(--card);border:1px solid var(--card-border);border-radius:16px;margin-bottom:10px">
+<div style="width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,rgba(78,203,113,.15),rgba(78,203,113,.05));display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:18px">🎯</div>
+<div><div style="font-size:14px;font-weight:800;color:var(--text);margin-bottom:2px">Choisissez votre camp</div><div style="font-size:12px;color:var(--text2);line-height:1.5">Défense ou accusation — vous décidez</div></div>
+</div>
+<!-- Avantage 4 -->
+<div style="display:flex;gap:14px;padding:16px;background:var(--card);border:1px solid var(--card-border);border-radius:16px;margin-bottom:10px">
+<div style="width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,rgba(255,210,63,.15),rgba(255,210,63,.05));display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:18px">✦</div>
+<div><div style="font-size:14px;font-weight:800;color:var(--text);margin-bottom:2px">Badge doré</div><div style="font-size:12px;color:var(--text2);line-height:1.5">Votre nom brille dans chaque duel et verdict</div></div>
+</div>
+
+<!-- Prix -->
+
+<div style="text-align:center;padding:20px 0">
+<div style="font-size:36px;font-weight:900;color:var(--text)">2,99€<span style="font-size:14px;font-weight:600;color:var(--text3)">/mois</span></div>
+<div style="font-size:12px;color:var(--text3);margin-top:4px">Annulez quand vous voulez</div>
+</div>
+
+<!-- CTA -->
+
+<button style="width:100%;padding:16px;border-radius:14px;border:none;font-size:17px;font-weight:800;cursor:pointer;background:linear-gradient(135deg,#FFD23F,#FFA04E);color:#1A1A1A;box-shadow:0 4px 20px rgba(255,210,63,.25);margin-bottom:10px" onclick="subscribePro()">Devenir Pro</button>
+<button style="width:100%;padding:14px;border-radius:14px;border:1.5px solid var(--card-border);background:transparent;font-size:14px;font-weight:600;cursor:pointer;color:var(--text3)" onclick="go('home')">Plus tard</button>
+
+</div>
+</div>
+</div>
+
+<!-- ONBOARDING -->
+
+<div class="P" id="onboarding" style="background:#08070E">
+<div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;scroll-snap-type:y mandatory">
+
+<!-- STEP 1 -->
+
+<div style="min-height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 28px;text-align:center;scroll-snap-align:start;position:relative">
+<div style="position:absolute;top:20%;left:50%;transform:translateX(-50%);width:200px;height:200px;background:radial-gradient(circle,rgba(255,122,46,.08),transparent 70%);pointer-events:none"></div>
+<div style="font-size:11px;font-weight:800;color:#FF7A2E;letter-spacing:4px;margin-bottom:20px">01</div>
+<div style="font-family:'Inter',sans-serif;font-size:34px;font-weight:900;line-height:1.15;margin-bottom:16px"><span style="background:linear-gradient(135deg,#FF7A2E,#A78BFA);-webkit-background-clip:text;-webkit-text-fill-color:transparent">Choisissez<br>une affaire</span></div>
+<div style="font-size:15px;color:rgba(255,255,255,.4);line-height:1.6;max-width:260px;margin-bottom:20px">Harvey accusé par Machiavel.<br>Ghost face à Nietzsche.<br>Walter jugé par Aristote.</div>
+<!-- Mini card preview -->
+<div style="width:240px;padding:12px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:14px">
+<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px"><div style="height:2px;flex:1;border-radius:99px;background:linear-gradient(90deg,#FF7A2E,#A78BFA)"></div><div style="font-size:8px;font-weight:700;color:#FF7A2E">SUITS</div></div>
+<div style="font-size:13px;font-weight:800;color:#fff">Harvey vs Machiavel</div>
+<div style="font-size:9px;color:rgba(255,255,255,.3)">6 min · Philosophique</div>
+</div>
+<div style="margin-top:30px;display:flex;flex-direction:column;align-items:center;gap:4px">
+<div style="font-size:12px;font-weight:700;color:#FF7A2E;letter-spacing:2px;animation:scrollHint 2s infinite">SCROLLEZ ↓</div>
+<div style="width:2px;height:16px;background:linear-gradient(180deg,#FF7A2E,transparent);border-radius:99px"></div>
+</div>
+</div>
+
+<!-- STEP 2 -->
+
+<div style="min-height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 28px;text-align:center;scroll-snap-align:start;position:relative">
+<div style="position:absolute;top:20%;left:50%;transform:translateX(-50%);width:200px;height:200px;background:radial-gradient(circle,rgba(167,139,250,.08),transparent 70%);pointer-events:none"></div>
+<div style="font-size:11px;font-weight:800;color:#A78BFA;letter-spacing:4px;margin-bottom:20px">02</div>
+<div style="font-family:'Inter',sans-serif;font-size:34px;font-weight:900;line-height:1.15;margin-bottom:16px"><span style="background:linear-gradient(135deg,#A78BFA,#FF7A2E);-webkit-background-clip:text;-webkit-text-fill-color:transparent">300 caractères.<br>Pas un de plus.</span></div>
+<div style="font-size:15px;color:rgba(255,255,255,.4);line-height:1.6;max-width:260px;margin-bottom:20px">Le chrono tourne. Votre adversaire écrit en même temps. Quand il soumet, vous perdez 15 secondes.</div>
+<!-- Mini textarea preview -->
+<div style="width:240px;padding:12px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:14px;text-align:left">
+<div style="font-size:11px;color:rgba(255,255,255,.4);line-height:1.5;margin-bottom:8px">Harvey ne manipule pas. Il négocie. Chaque client défendu est sorti libre...</div>
+<div style="display:flex;justify-content:space-between;align-items:center"><div style="font-size:10px;color:rgba(255,255,255,.2)">142 / 300</div><div style="font-size:9px;font-weight:700;color:#FF4757">-15s</div></div>
+</div>
+<div style="margin-top:30px;display:flex;flex-direction:column;align-items:center;gap:4px">
+<div style="font-size:12px;font-weight:700;color:#A78BFA;letter-spacing:2px;animation:scrollHint 2s infinite">SCROLLEZ ↓</div>
+<div style="width:2px;height:16px;background:linear-gradient(180deg,#A78BFA,transparent);border-radius:99px"></div>
+</div>
+</div>
+
+<!-- STEP 3 -->
+
+<div style="min-height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 28px;text-align:center;scroll-snap-align:start;position:relative">
+<div style="position:absolute;top:20%;left:50%;transform:translateX(-50%);width:200px;height:200px;background:radial-gradient(circle,rgba(255,210,63,.06),transparent 70%);pointer-events:none"></div>
+<div style="font-size:11px;font-weight:800;color:#4ECB71;letter-spacing:4px;margin-bottom:20px">03</div>
+<div style="font-family:'Inter',sans-serif;font-size:34px;font-weight:900;line-height:1.15;margin-bottom:16px"><span style="background:linear-gradient(135deg,#4ECB71,#FF7A2E);-webkit-background-clip:text;-webkit-text-fill-color:transparent">Le public<br>vote</span></div>
+<div style="font-size:15px;color:rgba(255,255,255,.4);line-height:1.6;max-width:260px;margin-bottom:20px">Les utilisateurs lisent les deux arguments. Ils votent. Le verdict tombe.</div>
+<!-- Mini verdict preview -->
+<div style="width:240px;padding:14px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:14px">
+<div style="font-size:9px;font-weight:700;color:#FFD23F;letter-spacing:1px;text-align:center;margin-bottom:6px">VERDICT</div>
+<div style="font-family:'Inter',sans-serif;font-size:22px;font-weight:900;color:#4ECB71;text-align:center;margin-bottom:8px">NON COUPABLE</div>
+<div style="display:flex;gap:3px"><div style="flex:67;height:4px;background:#4ECB71;border-radius:99px"></div><div style="flex:33;height:4px;background:#FF4757;border-radius:99px"></div></div>
+<div style="display:flex;justify-content:space-between;margin-top:4px"><div style="font-size:9px;font-weight:700;color:#4ECB71">67%</div><div style="font-size:9px;font-weight:700;color:#FF4757">33%</div></div>
+</div>
+<div style="margin-top:30px;display:flex;flex-direction:column;align-items:center;gap:4px">
+<div style="font-size:12px;font-weight:700;color:#4ECB71;letter-spacing:2px;animation:scrollHint 2s infinite">SCROLLEZ ↓</div>
+<div style="width:2px;height:16px;background:linear-gradient(180deg,#4ECB71,transparent);border-radius:99px"></div>
+</div>
+</div>
+
+<!-- STEP 4 -->
+
+<div style="min-height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 28px;text-align:center;scroll-snap-align:start;position:relative">
+<div style="position:absolute;top:20%;left:50%;transform:translateX(-50%);width:200px;height:200px;background:radial-gradient(circle,rgba(255,210,63,.06),transparent 70%);pointer-events:none"></div>
+<div style="font-size:11px;font-weight:800;color:#FFD23F;letter-spacing:4px;margin-bottom:20px">04</div>
+<div style="font-family:'Inter',sans-serif;font-size:34px;font-weight:900;line-height:1.15;margin-bottom:12px"><span style="background:linear-gradient(135deg,#FFD23F,#FF7A2E);-webkit-background-clip:text;-webkit-text-fill-color:transparent">Votre première<br>affaire</span></div>
+<div style="font-size:14px;color:rgba(255,255,255,.35);line-height:1.6;max-width:260px;margin-bottom:20px">Prouvez que vous savez plaider.</div>
+<!-- Prison Break card -->
+<div style="width:260px;padding:16px;background:rgba(255,255,255,.03);border:1.5px solid rgba(255,122,46,.15);border-radius:16px;text-align:left;margin-bottom:24px">
+<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><div style="height:3px;flex:1;border-radius:99px;background:linear-gradient(90deg,#FF7A2E,#A78BFA)"></div><div style="font-size:9px;font-weight:700;color:#FF7A2E;letter-spacing:1px">PRISON BREAK</div></div>
+<div style="font-size:17px;font-weight:900;color:#fff;margin-bottom:4px">Michael vs Lincoln</div>
+<div style="font-size:11px;color:rgba(255,255,255,.35);line-height:1.5">Lincoln accuse Michael d'avoir joué avec la vie de tout le monde pour un plan que personne ne lui avait demandé</div>
+</div>
+<button style="padding:16px 48px;border-radius:14px;border:none;font-size:17px;font-weight:800;cursor:pointer;background:linear-gradient(135deg,#FF7A2E,#A78BFA);color:#fff;box-shadow:0 4px 24px rgba(167,139,250,.25)" onclick="pickFirstSeries('scofield1')">Plaider</button>
+</div>
+
+</div>
+</div>
+
+</div>
+
+<script src="data.js"></script>
+
+<script src="app.js"></script>
+
+</body>
+</html>
