@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>D'brief</title>
+  <style>
+    :root {
+      --bg: #0a0a12;
+      --bg2: #111;
+      --bg3: #1c1c2e;
+      --text: #F0F0F5;
+      --text2: rgba(255, 255, 255, 0.4);
+      --text3: rgba(255, 255, 255, 0.7);
+      --primary: #FF7A2E;
+      --primary2: rgba(255, 122, 46, 0.1);
+      --success: #4ECB71;
+      --danger: #FF4757;
+      --warning: #FFD23F;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+    body { background: var(--bg); color: var(--text); min-height: 100vh; }
+    .P { display: none; flex; flex-direction: column; height: 100vh; }
+    .on { display: flex !important; }
+    .tab { display: flex; position: fixed; bottom: 0; left: 0; right: 0; background: var(--bg2); border-top: 1px solid rgba(255, 255, 255, 0.04); z-index: 100; }
+    .ti { flex: 1; text-align: center; padding: 12px 0; cursor: pointer; font-size: 11px; font-weight: 700; color: var(--text2); text-transform: uppercase; letter-spacing: 0.5px; }
+    .ti.on { color: var(--primary); }
+    .ti span { display: block; padding-top: 4px; }
+    .ti.on span { border-top: 2px solid var(--primary); }
+
+    /* Boutons */
+    .btn {
+      display: inline-block;
+      padding: 12px 24px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 800;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s;
+    }
+    .bp { background: var(--primary); color: white; }
+    .bp2 { background: rgba(78, 203, 113, 0.2); border: 2px solid var(--success); color: var(--success); }
+    .bs { background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08); color: var(--text3); }
+    .bp:active, .bp2:active, .bs:active { transform: scale(0.98); }
+
+    /* Inputs */
+    input, textarea, select {
+      width: 100%;
+      padding: 12px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 10px;
+      color: var(--text);
+      font-size: 14px;
+      margin-bottom: 12px;
+    }
+    input:focus, textarea:focus, select:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+    textarea { resize: vertical; min-height: 80px; }
+
+    /* Statuts */
+    .status-badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .status-junior { background: rgba(255, 122, 46, 0.1); color: var(--primary); border: 1px solid var(--primary); }
+    .status-confirmed { background: rgba(78, 203, 113, 0.1); color: var(--success); border: 1px solid var(--success); }
+    .status-expert { background: rgba(255, 210, 63, 0.1); color: var(--warning); border: 1px solid var(--warning); }
+
+    /* Propositions */
+    .proposal-item {
+      padding: 12px;
+      background: rgba(255, 255, 255, 0.02);
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.04);
+      margin-bottom: 12px;
+    }
+    .proposal-status {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 10px;
+      display: inline-block;
+    }
+    .status-pending { background: rgba(255, 210, 63, 0.1); color: var(--warning); }
+    .status-approved { background: rgba(78, 203, 113, 0.1); color: var(--success); }
+    .status-rejected { background: rgba(255, 71, 87, 0.1); color: var(--danger); }
+
+    /* Admin */
+    .admin-actions { display: flex; gap: 8px; margin-top: 10px; }
+    .admin-btn {
+      flex: 1;
+      padding: 8px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      border: none;
+    }
+    .admin-btn.approve { background: rgba(78, 203, 113, 0.2); color: var(--success); border: 1px solid var(--success); }
+    .admin-btn.reject { background: rgba(255, 71, 87, 0.2); color: var(--danger); border: 1px solid var(--danger); }
+  </style>
+</head>
+<body>
+  <!-- SPLASH -->
+  <div class="P on" id="splash">
+    <div style="flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px; text-align: center;">
+      <div style="font-size: 48px; font-weight: 900; margin-bottom: 40px; background: linear-gradient(135deg, #c7a0d0, #FF7A2E); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">D'brief</div>
+      <button onclick="go('login')" class="btn bp" style="width: 100%; max-width: 300px; padding: 16px;">COMMENCER</button>
+    </div>
+    <div class="tab">
+      <div class="ti"><span>Accueil</span></div>
+      <div class="ti"><span>Verdicts</span></div>
+      <div class="ti"><span>Profil</span></div>
+    </div>
+  </div>
+
+  <!-- LOGIN -->
+  <div class="P" id="login">
+    <div style="flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px; text-align: center;">
+      <div style="font-size: 28px; font-weight: 900; margin-bottom: 40px;">D'brief</div>
+      <div style="width: 100%; max-width: 300px;">
+        <input type="email" id="li-e" placeholder="Email" style="margin-bottom: 12px;">
+        <input type="password" id="li-p" placeholder="Mot de passe">
+        <div id="li-err" style="color: #FF4757; font-size: 12px; margin-top: 8px; display: none;"></div>
+        <button onclick="doLogin()" class="btn bp" style="width: 100%; margin-top: 16px;">SE CONNECTER</button>
+        <div style="margin-top: 16px; font-size: 12px; color: var(--text2);">Pas de compte ? <span onclick="go('signup')" style="color: var(--primary); cursor: pointer; font-weight: 700;">S'inscrire</span></div>
+      </div>
+    </div>
+    <div class="tab">
+      <div class="ti"><span>Accueil</span></div>
+      <div class="ti"><span>Verdicts</span></div>
+      <div class="ti"><span>Profil</span></div>
+    </div>
+  </div>
+
+  <!-- SIGNUP -->
+  <div class="P" id="signup">
+    <div style="flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px; text-align: center;">
+      <div style="font-size: 28px; font-weight: 900; margin-bottom: 40px;">D'brief</div>
+      <div style="width: 100%; max-width: 300px;">
+        <input type="text" id="su-n" placeholder="Prénom et Nom" style="margin-bottom: 12px;">
+        <input type="email" id="su-e" placeholder="Email" style="margin-bottom: 12px;">
+        <input type="password" id="su-p" placeholder="Mot de passe (6+ caractères)" style="margin-bottom: 12px;">
+        <input type="text" id="su-cab" placeholder="Nom du cabinet (ex: Dupont & Associés)" style="margin-bottom: 12px;">
+        <input type="text" id="su-cabcode" placeholder="Code du cabinet (4 lettres)" style="margin-bottom: 12px;">
+        <div id="su-err" style="color: #FF4757; font-size: 12px; margin-top: 8px; display: none;"></div>
+        <button onclick="doSignup()" class="btn bp" style="width: 100%; margin-top: 16px;">S'INSCRIRE</button>
+        <div style="margin-top: 16px; font-size: 12px; color: var(--text2);">Déjà un compte ? <span onclick="go('login')" style="color: var(--primary); cursor: pointer; font-weight: 700;">Se connecter</span></div>
+      </div>
+    </div>
+    <div class="tab">
+      <div class="ti"><span>Accueil</span></div>
+      <div class="ti"><span>Verdicts</span></div>
+      <div class="ti"><span>Profil</span></div>
+    </div>
+  </div>
+
+  <!-- ONBOARDING -->
+  <div class="P" id="onboarding">
+    <div style="flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px; text-align: center;">
+      <div style="font-size: 24px; font-weight: 900; margin-bottom: 20px;">Bienvenue sur D'brief</div>
+      <div style="font-size: 14px; color: var(--text2); margin-bottom: 40px; max-width: 300px;">Découvrez comment défendre ou accuser des personnages en quelques étapes.</div>
+
+      <div id="onboarding-step-1" style="display: block; width: 100%; max-width: 300px;">
+        <div style="font-size: 18px; font-weight: 800; margin-bottom: 10px;">1. Choisissez un camp</div>
+        <div style="font-size: 12px; color: var(--text2); margin-bottom: 20px;">Sélectionnez si vous défendez ou accusez le personnage.</div>
+        <button onclick="nextOnboardingStep(2)" class="btn bp" style="width: 100%;">SUIVANT</button>
+      </div>
+
+      <div id="onboarding-step-2" style="display: none; width: 100%; max-width: 300px;">
+        <div style="font-size: 18px; font-weight: 800; margin-bottom: 10px;">2. Rédigez votre argument</div>
+        <div style="font-size: 12px; color: var(--text2); margin-bottom: 20px;">Vous avez 300 caractères pour convaincre.</div>
+        <button onclick="nextOnboardingStep(3)" class="btn bp" style="width: 100%;">SUIVANT</button>
+      </div>
+
+      <div id="onboarding-step-3" style="display: none; width: 100%; max-width: 300px;">
+        <div style="font-size: 18px; font-weight: 800; margin-bottom: 10px;">3. Votez et gagnez</div>
+        <div style="font-size: 12px; color: var(--text2); margin-bottom: 20px;">Le camp avec le plus de votes gagne le duel.</div>
+        <button onclick="nextOnboardingStep(4)" class="btn bp" style="width: 100%;">SUIVANT</button>
+      </div>
+
+      <div id="onboarding-step-4" style="display: none; width: 100%; max-width: 300px;">
+        <div style="font-size: 18px; font-weight: 800; margin-bottom: 10px;">4. Prêt à commencer ?</div>
+        <div style="font-size: 12px; color: var(--text2); margin-bottom: 20px;">Lancez votre premier duel !</div>
+        <button onclick="startFirstDuel()" class="btn bp" style="width: 100%;">C'EST PARTI !</button>
+      </div>
+    </div>
+    <div class="tab">
+      <div class="ti"><span>Accueil</span></div>
+      <div class="ti"><span>Verdicts</span></div>
+      <div class="ti"><span>Profil</span></div>
+    </div>
+  </div>
+
+  <!-- HOME -->
+  <div class="P" id="home">
+    <div style="flex: 1; overflow-y: auto; padding: 20px;">
+      <div style="font-size: 24px; font-weight: 900; margin-bottom: 20px;">Affaires en cours</div>
+
+      <!-- Bouton pour proposer un personnage -->
+      <div style="margin-bottom: 20px;">
+        <button onclick="go('propose-character')" class="btn bp" style="width: 100%; padding: 16px; border-radius: 16px; background: linear-gradient(135deg, #A78BFA, #FF7A2E); border: none; color: white; font-size: 16px; font-weight: 800; cursor: pointer;">
+          🎤 Proposer un Personnage
+        </button>
+      </div>
+
+      <div id="cards-inner" style="display: flex; flex-direction: column; gap: 12px;"></div>
+    </div>
+    <div class="tab">
+      <div class="ti on" onclick="switchTab('home')"><span>Accueil</span></div>
+      <div class="ti" onclick="switchTab('verdicts')"><span>Verdicts</span></div>
+      <div class="ti" onclick="switchTab('profil')"><span>Profil</span></div>
+    </div>
+  </div>
+
+  <!-- PROPOSE CHARACTER -->
+  <div class="P" id="propose-character">
+    <div style="flex: 1; overflow-y: auto; padding: 20px;">
+      <div style="font-size: 24px; font-weight: 900; margin-bottom: 20px; color: var(--text);">Proposer un Personnage</div>
+      <div style="font-size: 14px; color: var(--text2); margin-bottom: 20px;">
+        Proposez un personnage, une célébrité ou une personne que vous aimeriez voir "en procès" sur D'brief.
+      </div>
+
+      <form id="propose-character-form" style="display: flex; flex-direction: column; gap: 16px;">
+        <div>
+          <label style="display: block; font-size: 14px; font-weight: 700; color: var(--text3); margin-bottom: 6px;">Nom du Personnage *</label>
+          <input type="text" id="propose-name" placeholder="Ex: Ghost, Tommy Shelby, Lupin" required>
+        </div>
+
+        <div>
+          <label style="display: block; font-size: 14px; font-weight: 700; color: var(--text3); margin-bottom: 6px;">Catégorie *</label>
+          <select id="propose-category" required>
+            <option value="" disabled selected>Sélectionnez une catégorie</option>
+            <option value="Série TV">Série TV</option>
+            <option value="Film">Film</option>
+            <option value="Célébrité">Célébrité</option>
+            <option value="Histoire">Histoire</option>
+            <option value="Politique">Politique</option>
+            <option value="Jeu Vidéo">Jeu Vidéo</option>
+            <option value="Autre">Autre</option>
+          </select>
+        </div>
+
+        <div>
+          <label style="display: block; font-size: 14px; font-weight: 700; color: var(--text3); margin-bottom: 6px;">Pourquoi ce personnage mérite un jugement ? *</label>
+          <textarea id="propose-reason" placeholder="Ex: Pour ses trahisons dans Power, pour ses décisions controversées..." required style="min-height: 100px;"></textarea>
+        </div>
+
+        <button type="submit" class="btn bp" style="width: 100%; padding: 16px; border-radius: 16px; margin-top: 8px;">
+          ✅ Soumettre
+        </button>
+      </form>
+
+      <div id="propose-message" style="margin-top: 16px; padding: 12px; border-radius: 10px; display: none;"></div>
+
+      <div style="margin-top: 24px;">
+        <div style="font-size: 18px; font-weight: 900; margin-bottom: 12px; color: var(--text);">Propositions Récentes</div>
+        <div id="propose-list-container" style="display: flex; flex-direction: column; gap: 12px;"></div>
+      </div>
+    </div>
+    <div class="tab">
+      <div class="ti" onclick="switchTab('home')"><span>Accueil</span></div>
+      <div class="ti" onclick="switchTab('verdicts')"><span>Verdicts</span></div>
+      <div class="ti" onclick="switchTab('profil')"><span>Profil</span></div>
+    </div>
+  </div>
+
+  <!-- ADMIN PROPOSALS -->
+  <div class="P" id="admin-proposals">
+    <div style="flex: 1; overflow-y: auto; padding: 20px;">
+      <div style="font-size: 24px; font-weight: 900; margin-bottom: 20px; color: var(--text);">⚙️ Gestion des Propositions</div>
+      <div id="admin-proposals-list" style="display: flex; flex-direction: column; gap: 12px;"></div>
+    </div>
+    <div class="tab">
+      <div class="ti" onclick="switchTab('home')"><span>Accueil</span></div>
+      <div class="ti" onclick="switchTab('verdicts')"><span>Verdicts</span></div>
+      <div class="ti" onclick="switchTab('profil')"><span>Profil</span></div>
+    </div>
+  </div>
+
+  <!-- DUEL DOSSIER -->
+  <div class="P" id="duel-dossier">
+    <div style="flex: 1; overflow-y: auto; padding: 20px;">
+      <div id="dd-name" style="font-size: 24px; font-weight: 900; margin-bottom: 10px;"></div>
+      <div id="dd-type" style="font-size: 12px; color: var(--text2); margin-bottom: 20px;"></div>
+      <div id="dd-desc" style="font-size: 14px; color: var(--text3); line-height: 1.5; margin-bottom: 20px;"></div>
+      <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+        <button onclick="goToSubmit()" class="btn bp2" style="flex: 1;">Je suis prêt — Rédiger</button>
+        <button onclick="leaveDuel()" class="btn bs" style="flex: 1;">Retour</button>
+      </div>
+    </div>
+    <div class="tab">
+      <div class="ti" onclick="switchTab('home')"><span>Accueil</span></div>
+      <div class="ti" onclick="switchTab('verdicts')"><span>Verdicts</span></div>
+      <div class="ti" onclick="switchTab('profil')"><span>Profil</span></div>
+    </div>
+  </div>
+
+  <!-- DUEL SUBMIT -->
+  <div class="P" id="duel-submit">
+    <div style="flex: 1; overflow-y: auto; padding: 20px;">
+      <div id="ds-name" style="font-size: 24px; font-weight: 900; margin-bottom: 10px;"></div>
+      <div id="ds-type" style="font-size: 12px; color: var(--text2); margin-bottom: 20px;"></div>
+      <div id="ds-desc" style="font-size: 14px; color: var(--text3); line-height: 1.5; margin-bottom: 20px;"></div>
+      <div style="font-size: 14px; font-weight: 700; margin-bottom: 10px;">Rédigez votre argument en <span id="ds-count">0</span> / 300 caractères</div>
+      <textarea id="ds-arg" oninput="updateCharCount()" style="min-height: 120px; margin-bottom: 20px;"></textarea>
+      <div style="display: flex; gap: 10px;">
+        <button onclick="submitArgument()" class="btn bp2" style="flex: 1;">Soumettre mon argument</button>
+        <button onclick="leaveDuel()" class="btn bs" style="flex: 1;">Retour</button>
+      </div>
+    </div>
+    <div class="tab">
+      <div class="ti" onclick="switchTab('home')"><span>Accueil</span></div>
+      <div class="ti" onclick="switchTab('verdicts')"><span>Verdicts</span></div>
+      <div class="ti" onclick="switchTab('profil')"><span>Profil</span></div>
+    </div>
+  </div>
+
+  <!-- DUEL VOTE -->
+  <div class="P" id="duel-vote">
+    <div style="flex: 1; overflow-y: auto; padding: 20px;">
+      <div id="dv-name" style="font-size: 24px; font-weight: 900; margin-bottom: 10px;"></div>
+      <div id="dv-type" style="font-size: 12px; color: var(--text2); margin-bottom: 20px;"></div>
+      <div id="dv-desc" style="font-size: 14px; color: var(--text3); line-height: 1.5; margin-bottom: 20px;"></div>
+
+      <div style="margin-bottom: 20px;">
+        <div style="font-size: 14px; font-weight: 700; margin-bottom: 10px;">Argument de la Défense</div>
+        <div id="dv-def-arg" style="padding: 12px; background: rgba(78, 203, 113, 0.1); border-radius: 10px; border: 1px solid var(--success); color: var(--text3); margin-bottom: 10px;"></div>
+        <div id="dv-def-name" style="font-size: 10px; font-weight: 800; color: var(--success);"></div>
+      </div>
+
+      <div style="margin-bottom: 20px;">
+        <div style="font-size: 14px; font-weight: 700; margin-bottom: 10px;">Argument de l'Accusation</div>
+        <div id="dv-acc-arg" style="padding: 12px; background: rgba(255, 71, 87, 0.1); border-radius: 10px; border: 1px solid var(--danger); color: var(--text3); margin-bottom: 10px;"></div>
+        <div id="dv-acc-name" style="font-size: 10px; font-weight: 800; color: var(--danger);"></div>
+      </div>
+
+      <div id="dv-buttons">
+        <div style="font-size: 14px; font-weight: 700; margin-bottom: 10px;">Choisis ton camp</div>
+        <div style="display: flex; gap: 10px;">
+          <button onclick="vote('defense')" class="btn bp2" style="flex: 1;">Je défends</button>
+          <button onclick="vote('accusation')" class="btn" style="flex: 1; background: rgba(255, 71, 87, 0.2); border: 2px solid var(--danger); color: var(--danger);">J'accuse</button>
+        </div>
+      </div>
+
+      <div id="dv-voted" style="display: none; text-align: center; margin-top: 20px;">
+        <div style="font-size: 18px; font-weight: 800; margin-bottom: 10px;">Vote enregistré !</div>
+        <div style="font-size: 14px; color: var(--text2);">Merci pour ta participation.</div>
+        <button onclick="leaveDuel()" class="btn bs" style="margin-top: 20px;">Retour à l'accueil</button>
+      </div>
+    </div>
+    <div class="tab">
+      <div class="ti" onclick="switchTab('home')"><span>Accueil</span></div>
+      <div class="ti" onclick="switchTab('verdicts')"><span>Verdicts</span></div>
+      <div class="ti" onclick="switchTab('profil')"><span>Profil</span></div>
+    </div>
+  </div>
+
+  <!-- VERDICTS -->
+  <div class="P" id="verdicts">
+    <div style="flex: 1; overflow-y: auto; padding: 20px;">
+      <div style="font-size: 24px; font-weight: 900; margin-bottom: 20px;">Verdicts Publics</div>
+      <div id="vd-list" style="display: flex; flex-direction: column; gap: 12px;"></div>
+    </div>
+    <div class="tab">
+      <div class="ti" onclick="switchTab('home')"><span>Accueil</span></div>
+      <div class="ti on" onclick="switchTab('verdicts')"><span>Verdicts</span></div>
+      <div class="ti" onclick="switchTab('profil')"><span>Profil</span></div>
+    </div>
+  </div>
+
+  <!-- PROFIL -->
+  <div class="P" id="profil">
+    <div style="flex: 1; overflow-y: auto; padding: 20px;">
+      <div style="display: flex; align-items: center; padding: 20px; gap: 16px;">
+        <div id="p-avatar" style="width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, #c7a0d0, #FF7A2E); display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 900; color: #fff; flex-shrink: 0;">?</div>
+        <div style="flex: 1;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <div style="font-size: 21px; font-weight: 900; color: #F0F0F5;" id="p-name">—</div>
+            <span id="p-status-badge" class="status-badge status-junior">JUNIOR</span>
+          </div>
+          <div style="font-size: 13px; color: rgba(255, 255, 255, 0.4);" id="p-xp">0 XP</div>
+        </div>
+        <div style="padding: 7px 16px; border-radius: 10px; background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08); color: rgba(255, 255, 255, 0.4); font-size: 12px; font-weight: 700; cursor: pointer;">Modifier</div>
+      </div>
+
+      <div style="font-size: 16px; font-weight: 900; padding: 0 20px; margin-bottom: 12px; color: #F0F0F5;">Statut et Progression</div>
+      <div style="padding: 0 20px 20px;">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+          <div>
+            <div style="font-size: 14px; font-weight: 700;">Statut actuel</div>
+            <div style="font-size: 12px; color: rgba(255, 255, 255, 0.4);">Gagnez des victoires pour monter en grade</div>
+          </div>
+          <div id="p-status" style="font-size: 14px; font-weight: 700;">Junior</div>
+        </div>
+        <div style="height: 8px; background: rgba(255, 255, 255, 0.04); border-radius: 4px; margin-bottom: 8px; overflow: hidden;">
+          <div id="p-progress-bar" style="height: 100%; background: linear-gradient(90deg, #FF7A2E, #A78BFA); width: 0%; border-radius: 4px; transition: width 0.3s;"></div>
+        </div>
+        <div style="display: flex; justify-content: space-between; font-size: 11px; color: rgba(255, 255, 255, 0.4);">
+          <span id="p-current-wins">0/5</span>
+          <span id="p-next-status">CONFIRMÉ</span>
+        </div>
+      </div>
+
+      <div style="font-size: 16px; font-weight: 900; padding: 0 20px; margin-bottom: 12px; color: #F0F0F5;">Statistiques</div>
+      <div style="padding: 0 20px 20px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;">
+        <div style="text-align: center; padding: 12px; background: rgba(255, 255, 255, 0.02); border-radius: 10px;">
+          <div style="font-size: 18px; font-weight: 900;" id="p-w">0</div>
+          <div style="font-size: 11px; color: var(--text2);">Victoires</div>
+        </div>
+        <div style="text-align: center; padding: 12px; background: rgba(255, 255, 255, 0.02); border-radius: 10px;">
+          <div style="font-size: 18px; font-weight: 900;" id="p-d">0</div>
+          <div style="font-size: 11px; color: var(--text2);">Duels</div>
+        </div>
+        <div style="text-align: center; padding: 12px; background: rgba(255, 255, 255, 0.02); border-radius: 10px;">
+          <div style="font-size: 18px; font-weight: 900;" id="p-r">—</div>
+          <div style="font-size: 11px; color: var(--text2);">Ratio</div>
+        </div>
+      </div>
+
+      <div style="font-size: 16px; font-weight: 900; padding: 0 20px; margin-bottom: 12px; color: #F0F0F5;">Cabinet</div>
+      <div style="padding: 0 20px 20px; display: flex; align-items: center; gap: 12px;">
+        <div id="p-cab-av" style="width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #c7a0d0, #FF7A2E); display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 900; color: #fff;">?</div>
+        <div style="flex: 1;">
+          <div style="font-size: 14px; font-weight: 700;" id="p-cab-name">—</div>
+          <div style="font-size: 11px; color: var(--text2);" id="p-cab-wins">0 victoires collectives</div>
+        </div>
+      </div>
+
+      <div style="font-size: 16px; font-weight: 900; padding: 0 20px; margin-bottom: 12px; color: #F0F0F5;">Historique</div>
+      <div id="p-history" style="padding: 0 20px 20px; display: flex; flex-direction: column; gap: 8px;"></div>
+
+      <button onclick="doLogout()" class="btn bs" style="margin: 0 20px 20px;">Se déconnecter</button>
+    </div>
+    <div class="tab">
+      <div class="ti" onclick="switchTab('home')"><span>Accueil</span></div>
+      <div class="ti" onclick="switchTab('verdicts')"><span>Verdicts</span></div>
+      <div class="ti on" onclick="switchTab('profil')"><span>Profil</span></div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
