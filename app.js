@@ -75,6 +75,14 @@ var ALL_CASES = {
   nietzsche1: K(3, 'Nietzsche vs Tag', 'Philosophie', 'Nietzsche accuse Tag d\'avoir le talent du surhomme mais de choisir délibérément la médiocrité du show plutôt que la grandeur du dépassement', 'Friedrich Nietzsche a théorisé le surhomme comme celui qui crée ses propres valeurs et se dépasse lui-même. Tag, joueur prodige du foot 2 rue, a un talent qui dépasse tous ses adversaires. Mais Nietzsche observe quelque chose d\'inquiétant : Tag utilise son talent non pas pour se dépasser, mais pour impressionner.', 'Tag joue comme il ressent les choses. Le football de rue c\'est de l\'art autant que du sport. Nietzsche lui-même valorisait la création et l\'instinct.', 'Nietzsche parlait de se dépasser soi-même, pas d\'épater les autres. Tag a le talent pour changer le jeu mais il choisit de briller dans sa propre lumière plutôt que d\'élever ceux qui l\'entourent.'),
 
   bloom1: K(1, 'Bloom vs Icy', 'Les Winx', 'Icy accuse Bloom d\'être une imposteur qui a construit sa légitimité sur une identité volée et des pouvoirs hérités qu\'elle n\'a pas mérités', 'Alfea, école des fées. Bloom a grandi en pensant être une humaine ordinaire avant de découvrir qu\'elle est la princesse de la planète Domino et porteuse du Feu du Destin. Icy lui reproche de se poser en héroïne alors que tout ce qu\'elle a, elle le doit à sa naissance et au hasard, pas à son travail ou son mérite.', 'Bloom n\'a pas choisi ses origines, mais elle a choisi d\'assumer la responsabilité qui venait avec. Elle aurait pu fuir. Elle s\'est battue.', 'Bloom arrive à Alfea sans formation, sans effort préalable, et s\'impose comme la plus puissante grâce à des pouvoirs innés. Elle représente exactement ce que le mérite devrait combattre : le privilège de naissance déguisé en destin.')
+  
+  // ===== NOUVELLE AFFAIRE D'ACTUALITÉ (à ajouter dans ALL_CASES) =====
+tribunal1: K(1, 'Le Tribunal des Présidents', 'Actualité',
+  'Faut-il instaurer un tribunal citoyen pour juger chaque président à la fin de son mandat, avec risque de peine de prison en cas de manquement avéré à ses devoirs sociaux ?',
+  'Paris, 2026. À la fin de chaque mandat présidentiel, des milliers de citoyens manifestent pour exiger des comptes sur les promesses non tenues, les réformes sociales insuffisantes, et les décisions jugées néfastes pour le pays. Une proposition radicale émerge : créer un tribunal indépendant, composé de citoyens tirés au sort, pour évaluer objectivement l’action du président sortant. Ce tribunal aurait le pouvoir de condamner à des peines de prison si le bilan social est jugé insuffisant ou nuisible. Mais une telle mesure ne risquerait-elle pas de paralyser la démocratie en décourageant les futurs dirigeants ?',
+  '',  // Argument défense vide (forcera le joueur à en écrire un)
+  ''   // Argument accusation vide (forcera le joueur à en écrire un)
+),
 };
 
 // Initialisation des cases
