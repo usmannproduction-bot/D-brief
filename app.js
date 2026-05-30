@@ -81,7 +81,6 @@ var ALL_CASES = {
   "Être intelligent dans un groupe ce n'est pas une preuve de trahison. C'est une qualité qu'on lui reproche parce qu'on n'en a pas.",
   "Il anticipe tout. Il sait avant les autres. Il ne pose jamais les mauvaises questions — parce qu'il connaît déjà les réponses."),
 
-  
 };
 
 // Initialisation des cases
