@@ -79,8 +79,7 @@ var ALL_CASES = {
   who2: K(1, 'Wilson vs Le Groupe', 'WHO', "Le groupe accuse Wilson de savoir des choses avant même qu'on les lui dise",
   "Personne ne le suspecte. Il est discret, posé, toujours à sa place. C'est exactement ce qui pose problème.",
   "Être intelligent dans un groupe ce n'est pas une preuve de trahison. C'est une qualité qu'on lui reproche parce qu'on n'en a pas.",
-  "Il anticipe tout. Il sait avant les autres. Il ne pose jamais les mauvaises questions — parce qu'il connaît déjà les réponses."),
-
+  "Il anticipe tout. Il sait avant les autres. Il ne pose jamais les mauvaises questions — parce qu'il connaît déjà les réponses.")
 };
 
 // Initialisation des cases
