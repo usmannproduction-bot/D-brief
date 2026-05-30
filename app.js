@@ -76,6 +76,12 @@ var ALL_CASES = {
 
   bloom1: K(1, 'Bloom vs Icy', 'Les Winx', 'Icy accuse Bloom d\'être une imposteur qui a construit sa légitimité sur une identité volée et des pouvoirs hérités qu\'elle n\'a pas mérités', 'Alfea, école des fées. Bloom a grandi en pensant être une humaine ordinaire avant de découvrir qu\'elle est la princesse de la planète Domino et porteuse du Feu du Destin. Icy lui reproche de se poser en héroïne alors que tout ce qu\'elle a, elle le doit à sa naissance et au hasard, pas à son travail ou son mérite.', 'Bloom n\'a pas choisi ses origines, mais elle a choisi d\'assumer la responsabilité qui venait avec. Elle aurait pu fuir. Elle s\'est battue.', 'Bloom arrive à Alfea sans formation, sans effort préalable, et s\'impose comme la plus puissante grâce à des pouvoirs innés. Elle représente exactement ce que le mérite devrait combattre : le privilège de naissance déguisé en destin.')
   
+  who2: K(1, 'Wilson vs Le Groupe', 'WHO', "Le groupe accuse Wilson de savoir des choses avant même qu'on les lui dise",
+  "Personne ne le suspecte. Il est discret, posé, toujours à sa place. C'est exactement ce qui pose problème.",
+  "Être intelligent dans un groupe ce n'est pas une preuve de trahison. C'est une qualité qu'on lui reproche parce qu'on n'en a pas.",
+  "Il anticipe tout. Il sait avant les autres. Il ne pose jamais les mauvaises questions — parce qu'il connaît déjà les réponses."),
+
+  
 };
 
 // Initialisation des cases
