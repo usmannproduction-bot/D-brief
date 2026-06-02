@@ -1,0 +1,22 @@
+{
+  "name": "D'brief",
+  "short_name": "D'brief",
+  "description": "La seule plateforme qui vous permet de devenir acteur et actrice de vos séries et films préférés.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0a12",
+  "theme_color": "#0a0a12",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
