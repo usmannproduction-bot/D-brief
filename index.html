@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <meta name="theme-color" content="#0a0a12">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="manifest" href="manifest.json">
+  <title>D'brief</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; overflow: hidden; }
+    body { font-family: 'Outfit', sans-serif; color: #F0F0F5; background: #0a0a12; }
+    #app { width: min(430px, 100vw); height: 100dvh; margin: 0 auto; position: relative; overflow: hidden; }
+    .P { position: absolute; inset: 0; display: none; flex-direction: column; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+    .P.on { display: flex; }
+    .btn { width: 100%; padding: 16px; border-radius: 16px; border: none; font-size: 17px; font-weight: 800; cursor: pointer; font-family: 'Outfit', sans-serif; }
+    .btn:active { opacity: 0.85; }
+    .bp { background: linear-gradient(135deg, #FF7A2E, #FFA04E); color: #fff; box-shadow: none; }
+    .bp2 { background: linear-gradient(135deg, #FF7A2E, #FFA04E, #A78BFA); color: #fff; box-shadow: none; }
+    .bs { background: #1c1c2e; color: #F0F0F5; border: 1.5px solid rgba(255,255,255,0.06); box-shadow: none; }
+    .inp { width: 100%; padding: 13px 16px; background: rgba(255,255,255,0.04); border: 1.5px solid rgba(255,255,255,0.07); border-radius: 12px; color: #fff; font-size: 15px; font-family: 'Outfit', sans-serif; margin-bottom: 8px; }
+    .inp:focus { border-color: #FF7A2E; outline: none; }
+    .inp::placeholder { color: rgba(255,255,255,0.2); }
+    .tab { display: flex; border-top: 1px solid rgba(255,255,255,0.04); background: #0a0a12; flex-shrink: 0; }
+    .ti { flex: 1; text-align: center; padding: 10px 0; cursor: pointer; }
+    .ti span { font-size: 11px; font-weight: 700; color: #555; }
+    .ti.on span { color: #FF7A2E; }
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+    .ob-wrap { scroll-snap-type: y mandatory; overflow-y: auto; height: 100%; }
+    .ob-step { scroll-snap-align: start; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 32px; text-align: center; }
+    .ob-num { font-size: 64px; font-weight: 900; color: rgba(255,122,46,0.15); margin-bottom: 12px; }
+    .ob-title { font-size: 22px; font-weight: 900; margin-bottom: 10px; }
+    .ob-desc { font-size: 14px; color: rgba(255,255,255,0.35); line-height: 1.5; max-width: 280px; }
+    .series-grid { display: flex; flex-wrap: wrap; gap: 8px; padding: 16px; justify-content: center; }
+    .series-chip { padding: 8px 16px; border-radius: 20px; font-size: 13px; font-weight: 700; border: 1.5px solid rgba(255,255,255,0.08); color: rgba(255,255,255,0.4); cursor: pointer; }
+    .series-chip.sel { border-color: #FF7A2E; color: #FF7A2E; background: rgba(255,122,46,0.08); }
+
+    /* Bannière invité */
+    .guest-banner {
+      position: fixed;
+      bottom: 60px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: calc(min(430px,100vw) - 32px);
+      background: linear-gradient(135deg, rgba(255,122,46,0.12), rgba(167,139,250,0.12));
+      border: 1px solid rgba(255,122,46,0.25);
+      border-radius: 16px;
+      padding: 14px 16px;
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      z-index: 50;
+      backdrop-filter: blur(10px);
+    }
+    .guest-banner.show { display: flex; }
+    .guest-banner-text { font-size: 13px; color: rgba(255,255,255,0.7); line-height: 1.4; flex: 1; }
+    .guest-banner-text strong { color: #FF7A2E; }
+    .guest-banner-btn { padding: 8px 16px; border-radius: 10px; background: linear-gradient(135deg,#FF7A2E,#FFA04E); color: #fff; font-size: 12px; font-weight: 800; border: none; cursor: pointer; font-family: 'Outfit',sans-serif; white-space: nowrap; }
+
+
+
+    /* ══ CLIENT SELECT ══ */
+    .client-card{margin:0 16px 10px;border-radius:18px;overflow:hidden;cursor:pointer;border:1.5px solid rgba(255,255,255,.05);transition:border-color .25s,transform .2s;}
+    .client-card:active{transform:scale(.98);}
+    .client-card.sel{border-color:rgba(255,255,255,.25);}
+    .client-blk{padding:20px;position:relative;}
+    .client-chk{position:absolute;top:16px;right:16px;width:22px;height:22px;border-radius:50%;border:2px solid rgba(255,255,255,.3);display:flex;align-items:center;justify-content:center;transition:all .3s;}
+    .client-card.sel .client-chk{background:#fff;border-color:#fff;}
+    .client-chk-svg{opacity:0;transition:opacity .2s;}
+    .client-card.sel .client-chk-svg{opacity:1;}
+    .client-pre{font-size:9px;font-weight:800;letter-spacing:4px;color:rgba(255,255,255,.5);text-transform:uppercase;margin-bottom:4px;}
+    .client-nm{font-size:24px;font-weight:900;color:#fff;line-height:1;margin-bottom:6px;}
+    .client-sr{font-size:11px;font-weight:700;color:rgba(255,255,255,.45);}
+
+
+    /* ══ PAGES LÉGALES ══ */
+    .lg-title{font-size:26px;font-weight:900;color:#F0F0F5;line-height:1.15;margin-bottom:6px;}
+    .lg-date{font-size:12px;color:rgba(255,255,255,.3);margin-bottom:24px;}
+    .lg-h{font-size:15px;font-weight:800;color:#A78BFA;margin:22px 0 8px;}
+    .lg-p{font-size:14px;color:rgba(255,255,255,.6);line-height:1.7;}
+
+    /* ══ ESPACE ADMIN ══ */
+    .adm-b{display:inline-block;padding:9px 14px;border-radius:10px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);color:#fff;font-size:13px;font-weight:700;cursor:pointer;margin:0 6px 6px 0;}
+    .adm-bp{background:linear-gradient(135deg,#FF7A2E,#FF4E8A);border:none;}
+    .adm-bd{color:#FF6B6B;border-color:rgba(255,107,107,.3);}
+    .adm-row{display:flex;align-items:center;gap:10px;padding:13px 14px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:14px;margin-bottom:10px;}
+    .adm-off{opacity:.42;}
+    .adm-tag{font-size:10px;font-weight:800;color:rgba(255,255,255,.35);letter-spacing:1px;text-transform:uppercase;}
+    .adm-name{font-size:15px;font-weight:800;margin:2px 0;}
+    .adm-sub{font-size:12px;color:rgba(255,255,255,.4);}
+    .adm-btns{display:flex;flex-direction:column;gap:6px;flex-shrink:0;}
+    .adm-btns .adm-b{margin:0;padding:7px 10px;font-size:12px;text-align:center;}
+    .adm-l{display:block;font-size:11px;font-weight:700;color:rgba(255,255,255,.4);margin:13px 0 4px;}
+    .adm-i{width:100%;box-sizing:border-box;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.1);background:rgba(0,0,0,.3);color:#fff;font-size:14px;font-family:inherit;resize:vertical;}
+    .adm-check{display:flex;align-items:center;gap:8px;font-size:13px;color:rgba(255,255,255,.65);margin-top:14px;cursor:pointer;}
+  </style>
+</head>
+<body>
+<div id="app">
+
+  <!-- SPLASH -->
+  <div class="P on" id="splash" style="align-items:center;justify-content:center;padding:32px;text-align:center;background:#0a0a12;">
+    <div style="font-size:46px;font-weight:900;margin-bottom:12px;background:linear-gradient(135deg,#FF7A2E,#e8a0b0,#A78BFA);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;">D'brief</div>
+    <div style="font-size:15px;color:rgba(255,255,255,0.3);margin-bottom:44px;">Défendez vos personnages préférés</div>
+    <div style="width:100%;max-width:340px;display:flex;flex-direction:column;gap:10px;">
+      <button class="btn bp" onclick="go('signup')">Créer un compte</button>
+      <button class="btn bs" onclick="go('login')">Se connecter</button>
+      <button onclick="goGuest()" style="background:none;border:none;color:rgba(255,255,255,0.3);font-size:14px;font-weight:700;cursor:pointer;padding:8px;font-family:'Outfit',sans-serif;text-decoration:underline;text-underline-offset:3px;">Jouer sans compte</button>
+    </div>
+  </div>
+
+  <!-- PAGE INVITÉ — juste un prénom -->
+  <div class="P" id="guest-name" style="background:#0a0a12;align-items:center;justify-content:center;padding:32px;text-align:center;">
+    <div style="font-size:28px;font-weight:900;margin-bottom:8px;">Comment vous appelez-vous ?</div>
+    <div style="font-size:14px;color:rgba(255,255,255,0.3);margin-bottom:32px;">Juste un prénom suffit</div>
+    <div style="width:100%;max-width:320px;">
+      <input class="inp" id="guest-n" placeholder="Votre prénom" style="font-size:18px;text-align:center;margin-bottom:16px;" maxlength="20">
+      <button class="btn bp" onclick="doGuest()">Entrer dans l'arène</button>
+      <button class="btn bs" style="margin-top:10px;" onclick="go('splash')">Retour</button>
+    </div>
+  </div>
+
+  <!-- SIGNUP -->
+  <div class="P" id="signup" style="background:#0a0a12;">
+    <div style="flex:1;display:flex;flex-direction:column;padding:20px;justify-content:center;">
+      <div style="font-size:24px;font-weight:900;margin-bottom:16px;">Créer un compte</div>
+      <input class="inp" id="su-n" placeholder="Votre nom">
+      <input class="inp" id="su-e" type="email" placeholder="E-mail">
+      <input class="inp" id="su-p" type="password" placeholder="Mot de passe (6 car.)">
+      <input class="inp" id="su-cab" placeholder="Nom du cabinet (ex: Dupont & associé)">
+      <div style="text-align:center;color:#555;font-size:12px;margin:2px 0 6px;">— ou —</div>
+      <input class="inp" id="su-cabcode" placeholder="Code cabinet existant (CAB-XXXX)">
+      <div id="su-err" style="display:none;font-size:12px;margin-bottom:6px;"></div>
+      <button class="btn bp" style="margin-bottom:10px;" onclick="doSignup()">S'inscrire</button>
+      <div style="font-size:11px;color:rgba(255,255,255,.3);line-height:1.5;text-align:center;">En vous inscrivant, vous acceptez nos <span onclick="openLegal('cgu','signup')" style="color:#A78BFA;cursor:pointer;text-decoration:underline;">Conditions d'utilisation</span> et notre <span onclick="openLegal('privacy','signup')" style="color:#A78BFA;cursor:pointer;text-decoration:underline;">Politique de confidentialité</span>.</div>
+      <button class="btn bs" onclick="go('splash')">Retour</button>
+    </div>
+  </div>
+
+  <!-- LOGIN -->
+  <div class="P" id="login" style="background:#0a0a12;">
+    <div style="flex:1;display:flex;flex-direction:column;padding:20px;justify-content:center;">
+      <div style="font-size:24px;font-weight:900;margin-bottom:16px;">Se connecter</div>
+      <input class="inp" id="li-e" type="email" placeholder="E-mail">
+      <input class="inp" id="li-p" type="password" placeholder="Mot de passe">
+      <div id="li-err" style="display:none;font-size:12px;margin-bottom:6px;"></div>
+      <button class="btn bp" style="margin-bottom:8px;" onclick="doLogin()">Connexion</button>
+      <button class="btn bs" onclick="go('splash')">Retour</button>
+    </div>
+  </div>
+
+  <!-- ONBOARDING -->
+  <div class="P" id="onboarding" style="background:#0a0a12;">
+    <div class="ob-wrap">
+      <div class="ob-step">
+        <div class="ob-num">01</div>
+        <div class="ob-title">Choisissez une affaire</div>
+        <div class="ob-desc">Des personnages de séries sont accusés. À vous de les défendre ou de les enfoncer.</div>
+        <div style="margin-top:24px;font-size:12px;color:#555;">↓ Swipez vers le bas</div>
+      </div>
+      <div class="ob-step">
+        <div class="ob-num">02</div>
+        <div class="ob-title">300 caractères, pas un de plus</div>
+        <div class="ob-desc">Comme un vrai avocat, soyez percutant. Chaque mot compte dans votre plaidoirie.</div>
+      </div>
+      <div class="ob-step">
+        <div class="ob-num">03</div>
+        <div class="ob-title">Le public vote</div>
+        <div class="ob-desc">Les autres joueurs lisent les deux arguments et décident qui est le plus convaincant.</div>
+      </div>
+      <div class="ob-step">
+        <div class="ob-num">04</div>
+        <div class="ob-title">Votre première affaire</div>
+        <div class="ob-desc">Ghost est accusé d'avoir trahi la rue pour jouer au politicien. Prêt à plaider ?</div>
+        <button class="btn bp" style="margin-top:24px;width:auto;padding:14px 40px;" onclick="buildSeriesGrid(); go('series-select')">C'est parti !</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SERIES SELECT -->
+  <div class="P" id="series-select" style="background:#0a0a12;padding:20px;">
+    <div style="font-size:20px;font-weight:900;margin-bottom:16px;text-align:center;">Choisissez vos séries préférées</div>
+    <div style="font-size:14px;color:rgba(255,255,255,0.4);margin-bottom:20px;text-align:center;">Sélectionnez au moins 3 séries</div>
+    <div class="series-grid" id="series-grid"></div>
+    <button class="btn bp" style="margin-top:20px;" onclick="finishSeriesSelect()">Valider</button>
+  </div>
+
+
+
+
+
+
+  <!-- CLIENT SELECT -->
+  <div class="P" id="client-select" style="background:#06060C;">
+    <div style="padding:52px 24px 16px;flex-shrink:0;">
+      <div style="font-size:28px;font-weight:900;color:#F0F0F5;line-height:1.1;">Quel personnage<br>allez-vous défendre ?</div>
+      <div style="font-size:13px;color:rgba(255,255,255,.35);margin-top:8px;">Ce sera votre client. Défendez-le, faites-le gagner.</div>
+    </div>
+    <div style="flex:1;overflow-y:auto;padding:8px 0 100px;-webkit-overflow-scrolling:touch;" id="client-cards"></div>
+    <div style="position:absolute;bottom:0;left:0;right:0;padding:12px 16px 32px;background:linear-gradient(to top,#06060C 55%,transparent);">
+      <button id="client-confirm-btn" style="width:100%;padding:15px;border-radius:14px;border:none;font-family:'Outfit',sans-serif;font-size:15px;font-weight:800;background:linear-gradient(135deg,#FF7A2E,#FFA04E);color:#fff;opacity:.25;pointer-events:none;cursor:pointer;transition:opacity .3s;" onclick="confirmClient()">Choisissez un personnage</button>
+    </div>
+  </div>
+
+
+  <!-- ACCOUNT WALL (invité après son affaire signature) -->
+  <div class="P" id="account-wall" style="background:#06060C;align-items:center;justify-content:center;padding:32px;text-align:center;">
+    <div style="font-size:40px;margin-bottom:20px;">⚖️</div>
+    <div style="font-size:24px;font-weight:900;color:#F0F0F5;line-height:1.25;margin-bottom:14px;">Vous avez plaidé<br>votre première affaire.</div>
+    <div style="font-size:15px;color:rgba(255,255,255,.4);line-height:1.6;max-width:300px;margin-bottom:8px;">Pour continuer à plaider et garder votre progression, créez un compte gratuit.</div>
+    <div style="font-size:13px;color:rgba(255,71,87,.7);font-weight:700;margin-bottom:32px;">Sinon tout disparaît.</div>
+    <button class="btn bp" style="margin-bottom:14px;" onclick="window.convertingGuest=true; go('signup')">Créer un compte gratuit</button>
+          <div style="padding:18px 20px 8px;">
+        <div style="font-size:11px;font-weight:800;color:rgba(255,255,255,.25);letter-spacing:2px;margin-bottom:12px;">INFORMATIONS LÉGALES</div>
+        <div onclick="openLegal('cgu','profil')" style="font-size:13px;color:rgba(255,255,255,.5);padding:10px 0;border-bottom:1px solid rgba(255,255,255,.04);cursor:pointer;">Conditions d'utilisation</div>
+        <div onclick="openLegal('privacy','profil')" style="font-size:13px;color:rgba(255,255,255,.5);padding:10px 0;border-bottom:1px solid rgba(255,255,255,.04);cursor:pointer;">Politique de confidentialité</div>
+        <div onclick="openLegal('legal','profil')" style="font-size:13px;color:rgba(255,255,255,.5);padding:10px 0;cursor:pointer;">Mentions légales</div>
+      </div>
+<div style="font-size:12px;color:rgba(255,255,255,.2);cursor:pointer;text-decoration:underline;text-underline-offset:3px;" onclick="logout()">Recommencer</div>
+  </div>
+
+
+
+  <!-- CGU -->
+  <div class="P" id="cgu" style="background:#0a0a12;">
+    <div style="flex:1;overflow-y:auto;padding:52px 22px 60px;-webkit-overflow-scrolling:touch;">
+      <div onclick="closeLegal()" style="font-size:14px;color:#A78BFA;font-weight:700;cursor:pointer;margin-bottom:20px;">← Retour</div>
+      <div class="lg-title">Conditions Générales d'Utilisation</div>
+      <div class="lg-date">Dernière mise à jour : juin 2026</div>
+      <div class="lg-h">1. Objet</div>
+      <div class="lg-p">D'brief est une application de jeu permettant à ses utilisateurs de s'affronter dans des duels rhétoriques en défendant ou en accusant des personnages de fiction issus de séries, films et œuvres. Les présentes conditions encadrent l'utilisation de l'application.</div>
+      <div class="lg-h">2. Acceptation</div>
+      <div class="lg-p">En accédant à l'application, en créant un compte ou en jouant en tant qu'invité, vous reconnaissez avoir lu et accepté les présentes conditions. Si vous n'êtes pas d'accord, n'utilisez pas l'application.</div>
+      <div class="lg-h">3. Accès au service</div>
+      <div class="lg-p">L'application est accessible gratuitement, avec un compte ou en mode invité. Certaines fonctionnalités nécessitent la création d'un compte. Vous êtes responsable de la confidentialité de vos identifiants.</div>
+      <div class="lg-h">4. Comportement des utilisateurs</div>
+      <div class="lg-p">Les débats portent sur des personnages de fiction. Vous vous engagez à ne pas publier de contenu illégal, haineux, diffamatoire, discriminatoire, ou portant atteinte aux droits d'autrui. Tout manquement peut entraîner la suspension de votre accès.</div>
+      <div class="lg-h">5. Contenu des utilisateurs</div>
+      <div class="lg-p">Vous restez responsable des arguments et contenus que vous rédigez. En les publiant, vous accordez à D'brief le droit de les afficher au sein de l'application aux fins du jeu (notamment pour le vote des autres joueurs).</div>
+      <div class="lg-h">6. Propriété intellectuelle</div>
+      <div class="lg-p">L'application, son nom, son design et ses contenus originaux sont protégés. Les références aux séries, films et personnages sont utilisées dans un cadre de commentaire critique, de débat et de parodie. D'brief n'est affilié à aucun ayant droit des œuvres citées.</div>
+      <div class="lg-h">7. Responsabilité</div>
+      <div class="lg-p">L'application est fournie « en l'état », sans garantie de disponibilité continue ou d'absence d'erreur. D'brief ne saurait être tenu responsable des contenus publiés par les utilisateurs ni des interruptions de service.</div>
+      <div class="lg-h">8. Modification</div>
+      <div class="lg-p">Ces conditions peuvent être modifiées à tout moment. La version en vigueur est celle accessible dans l'application.</div>
+      <div class="lg-h">9. Droit applicable</div>
+      <div class="lg-p">Les présentes conditions sont régies par le droit français. En cas de litige, une solution amiable sera recherchée avant toute action judiciaire.</div>
+    </div>
+  </div>
+
+  <!-- POLITIQUE DE CONFIDENTIALITÉ -->
+  <div class="P" id="privacy" style="background:#0a0a12;">
+    <div style="flex:1;overflow-y:auto;padding:52px 22px 60px;-webkit-overflow-scrolling:touch;">
+      <div onclick="closeLegal()" style="font-size:14px;color:#A78BFA;font-weight:700;cursor:pointer;margin-bottom:20px;">← Retour</div>
+      <div class="lg-title">Politique de Confidentialité</div>
+      <div class="lg-date">Dernière mise à jour : juin 2026</div>
+      <div class="lg-p">D'brief accorde de l'importance à la protection de vos données personnelles, conformément au Règlement Général sur la Protection des Données (RGPD).</div>
+      <div class="lg-h">1. Données collectées</div>
+      <div class="lg-p">Selon votre usage : votre prénom ou pseudonyme, votre adresse e-mail (si vous créez un compte), les arguments que vous rédigez, et des données techniques d'utilisation (statistiques de jeu).</div>
+      <div class="lg-h">2. Finalités</div>
+      <div class="lg-p">Vos données servent à faire fonctionner votre compte, à permettre le déroulement des duels, et à améliorer l'application.</div>
+      <div class="lg-h">3. Hébergement des données</div>
+      <div class="lg-p">Les données sont stockées via Firebase (service de Google), sur des serveurs situés en Europe. Une mesure d'audience est réalisée via Google Analytics.</div>
+      <div class="lg-h">4. Durée de conservation</div>
+      <div class="lg-p">Vos données sont conservées tant que votre compte est actif. À la suppression de votre compte, elles sont effacées.</div>
+      <div class="lg-h">5. Vos droits</div>
+      <div class="lg-p">Vous disposez d'un droit d'accès, de rectification, d'effacement, de portabilité et d'opposition sur vos données. Pour les exercer, contactez-nous à l'adresse indiquée dans les mentions légales.</div>
+      <div class="lg-h">6. Stockage local</div>
+      <div class="lg-p">L'application utilise le stockage local de votre navigateur pour maintenir votre session. Aucune donnée n'est revendue à des tiers à des fins publicitaires.</div>
+      <div class="lg-h">7. Mineurs</div>
+      <div class="lg-p">Si vous avez moins de 15 ans, l'accord d'un titulaire de l'autorité parentale est requis pour la création d'un compte.</div>
+    </div>
+  </div>
+
+  <!-- MENTIONS LÉGALES -->
+  <div class="P" id="legal" style="background:#0a0a12;">
+    <div style="flex:1;overflow-y:auto;padding:52px 22px 60px;-webkit-overflow-scrolling:touch;">
+      <div onclick="closeLegal()" style="font-size:14px;color:#A78BFA;font-weight:700;cursor:pointer;margin-bottom:20px;">← Retour</div>
+      <div class="lg-title">Mentions Légales</div>
+      <div class="lg-date">Dernière mise à jour : juin 2026</div>
+      <div class="lg-h">Éditeur</div>
+      <div class="lg-p">D'brief est édité par KeyStriction, SAS [en cours d'immatriculation].<br>Siège social : [à compléter].<br>RCS / SIREN : [à compléter].</div>
+      <div class="lg-h">Directeur de la publication</div>
+      <div class="lg-p">Kelan Usman.</div>
+      <div class="lg-h">Contact</div>
+      <div class="lg-p">[adresse e-mail à compléter]</div>
+      <div class="lg-h">Hébergement</div>
+      <div class="lg-p">L'application est hébergée par GitHub, Inc. (GitHub Pages — 88 Colin P. Kelly Jr. Street, San Francisco, CA 94107, États-Unis) et par Vercel, Inc. Les données utilisateurs sont hébergées par Google (Firebase), serveurs situés en Europe.</div>
+    </div>
+  </div>
+
+
+
+  <!-- ESPACE ADMIN — PORTE -->
+  <div class="P" id="admin-gate" style="background:#0a0a12;">
+    <div style="flex:1;overflow-y:auto;padding:64px 24px;-webkit-overflow-scrolling:touch;">
+      <div style="font-size:30px;font-weight:900;margin-bottom:6px;">🔒 Espace admin</div>
+      <div style="font-size:13px;color:rgba(255,255,255,.4);margin-bottom:30px;">Accès réservé. Entre ton code.</div>
+      <input id="admin-code-input" type="password" placeholder="Code d'accès" class="adm-i" style="font-size:16px;padding:13px 14px;">
+      <button class="btn bp" style="margin-top:14px;" onclick="adminLogin()">Entrer</button>
+      <div id="admin-gate-err" style="color:#FF6B6B;font-size:13px;margin-top:12px;min-height:16px;font-weight:600;"></div>
+      <div onclick="adminExit()" style="font-size:13px;color:rgba(255,255,255,.4);margin-top:26px;cursor:pointer;">← Retour à l'application</div>
+    </div>
+  </div>
+
+  <!-- ESPACE ADMIN — PANNEAU -->
+  <div class="P" id="admin" style="background:#0a0a12;">
+    <div style="flex:1;overflow-y:auto;padding:26px 18px 70px;-webkit-overflow-scrolling:touch;">
+      <div style="font-size:23px;font-weight:900;margin-bottom:4px;">Gestion des affaires</div>
+      <div onclick="adminExit()" style="font-size:13px;color:#A78BFA;font-weight:700;margin-bottom:20px;cursor:pointer;">← Retour à l'application</div>
+
+      <div style="margin-bottom:20px;">
+        <button class="adm-b adm-bp" onclick="adminNewCase()">+ Nouvelle affaire</button>
+        <button class="adm-b" onclick="adminExport()">Exporter le code</button>
+        <button class="adm-b" onclick="adminChangeCode()">Changer le code</button>
+      </div>
+
+      <!-- Formulaire -->
+      <div id="admin-form" style="display:none;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:16px;margin-bottom:22px;">
+        <div id="admin-form-title" style="font-size:15px;font-weight:800;margin-bottom:12px;">Nouvelle affaire</div>
+        <label class="adm-l">Clé / identifiant (optionnel)</label>
+        <input id="af-key" class="adm-i" placeholder="ex : tony1">
+        <label class="adm-l">Nom de l'affaire — Accusé vs Accusateur</label>
+        <input id="af-name" class="adm-i" placeholder="ex : Tony vs Carmela">
+        <label class="adm-l">Série / Film</label>
+        <input id="af-serie" class="adm-i" placeholder="ex : Les Soprano">
+        <label class="adm-l">Qui accuse</label>
+        <input id="af-acc" class="adm-i" placeholder="ex : Carmela">
+        <label class="adm-l">Qui est accusé</label>
+        <input id="af-def" class="adm-i" placeholder="ex : Tony">
+        <label class="adm-l">Faits reprochés (l'accusation) *</label>
+        <textarea id="af-re" class="adm-i" rows="3" placeholder="Ce qu'on lui reproche exactement…"></textarea>
+        <label class="adm-l">Question / résumé (optionnel)</label>
+        <textarea id="af-q" class="adm-i" rows="2" placeholder="La question du duel…"></textarea>
+        <label class="adm-l">Dossier — contexte (optionnel)</label>
+        <textarea id="af-dos" class="adm-i" rows="4" placeholder="Le décor de l'affaire…"></textarea>
+        <label class="adm-l">Argument de défense suggéré (optionnel)</label>
+        <textarea id="af-bd" class="adm-i" rows="3"></textarea>
+        <label class="adm-l">Argument d'accusation suggéré (optionnel)</label>
+        <textarea id="af-ba" class="adm-i" rows="3"></textarea>
+        <label class="adm-check"><input type="checkbox" id="af-jm"> Mode juge (un seul joueur tranche)</label>
+        <div style="margin-top:16px;">
+          <button class="adm-b adm-bp" onclick="adminSaveCase()">Enregistrer</button>
+          <button class="adm-b" onclick="adminRender()">Annuler</button>
+        </div>
+        <div style="font-size:11px;color:rgba(255,255,255,.3);margin-top:10px;">* obligatoire. Champs vides : des textes par défaut sont utilisés.</div>
+      </div>
+
+      <!-- Export -->
+      <div id="admin-export" style="display:none;background:rgba(167,139,250,.06);border:1px solid rgba(167,139,250,.2);border-radius:16px;padding:16px;margin-bottom:22px;">
+        <div style="font-size:14px;font-weight:800;margin-bottom:8px;">Déployer pour tout le monde</div>
+        <div style="font-size:12px;color:rgba(255,255,255,.55);line-height:1.6;margin-bottom:10px;">Dans <b>app.js</b>, remplace la ligne qui commence par <b style="color:#A78BFA;">var ADMIN_DATA =</b> par le texte ci-dessous, puis commite sur GitHub. Tes affaires perso seront alors visibles par tous.</div>
+        <textarea id="admin-export-text" class="adm-i" rows="6" readonly onclick="this.select()" style="font-size:11px;font-family:monospace;"></textarea>
+      </div>
+
+      <div id="admin-list"></div>
+    </div>
+  </div>
+
+
+  <!-- HOME -->
+  <div class="P" id="home" style="background:#0a0a12;">
+    <div style="position:absolute;inset:0;overflow-y:scroll;scroll-snap-type:y mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none;" id="cards-wrap">
+      <style>#cards-wrap::-webkit-scrollbar{display:none;}</style>
+      <div id="cards-inner"></div>
+    </div>
+    <div class="tab" style="position:absolute;bottom:0;left:0;right:0;z-index:10;">
+      <div class="ti on" onclick="switchTab('home')"><span>Accueil</span></div>
+      <div class="ti" onclick="switchTab('verdicts')"><span>Verdicts</span></div>
+      <div class="ti" onclick="switchTab('profil')"><span>Profil</span></div>
+    </div>
+  </div>
+
+  <!-- VERDICTS -->
+  <div class="P" id="verdicts" style="background:#0a0a12;">
+    <div style="padding:56px 24px 12px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;">
+      <div style="font-size:13px;font-weight:800;color:rgba(255,255,255,0.2);letter-spacing:4px;">VERDICTS</div>
+      <div style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;color:#4ECB71;" id="vd-live">
+        <span style="width:6px;height:6px;border-radius:50%;background:#4ECB71;display:inline-block;animation:pulse 1.5s infinite;"></span>EN DIRECT
+      </div>
+    </div>
+    <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;" id="vd-feed"></div>
+    <div class="tab">
+      <div class="ti" onclick="switchTab('home')"><span>Accueil</span></div>
+      <div class="ti on" onclick="switchTab('verdicts')"><span>Verdicts</span></div>
+      <div class="ti" onclick="switchTab('profil')"><span>Profil</span></div>
+    </div>
+  </div>
+
+  <!-- PROFIL -->
+  <div class="P" id="profil" style="background:#0a0a12;">
+    <div style="flex:1;overflow-y:auto;">
+      <div style="padding:24px 20px 18px;background:linear-gradient(180deg,rgba(80,50,140,0.12) 0%,transparent 100%);">
+        <div style="font-size:11px;font-weight:800;color:#A78BFA;letter-spacing:3px;margin-bottom:14px;">VOS CLIENTS</div>
+        <div id="p-clients-grid" style="display:flex;flex-wrap:wrap;gap:12px;margin-bottom:18px;"></div>
+        <div style="font-size:13px;color:rgba(255,255,255,.5);margin-bottom:8px;">Affaires plaidées : <span id="p-duels-count" style="color:#fff;font-weight:800;">0</span></div>
+        <div style="height:8px;border-radius:4px;background:rgba(255,255,255,.06);overflow:hidden;margin-bottom:6px;"><div id="p-next-bar" style="height:100%;width:0%;background:linear-gradient(90deg,#A78BFA,#FF7A2E);border-radius:4px;transition:width .4s;"></div></div>
+        <div id="p-next-text" style="font-size:11px;color:rgba(255,255,255,.3);">Prochain client dans 3 affaires</div>
+      </div>
+      <div style="height:1px;background:rgba(255,255,255,0.04);margin:0 20px;"></div>
+      <div style="display:flex;align-items:center;padding:20px;gap:16px;">
+        <div id="p-avatar" style="width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,#c7a0d0,#FF7A2E);display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:900;color:#fff;flex-shrink:0;">?</div>
+        <div style="flex:1;">
+          <div style="font-size:21px;font-weight:900;color:#F0F0F5;" id="p-name">—</div>
+          <div style="font-size:12px;font-weight:700;color:#A78BFA;margin-top:2px;" id="p-client"></div>
+        </div>
+        <div style="padding:7px 16px;border-radius:10px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:rgba(255,255,255,0.4);font-size:12px;font-weight:700;cursor:pointer;">Modifier</div>
+      </div>
+      <div style="display:flex;gap:10px;padding:0 20px;margin-bottom:20px;">
+        <div style="flex:1;padding:16px 12px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.04);border-radius:16px;text-align:center;">
+          <div style="font-size:26px;font-weight:900;color:#FF7A2E;" id="p-w">0</div>
+          <div style="font-size:11px;color:rgba(255,255,255,0.3);margin-top:3px;">Victoires</div>
+        </div>
+        <div style="flex:1;padding:16px 12px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.04);border-radius:16px;text-align:center;">
+          <div style="font-size:26px;font-weight:900;color:#A78BFA;" id="p-d">0</div>
+          <div style="font-size:11px;color:rgba(255,255,255,0.3);margin-top:3px;">Duels</div>
+        </div>
+        <div style="flex:1;padding:16px 12px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.04);border-radius:16px;text-align:center;">
+          <div style="font-size:26px;font-weight:900;color:#FFD23F;" id="p-r">—</div>
+          <div style="font-size:11px;color:rgba(255,255,255,0.3);margin-top:3px;">Ratio</div>
+        </div>
+      </div>
+      <div style="font-size:16px;font-weight:900;padding:0 20px;margin-bottom:12px;color:#F0F0F5;">Historique</div>
+      <div id="p-history" style="padding:0 20px;"></div>
+      <div style="padding:8px 20px 28px;">
+        <button class="btn bs" style="padding:18px;font-size:16px;" onclick="logout()">Déconnexion</button>
+      </div>
+    </div>
+    <div class="tab">
+      <div class="ti" onclick="switchTab('home')"><span>Accueil</span></div>
+      <div class="ti" onclick="switchTab('verdicts')"><span>Verdicts</span></div>
+      <div class="ti on" onclick="switchTab('profil')"><span>Profil</span></div>
+    </div>
+  </div>
+
+  <!-- DUEL WAIT -->
+  <div class="P" id="duel-wait">
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;text-align:center;background:#0a0a12;">
+      <div style="font-size:11px;font-weight:800;color:rgba(255,255,255,0.25);letter-spacing:3px;margin-bottom:8px;" id="dw-series"></div>
+      <div style="font-size:24px;font-weight:900;margin-bottom:6px;" id="dw-name"></div>
+      <div style="font-size:13px;color:rgba(255,255,255,0.3);line-height:1.5;max-width:300px;margin-bottom:28px;" id="dw-q"></div>
+      <div style="display:flex;align-items:center;gap:20px;margin-bottom:22px;">
+        <div style="text-align:center;width:90px;">
+          <div id="dw-av-def" style="width:64px;height:64px;border-radius:50%;border:3px solid #4ECB71;background:rgba(78,203,113,0.06);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:900;color:#4ECB71;margin:0 auto 5px;">?</div>
+          <div style="font-size:9px;font-weight:800;color:#4ECB71;letter-spacing:1px;">DÉFENSE</div>
+          <div style="font-size:11px;color:#888;" id="dw-name-def">En attente…</div>
+        </div>
+        <div style="font-size:18px;font-weight:900;color:rgba(255,255,255,0.12);">VS</div>
+        <div style="text-align:center;width:90px;">
+          <div id="dw-av-acc" style="width:64px;height:64px;border-radius:50%;border:3px dashed rgba(255,255,255,0.12);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:900;color:rgba(255,255,255,0.12);margin:0 auto 5px;">?</div>
+          <div style="font-size:9px;font-weight:800;color:#FF4757;letter-spacing:1px;">ACCUSATION</div>
+          <div style="font-size:11px;color:#888;" id="dw-name-acc">En attente…</div>
+        </div>
+      </div>
+      <div style="font-size:13px;color:rgba(255,255,255,0.4);" id="dw-status">En attente d'un adversaire…</div>
+      <div style="font-size:13px;font-weight:700;color:#4ECB71;margin:6px 0;display:none;" id="dw-myrole"></div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.15);margin-bottom:18px;" id="dw-count">1 personne(s)</div>
+      <button style="padding:10px 30px;background:rgba(255,122,46,0.1);border:1.5px solid rgba(255,122,46,0.2);border-radius:12px;color:#FF7A2E;font-size:13px;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif;margin-bottom:8px;" onclick="shareRoom()">Inviter un ami</button>
+      <button class="btn bs" style="padding:10px 30px;margin-bottom:8px;" onclick="leaveDuel()">Retour</button>
+    </div>
+  </div>
+
+  <!-- DUEL DOSSIER -->
+  <div class="P" id="duel-dossier">
+    <div style="flex:1;display:flex;flex-direction:column;padding:16px;overflow-y:auto;background:#0a0a12;">
+      <div style="width:110px;height:110px;margin:8px auto;position:relative;">
+        <svg viewBox="0 0 100 100" style="width:100%;height:100%;transform:rotate(-90deg);">
+          <circle cx="50" cy="50" r="44" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="3.5"/>
+          <circle id="dd-ring" cx="50" cy="50" r="44" fill="none" stroke="url(#cg1)" stroke-width="3.5" stroke-linecap="round" stroke-dasharray="276.46" stroke-dashoffset="0"/>
+          <defs><linearGradient id="cg1" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#A78BFA"/><stop offset="100%" stop-color="#FF7A2E"/></linearGradient></defs>
+        </svg>
+        <div id="dd-timer" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:900;">—</div>
+      </div>
+      <div style="text-align:center;font-size:10px;color:rgba(255,255,255,0.2);letter-spacing:3px;margin-bottom:14px;">PRISE DE CONNAISSANCE</div>
+      <div id="dd-series-tag" style="display:inline-block;padding:4px 14px;background:rgba(255,255,255,0.06);border-radius:20px;font-size:11px;font-weight:700;color:rgba(255,255,255,0.4);margin-bottom:6px;align-self:flex-start;"></div>
+      <div id="dd-name" style="font-size:24px;font-weight:900;margin-bottom:4px;"></div>
+      <div id="dd-role" style="font-size:13px;font-weight:800;margin-bottom:16px;"></div>
+      <div style="padding:16px 18px;background:rgba(255,90,90,0.06);border:1px solid rgba(255,90,90,0.18);border-radius:16px;margin-bottom:12px;">
+        <div style="font-size:11px;font-weight:800;color:#FF6B6B;letter-spacing:2px;margin-bottom:8px;">⚖️ L'ACCUSATION</div>
+        <div id="dd-parties" style="font-size:15px;color:#fff;font-weight:700;margin-bottom:12px;line-height:1.4;"></div>
+        <div style="font-size:10px;font-weight:700;color:rgba(255,255,255,0.3);letter-spacing:1.5px;margin-bottom:5px;">FAITS REPROCHÉS</div>
+        <div id="dd-reproche" style="font-size:14px;color:rgba(255,255,255,0.72);line-height:1.6;font-weight:500;"></div>
+      </div>
+      <div style="padding:18px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:16px;margin-bottom:12px;">
+        <div style="font-size:11px;font-weight:800;color:#FFD23F;letter-spacing:2px;margin-bottom:10px;">📋 DOSSIER DE L'AFFAIRE</div>
+        <div id="dd-dos" style="font-size:14px;color:rgba(255,255,255,0.5);line-height:1.7;"></div>
+      </div>
+      <div style="padding:14px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.04);border-radius:12px;margin-bottom:16px;font-size:12px;color:rgba(255,255,255,0.35);">
+        <b style="color:#FFD23F;">Conseil :</b> Lisez attentivement. Vous aurez 2 min et 300 caractères.
+      </div>
+      <div style="margin-top:auto;">
+        <button class="btn bp2" onclick="goToSubmit()">Je suis prêt — Rédiger</button>
+        <button class="btn bs" style="margin-top:10px;" onclick="leaveDuel()">Retour</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- DUEL SUBMIT -->
+  <div class="P" id="duel-submit">
+    <div style="flex:1;display:flex;flex-direction:column;padding:14px;background:#0a0a12;">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
+        <div style="width:56px;height:56px;position:relative;flex-shrink:0;">
+          <svg viewBox="0 0 100 100" style="width:100%;height:100%;transform:rotate(-90deg);">
+            <circle cx="50" cy="50" r="44" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="4"/>
+            <circle id="ds-ring" cx="50" cy="50" r="44" fill="none" stroke="url(#cg1)" stroke-width="4" stroke-linecap="round" stroke-dasharray="276.46" stroke-dashoffset="0"/>
+          </svg>
+          <div id="ds-timer" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:900;">—</div>
+        </div>
+        <div style="flex:1;">
+          <div id="ds-role2" style="font-size:14px;font-weight:800;"></div>
+          <div id="ds-case-name" style="font-size:11px;color:#888;"></div>
+        </div>
+        <div id="ds-opp-status" style="padding:5px 12px;border-radius:16px;background:rgba(78,203,113,0.06);font-size:10px;font-weight:700;display:none;color:#4ECB71;"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+        <div id="ds-count" style="font-size:12px;color:#FF7A2E;">0 / 300</div>
+        <div style="font-size:12px;color:#555;">Soyez percutant</div>
+      </div>
+      <textarea id="ds-arg" maxlength="300" placeholder="Votre argument en 300 caractères..." style="flex:1;width:100%;padding:16px;background:rgba(255,255,255,0.025);border:1.5px solid rgba(255,255,255,0.06);border-radius:14px;color:#fff;font-size:15px;resize:none;font-family:'Outfit',sans-serif;line-height:1.6;min-height:200px;" oninput="document.getElementById('ds-count').textContent=this.value.length+' / 300';"></textarea>
+      <div style="margin-top:10px;">
+        <button class="btn bp2" onclick="submitArgument()">Soumettre mon argument</button>
+        <button class="btn bs" style="margin-top:10px;" onclick="leaveDuel()">Retour</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- DUEL VOTE -->
+  <div class="P" id="duel-vote">
+    <div style="flex:1;padding:16px;overflow-y:auto;background:#0a0a12;">
+      <div style="font-size:10px;font-weight:800;color:rgba(255,255,255,0.2);letter-spacing:3px;text-align:center;margin-bottom:6px;">VERDICT</div>
+      <div id="dv-name" style="font-size:22px;font-weight:900;text-align:center;margin-bottom:14px;"></div>
+      <div style="display:flex;gap:8px;margin-bottom:10px;">
+        <div style="flex:1;padding:12px;background:rgba(78,203,113,0.04);border:1.5px solid rgba(78,203,113,0.12);border-radius:14px;">
+          <div id="dv-def-name" style="font-size:10px;font-weight:800;color:#4ECB71;margin-bottom:5px;">Défense</div>
+          <div id="dv-def-arg" style="font-size:12px;color:#888;line-height:1.5;">…</div>
+        </div>
+        <div style="flex:1;padding:12px;background:rgba(255,71,87,0.04);border:1.5px solid rgba(255,71,87,0.12);border-radius:14px;">
+          <div id="dv-acc-name" style="font-size:10px;font-weight:800;color:#FF4757;margin-bottom:5px;">Accusation</div>
+          <div id="dv-acc-arg" style="font-size:12px;color:#888;line-height:1.5;">…</div>
+        </div>
+      </div>
+      <div id="dv-vote-info" style="text-align:center;font-size:11px;color:#555;margin-bottom:10px;">0 votes</div>
+      <div id="dv-buttons" style="display:flex;gap:8px;margin-bottom:10px;">
+        <button style="flex:1;padding:14px;border-radius:14px;border:2px solid #4ECB71;background:rgba(78,203,113,0.04);color:#4ECB71;font-size:16px;font-weight:800;cursor:pointer;font-family:'Outfit',sans-serif;" onclick="vote('defense')">Défense</button>
+        <button style="flex:1;padding:14px;border-radius:14px;border:2px solid #FF4757;background:rgba(255,71,87,0.04);color:#FF4757;font-size:16px;font-weight:800;cursor:pointer;font-family:'Outfit',sans-serif;" onclick="vote('accusation')">Accusation</button>
+      </div>
+      <div id="dv-voted" style="display:none;text-align:center;padding:12px;color:#FFD23F;font-weight:800;">Vote enregistré !</div>
+      <button id="dv-next" class="btn bp" style="margin-top:10px;display:none;" onclick="nextCase()">Affaire suivante →</button>
+      <button id="dv-account" class="btn bp" style="margin-top:10px;display:none;" onclick="go('account-wall')">Créer un compte pour continuer</button>
+      <button class="btn bs" style="margin-top:8px;" onclick="shareVerdict()">Partager mon verdict</button>
+      <button class="btn bs" style="margin-top:6px;" onclick="leaveDuel()">Retour</button>
+    </div>
+  </div>
+
+  <!-- JUDGE MODE -->
+  <div class="P" id="judge-mode">
+    <div style="flex:1;display:flex;flex-direction:column;padding:16px;overflow-y:auto;background:#0a0a12;">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+        <div style="width:56px;height:56px;position:relative;flex-shrink:0;">
+          <svg viewBox="0 0 100 100" style="width:100%;height:100%;transform:rotate(-90deg);">
+            <circle cx="50" cy="50" r="44" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="4"/>
+            <circle id="jm-ring" cx="50" cy="50" r="44" fill="none" stroke="url(#cg1)" stroke-width="4" stroke-linecap="round" stroke-dasharray="276.46" stroke-dashoffset="0"/>
+          </svg>
+          <div id="jm-timer" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:900;">—</div>
+        </div>
+        <div>
+          <div style="font-size:10px;font-weight:800;color:#FFD23F;letter-spacing:2px;">MODE JUGE</div>
+          <div id="jm-name" style="font-size:16px;font-weight:900;"></div>
+        </div>
+      </div>
+      <div id="jm-question" style="font-size:12px;color:#666;margin-bottom:12px;line-height:1.4;"></div>
+      <div style="display:flex;gap:8px;margin-bottom:12px;">
+        <div style="flex:1;padding:12px;background:rgba(78,203,113,0.04);border:1px solid rgba(78,203,113,0.1);border-radius:12px;">
+          <div style="font-size:10px;font-weight:800;color:#4ECB71;margin-bottom:4px;">DÉFENSE</div>
+          <div id="jm-def" style="font-size:12px;color:#888;line-height:1.5;">…</div>
+        </div>
+        <div style="flex:1;padding:12px;background:rgba(255,71,87,0.04);border:1px solid rgba(255,71,87,0.1);border-radius:12px;">
+          <div style="font-size:10px;font-weight:800;color:#FF4757;margin-bottom:4px;">ACCUSATION</div>
+          <div id="jm-acc" style="font-size:12px;color:#888;line-height:1.5;">…</div>
+        </div>
+      </div>
+      <textarea id="jm-motiv" maxlength="600" placeholder="Motivez votre décision (600 car.)..." style="width:100%;padding:14px;background:rgba(255,255,255,0.025);border:1.5px solid rgba(255,255,255,0.06);border-radius:14px;color:#fff;font-size:14px;resize:none;font-family:'Outfit',sans-serif;min-height:120px;line-height:1.6;" oninput="document.getElementById('jm-count').textContent=this.value.length+'/600';"></textarea>
+      <div style="font-size:11px;color:#555;margin:6px 0;text-align:right;" id="jm-count">0/600</div>
+      <div style="font-size:12px;font-weight:700;color:rgba(255,255,255,0.3);margin-bottom:8px;text-align:center;">Quel est votre verdict ?</div>
+      <div style="display:flex;gap:8px;margin-bottom:12px;">
+        <button id="jm-btn-nc" style="flex:1;padding:12px;border-radius:14px;border:2px solid rgba(78,203,113,0.2);background:transparent;color:#4ECB71;font-size:14px;font-weight:800;cursor:pointer;font-family:'Outfit',sans-serif;" onclick="selectJudgeVerdict('NON COUPABLE')">Non coupable</button>
+        <button id="jm-btn-c" style="flex:1;padding:12px;border-radius:14px;border:2px solid rgba(255,71,87,0.2);background:transparent;color:#FF4757;font-size:14px;font-weight:800;cursor:pointer;font-family:'Outfit',sans-serif;" onclick="selectJudgeVerdict('COUPABLE')">Coupable</button>
+      </div>
+      <button class="btn bp2" onclick="judgeDecision()">Soumettre mon verdict</button>
+      <button class="btn bs" style="margin-top:10px;" onclick="clearInterval(judgeI);go('home')">Retour</button>
+    </div>
+  </div>
+
+
+  <!-- BANNIÈRE INVITÉ (apparaît après le premier duel) -->
+  <div class="guest-banner" id="guest-banner">
+    <div class="guest-banner-text"><strong>Sauvegardez vos victoires.</strong><br>Créez un compte gratuit.</div>
+    <button class="guest-banner-btn" onclick="go('signup');document.getElementById('guest-banner').classList.remove('show')">Créer un compte</button>
+  </div>
+
+</div>
+
+<script src="app.js?v=19"></script>
+<script>
+// ======================
+// MODE INVITÉ
+// ======================
+function goGuest() {
+  go('guest-name');
+  setTimeout(function() {
+    var inp = document.getElementById('guest-n');
+    if (inp) inp.focus();
+  }, 300);
+}
+
+function doGuest() {
+  var n = document.getElementById('guest-n').value.trim();
+  if (!n) {
+    document.getElementById('guest-n').placeholder = 'Entrez votre prénom';
+    document.getElementById('guest-n').style.borderColor = '#FF4757';
+    return;
+  }
+  me.name = n;
+  me.email = '';
+  me.wins = 0;
+  me.duels = 0;
+  me.cabName = n + ' & associé';
+  me.cabId = '';
+  me.onboarded = false;
+  myUid = 'guest_' + Math.random().toString(36).substr(2, 9);
+  buildClientSelect();
+  go('client-select');
+}
+
+// Afficher la bannière invité après un duel en mode invité
+function showGuestBanner() {
+  if (!me.email && me.name) {
+    var banner = document.getElementById('guest-banner');
+    if (banner) banner.classList.add('show');
+  }
+}
+
+// ======================
+// FIREBASE & INIT
+// ======================
+function loadFirebase() {
+  return new Promise(function(resolve, reject) {
+    var s1 = document.createElement('script');
+    s1.src = 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js';
+    s1.onload = function() {
+      var s2 = document.createElement('script');
+      s2.src = 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js';
+      s2.onload = function() {
+        try {
+          firebase.initializeApp({
+            apiKey: 'AIzaSyCAsL1P1YDGWfZMBzQdZdp4xd6zjgoGK9g',
+            databaseURL: 'https://guette-a9b5d-default-rtdb.europe-west1.firebasedatabase.app',
+            projectId: 'guette-a9b5d'
+          });
+          window.db = firebase.database();
+          resolve();
+        } catch(e) { reject(e); }
+      };
+      s2.onerror = reject;
+      document.head.appendChild(s2);
+    };
+    s1.onerror = reject;
+    document.head.appendChild(s1);
+  });
+}
+
+async function initApp() {
+  try {
+    await loadFirebase();
+    window.firebaseLoaded = true;
+  } catch(e) {
+    console.error('Firebase error:', e);
+    window.firebaseLoaded = false;
+  }
+  var _isAdmin = (window.location.hash || '').toLowerCase().indexOf('admin') > -1;
+  if (_isAdmin && typeof openAdminGate === 'function') {
+    if ('serviceWorker' in navigator) { try { navigator.serviceWorker.register('./sw.js'); } catch(e) {} }
+    openAdminGate();
+    return;
+  }
+  initMainApp();
+}
+
+initApp();
+</script>
+</body>
+</html>
