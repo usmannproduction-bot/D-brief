@@ -302,7 +302,7 @@ function goToSubmitOnboarding() {
   clearInterval(prepI);
   var c = CASES[curCase];
   document.getElementById('ds-arg').value = '';
-  document.getElementById('ds-count').textContent = '0 / 300';
+  document.getElementById('ds-count').textContent = '0 caractères';
   var cn = c.n.split(' vs ');
   document.getElementById('ds-role2').textContent = 'DÉFENSE — Vous défendez ' + cn[1];
   document.getElementById('ds-role2').style.color = '#4ECB71';
@@ -493,7 +493,7 @@ function joinDuel(id) {
 
   currentRoom = null;
   document.getElementById('ds-arg').value = '';
-  document.getElementById('ds-count').textContent = '0 / 300';
+  document.getElementById('ds-count').textContent = '0 caractères';
   document.getElementById('ds-opp-status').style.display = 'none';
   document.getElementById('dw-series').textContent = c.t.toUpperCase();
   document.getElementById('dw-name').textContent = c.n;
@@ -617,7 +617,7 @@ function goToSubmit() {
   var c = CASES[curCase];
   var cn = c.n.split(' vs ');
   document.getElementById('ds-arg').value = '';
-  document.getElementById('ds-count').textContent = '0 / 300';
+  document.getElementById('ds-count').textContent = '0 caractères';
   document.getElementById('ds-role2').textContent = myRole === 'defense' ? 'DÉFENSE — Vous défendez ' + cn[0] : 'ACCUSATION — Vous accusez ' + cn[0];
   document.getElementById('ds-role2').style.color = myRole === 'defense' ? '#4ECB71' : '#FF4757';
   document.getElementById('ds-case-name').textContent = c.n;
