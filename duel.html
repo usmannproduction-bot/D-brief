@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<title>D'brief — le prétoire</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0a12; --surf:#15151f; --surf2:#1b1b27; --line:#2a2a38;
+    --txt:#f2f2f6; --mut:#9a9aa6;
+    --o:#ff7a2e; --p:#ff4e8a; --v:#a24bfa; --bl:#5b8def;
+    --grad:linear-gradient(90deg,var(--o),var(--p),var(--v));
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0}
+  body{
+    background:
+      radial-gradient(55% 38% at 14% 10%, rgba(255,122,46,.20), transparent 60%),
+      radial-gradient(55% 38% at 88% 8%, rgba(162,75,250,.20), transparent 60%),
+      radial-gradient(80% 45% at 50% 102%, rgba(255,78,138,.13), transparent 60%),
+      var(--bg);
+    background-attachment:fixed;color:var(--txt);
+    font-family:"Outfit",system-ui,-apple-system,sans-serif;min-height:100vh;
+  }
+  .wrap{max-width:440px;margin:0 auto;padding:20px 16px 36px;position:relative}
+  .screen{display:none}
+  .screen.on{display:block}
+
+  /* HOME */
+  .brand{font-weight:900;font-size:24px;letter-spacing:-.01em;margin-bottom:16px;
+    background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .rankbar{display:flex;align-items:center;gap:12px;background:var(--surf);border:1px solid var(--line);
+    border-radius:16px;padding:14px 16px}
+  .rankbar .rk{font-weight:900;font-size:17px}
+  .rankbar .rec{margin-left:auto;color:var(--mut);font-weight:700;font-size:14px}
+  .hhead{font-size:26px;font-weight:900;margin:26px 0 4px;letter-spacing:-.01em}
+  .hsub{color:var(--mut);font-size:15px;margin-bottom:18px}
+  .grid{display:flex;flex-direction:column;gap:14px}
+  .ccard{position:relative;text-align:left;width:100%;cursor:pointer;border:1px solid var(--line);
+    border-radius:18px;padding:20px 18px 20px 26px;color:var(--txt);font-family:inherit;background:var(--surf);
+    overflow:hidden;transition:transform .12s ease}
+  .ccard:active{transform:scale(.99)}
+  .ccard:focus-visible{outline:2px solid var(--p);outline-offset:3px}
+  .ccard .accent{position:absolute;left:0;top:0;bottom:0;width:6px}
+  .ccard .cl{font-size:22px;font-weight:900;letter-spacing:-.01em}
+  .ccard .sr{font-size:12px;font-weight:800;color:var(--mut);text-transform:uppercase;letter-spacing:.08em;margin-top:3px}
+  .ccard .ch{font-size:14px;color:#bdbdc8;margin-top:11px;line-height:1.32;padding-right:24px}
+  .ccard .go{position:absolute;right:16px;top:50%;transform:translateY(-50%);font-size:26px;color:#6b6b78;font-weight:700}
+
+  /* GAME */
+  .back{background:none;border:0;color:var(--mut);font-family:inherit;font-weight:700;font-size:15px;
+    cursor:pointer;padding:6px 0;margin-bottom:6px}
+  .eyebrow{font-size:13px;letter-spacing:.14em;color:var(--mut);font-weight:600;text-transform:uppercase}
+  .title{font-size:30px;font-weight:900;letter-spacing:-.01em;margin:4px 0 0;line-height:1.05}
+  .hrow{display:flex;gap:10px;align-items:center;margin-top:12px}
+  .badge{font-size:12px;font-weight:800;letter-spacing:.08em;color:var(--mut);
+    background:var(--surf);border:1px solid var(--line);padding:6px 12px;border-radius:999px}
+
+  .gauge{margin-top:24px}
+  .glabel{display:flex;justify-content:space-between;font-size:14px;font-weight:800;margin-bottom:10px}
+  .glabel .d{color:#ffb38a}
+  .glabel .a{color:var(--mut)}
+  .gtrack{position:relative;height:18px;border-radius:999px;background:#1d1d29;border:1px solid #25252f}
+  .gfill{height:100%;width:50%;border-radius:999px;background:var(--grad);transition:width .65s cubic-bezier(.34,1.2,.5,1)}
+  .gmarker{position:absolute;top:50%;width:26px;height:26px;border-radius:50%;background:#fff;border:4px solid #ff8a55;
+    transform:translate(-50%,-50%);left:50%;transition:left .65s cubic-bezier(.34,1.2,.5,1);box-shadow:0 0 14px rgba(255,122,46,.6)}
+  .pop{position:absolute;top:-6px;left:50%;transform:translateX(-50%);font-weight:900;font-size:18px;color:#fff;
+    background:#1ec878;padding:4px 12px;border-radius:10px;opacity:0;pointer-events:none}
+  .pop.go{animation:pop 1s ease forwards}
+  @keyframes pop{0%{opacity:0;transform:translate(-50%,6px) scale(.8)}25%{opacity:1;transform:translate(-50%,-14px) scale(1.05)}
+    80%{opacity:1;transform:translate(-50%,-22px)}100%{opacity:0;transform:translate(-50%,-34px)}}
+
+  .speak{margin-top:26px;background:var(--surf);border:1px solid var(--line);border-radius:18px;
+    padding:18px 20px 20px;border-left:6px solid #6a6a78;transition:border-color .3s}
+  .speak.you{border-left-color:var(--p)}
+  .speak.late{border-left-color:#ff5a72}
+  .who{font-size:13px;font-weight:800;letter-spacing:.04em;color:var(--mut);margin-bottom:8px;text-transform:uppercase}
+  .speak.you .who{color:#ff9ec0}
+  .speak.late .who{color:#ff8a99}
+  .line{font-size:18px;line-height:1.35;color:#e7e7ee}
+  .fade{animation:fade .35s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+
+  .turn{text-align:center;font-weight:900;font-size:18px;letter-spacing:.06em;margin:24px 0 12px;
+    background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+
+  .timer{display:flex;align-items:center;gap:12px;margin:0 0 16px;opacity:0;transition:opacity .3s}
+  .timer.on{opacity:1}
+  .tnum{font-weight:900;font-size:16px;color:#bdbdc8;min-width:44px;font-variant-numeric:tabular-nums}
+  .tbar{flex:1;height:8px;border-radius:999px;background:#1d1d29;overflow:hidden;border:1px solid #25252f}
+  .tfill{height:100%;width:100%;background:linear-gradient(90deg,#3fb6a0,#5b8def)}
+  .timer.urgent .tnum{color:#ff5a72;animation:tpulse .7s ease-in-out infinite}
+  .timer.urgent .tfill{background:linear-gradient(90deg,#ff5a72,#ff7a2e)}
+  @keyframes tpulse{0%,100%{transform:scale(1)}50%{transform:scale(1.14)}}
+  .reading{text-align:center;color:var(--mut);font-weight:600;font-size:15px;padding:26px 0}
+
+  #cards{display:flex;flex-direction:column;gap:14px}
+  .card{position:relative;text-align:left;width:100%;cursor:pointer;background:var(--surf);
+    border:1px solid var(--line);border-radius:18px;padding:20px 18px 20px 26px;color:var(--txt);font-family:inherit;
+    transition:transform .12s ease, box-shadow .2s ease, opacity .25s ease}
+  .card .bar{position:absolute;left:14px;top:22px;bottom:22px;width:5px;border-radius:6px}
+  .card .head{display:flex;align-items:center;gap:12px}
+  .card .dot{width:11px;height:11px;border-radius:50%;flex:0 0 auto}
+  .card .lab{font-size:19px;font-weight:800;letter-spacing:-.01em}
+  .card .prev{display:block;margin-top:10px;color:var(--mut);font-size:15px;line-height:1.3;font-weight:500}
+  .card .chev{position:absolute;right:18px;top:50%;transform:translateY(-50%);color:#6b6b78;font-size:26px;font-weight:700}
+  .card:active{transform:scale(.985)}
+  .card:focus-visible{outline:2px solid var(--p);outline-offset:3px}
+  .card.reco{border-color:transparent;background:linear-gradient(var(--surf2),var(--surf2)) padding-box,var(--grad) border-box;
+    box-shadow:0 0 28px rgba(255,90,140,.35);animation:pulse 1.8s ease-in-out infinite}
+  .card.reco .play{position:absolute;right:16px;bottom:16px;font-size:14px;font-weight:800;color:#fff;
+    background:var(--grad);padding:7px 14px;border-radius:999px}
+  .card.reco .chev{display:none}
+  @keyframes pulse{0%,100%{box-shadow:0 0 22px rgba(255,90,140,.28)}50%{box-shadow:0 0 34px rgba(255,90,140,.55)}}
+  .card.picked{background:var(--grad);border-color:transparent;animation:none;transform:scale(1.02);box-shadow:0 0 34px rgba(255,90,140,.5)}
+  .card.picked .prev,.card.picked .lab{color:#fff}
+  .card.picked .dot,.card.picked .bar{background:#fff!important}
+  .card.dim{opacity:.32}
+
+  .verdict{position:fixed;inset:0;background:rgba(8,8,14,.82);backdrop-filter:blur(6px);display:flex;
+    align-items:center;justify-content:center;padding:24px;opacity:0;pointer-events:none;transition:opacity .4s ease}
+  .verdict.show{opacity:1;pointer-events:auto}
+  .vcard{max-width:380px;width:100%;text-align:center;transform:translateY(14px) scale(.96);
+    transition:transform .5s cubic-bezier(.34,1.3,.5,1)}
+  .verdict.show .vcard{transform:none}
+  .vkick{color:var(--mut);font-weight:800;letter-spacing:.14em;font-size:14px;text-transform:uppercase}
+  .vbig{font-size:54px;font-weight:900;margin:10px 0 6px;letter-spacing:-.02em;
+    background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .vbig.lose{background:linear-gradient(90deg,#7a7a88,#9a9aa6);-webkit-background-clip:text;background-clip:text}
+  .vsub{font-size:20px;color:#dcdce4;font-weight:600}
+  .vbar{height:14px;border-radius:999px;background:#1d1d29;margin:20px 0 8px;overflow:hidden;border:1px solid #25252f}
+  .vbar i{display:block;height:100%;width:0;background:var(--grad);transition:width 1s ease .25s}
+  .vrank{margin:14px 0 18px;font-weight:800;color:#ffd27a;font-size:16px;min-height:20px}
+  .vrow{display:flex;gap:10px}
+  .btn{font-family:inherit;font-size:16px;font-weight:800;color:#fff;border:0;cursor:pointer;
+    background:var(--grad);padding:14px 18px;border-radius:999px;flex:1}
+  .btn:focus-visible{outline:2px solid #fff;outline-offset:3px}
+  .btn.ghost{background:var(--surf);border:1px solid var(--line);color:var(--txt)}
+  @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ACCUEIL -->
+  <div class="screen on" id="home">
+    <div class="brand">D'brief</div>
+    <div class="rankbar">
+      <span class="rk" id="rk">Novice</span>
+      <span class="rec" id="rec">0 V · 0 D</span>
+    </div>
+    <div class="hhead">Choisis ton client</div>
+    <div class="hsub">Défends-le. 3 manches, 50 secondes par tour. Le public tranche.</div>
+    <div class="grid" id="grid"></div>
+  </div>
+
+  <!-- DUEL -->
+  <div class="screen" id="game">
+    <button class="back" id="back">‹ Quitter</button>
+    <div class="eyebrow" id="eyebrow">Affaire</div>
+    <h1 class="title" id="title">Client</h1>
+    <div class="hrow"><span class="badge" id="manche">Manche 1/3</span></div>
+
+    <section class="gauge">
+      <div class="glabel">
+        <span class="d">Défense <span id="dPct">50%</span></span>
+        <span class="a">Accusation <span id="aPct">50%</span></span>
+      </div>
+      <div class="gtrack">
+        <div class="gfill" id="gfill"></div>
+        <div class="gmarker" id="gmark"></div>
+        <span class="pop" id="pop">+6%</span>
+      </div>
+    </section>
+
+    <section class="speak" id="speak">
+      <div class="who" id="who">Adversaire · Avocat du barreau</div>
+      <div class="line" id="line"></div>
+    </section>
+
+    <div class="turn" id="turn">À toi de plaider</div>
+    <div class="timer" id="timer">
+      <span class="tnum" id="tnum">0:50</span>
+      <span class="tbar"><span class="tfill" id="tfill"></span></span>
+    </div>
+    <section id="cards"></section>
+  </div>
+</div>
+
+<!-- VERDICT -->
+<div class="verdict" id="verdict">
+  <div class="vcard">
+    <div class="vkick">Le public a tranché</div>
+    <div class="vbig" id="vbig">Vous gagnez</div>
+    <div class="vsub" id="vsub"></div>
+    <div class="vbar"><i id="vfill"></i></div>
+    <div class="vrank" id="vrank"></div>
+    <div class="vrow">
+      <button class="btn ghost" id="tohome">Accueil</button>
+      <button class="btn" id="replay">Rejouer</button>
+    </div>
+  </div>
+</div>
+
+<script>
+var SEC=50;
+var P="#ff4e8a", BL="#5b8def", V="#a24bfa", O="#ff7a2e";
+
+var CASES={
+  ghost:{ client:"Ghost", serie:"Power", accent:"#a24bfa",
+    charge:"Accusé d'avoir commandité des meurtres pour protéger son empire.",
+    rounds:[
+      { opp:"Ghost a commandité des meurtres de sang-froid. L'ambition n'excuse pas le sang versé.",
+        cards:[
+          {lab:"L'appel à l'émotion", prev:"Il a tout risqué pour sortir sa famille de la rue.", c:P, imp:9, reco:true},
+          {lab:"La logique implacable", prev:"Aucune preuve directe ne le relie à ces ordres.", c:BL, imp:6},
+          {lab:"Le retournement", prev:"Le vrai coupable, c'est le système qui l'a créé.", c:V, imp:5}
+        ]},
+      { opp:"De beaux mots. Mais Tommy, Angela, tous ceux qu'il a trahis diraient le contraire.",
+        cards:[
+          {lab:"L'aveu sincère", prev:"Oui, il a fauté. Mais il n'a jamais cessé de protéger les siens.", c:P, imp:8},
+          {lab:"La comparaison", prev:"Qui, dans ce milieu, a les mains plus propres que lui ?", c:BL, imp:7},
+          {lab:"L'attaque frontale", prev:"Vous le jugez sans avoir vécu une seule de ses nuits.", c:O, imp:10}
+        ]},
+      { opp:"Pour conclure : un homme qui tue pour garder son trône n'est pas un père, c'est un tyran.",
+        cards:[
+          {lab:"La péroraison", prev:"Ghost n'est pas un saint. C'est un homme qui a aimé trop fort.", c:P, imp:11, reco:true},
+          {lab:"L'appel au juré", prev:"Vous aussi, vous auriez tout fait pour les vôtres.", c:V, imp:9},
+          {lab:"Le doute", prev:"Dans le doute, on n'envoie pas un père au bûcher.", c:BL, imp:8}
+        ]}
+    ]},
+
+  walter:{ client:"Walter White", serie:"Breaking Bad", accent:"#2ecf6a",
+    charge:"Accusé d'avoir bâti un empire de la drogue et détruit tout son entourage.",
+    rounds:[
+      { opp:"Walter a empoisonné un enfant et laissé mourir une femme. Tout ça par pur orgueil.",
+        cards:[
+          {lab:"L'appel à l'émotion", prev:"Il voulait laisser un avenir à sa famille avant de mourir.", c:P, imp:9, reco:true},
+          {lab:"La logique implacable", prev:"Un homme condamné par le cancer agit sous la contrainte.", c:BL, imp:6},
+          {lab:"Le retournement", prev:"C'est un pays qui abandonne ses malades qui l'a poussé là.", c:V, imp:6}
+        ]},
+      { opp:"Sa famille ? Il a terrorisé Skyler et entraîné Jesse dans l'enfer.",
+        cards:[
+          {lab:"L'aveu sincère", prev:"Il a basculé, c'est vrai. Mais l'amour des siens fut son moteur.", c:P, imp:8},
+          {lab:"La comparaison", prev:"Combien, à sa place et condamnés, garderaient les mains propres ?", c:BL, imp:7},
+          {lab:"L'attaque frontale", prev:"Vous le jugez du confort de votre fauteuil.", c:O, imp:9}
+        ]},
+      { opp:"Pour conclure : Heisenberg n'était pas un père. C'était un monstre assoiffé de pouvoir.",
+        cards:[
+          {lab:"La péroraison", prev:"Walter a aimé, a eu peur, a fauté. Un homme, jamais un monstre.", c:P, imp:11, reco:true},
+          {lab:"L'appel au juré", prev:"Qui n'a jamais rêvé de compter, d'exister, avant de partir ?", c:V, imp:9},
+          {lab:"Le doute", prev:"Dans le doute, on ne condamne pas un mourant.", c:BL, imp:8}
+        ]}
+    ]},
+
+  assane:{ client:"Assane Diop", serie:"Lupin", accent:"#3a7bd5",
+    charge:"Accusé de vols, d'usurpations d'identité et de manipulations en série.",
+    rounds:[
+      { opp:"Assane n'est qu'un voleur. Il ment, il manipule et il dérobe sans le moindre remords.",
+        cards:[
+          {lab:"L'appel à l'émotion", prev:"Tout ce qu'il fait, c'est pour laver l'honneur de son père.", c:P, imp:9, reco:true},
+          {lab:"La logique implacable", prev:"Il n'a jamais versé une seule goutte de sang.", c:BL, imp:7},
+          {lab:"Le retournement", prev:"Les vrais voleurs, ce sont les puissants qu'il défie.", c:V, imp:7}
+        ]},
+      { opp:"De beaux principes. Mais ses proches paient toujours le prix de ses ruses.",
+        cards:[
+          {lab:"L'aveu sincère", prev:"Il risque sa propre liberté pour ceux qu'il aime.", c:P, imp:8},
+          {lab:"La comparaison", prev:"Un Robin des Bois moderne mérite-t-il la prison ?", c:BL, imp:8},
+          {lab:"L'attaque frontale", prev:"Vous défendez ceux qui ont broyé son père.", c:O, imp:9}
+        ]},
+      { opp:"Pour conclure : aussi élégant soit-il, un criminel reste un criminel.",
+        cards:[
+          {lab:"La péroraison", prev:"Assane ne vole pas par avidité, mais par fidélité. Un fils, pas un bandit.", c:P, imp:11, reco:true},
+          {lab:"L'appel au juré", prev:"Vous aussi, vous vous battriez pour la mémoire d'un parent.", c:V, imp:9},
+          {lab:"Le doute", prev:"Le doute profite à celui dont les intentions sont nobles.", c:BL, imp:8}
+        ]}
+    ]}
+};
+var ORDER=["ghost","walter","assane"];
+var RANKS=[[0,"Novice"],[2,"Plaideur"],[5,"Ténor du barreau"],[10,"Maître"],[20,"Bâtonnier"]];
+
+var meter=50, cur=0, busy=false, tmr=null, left=SEC, curId=null, CUR=null, mem=null;
+var $=function(id){return document.getElementById(id)};
+function clamp(v){return Math.max(3,Math.min(97,v))}
+function rnd(a,b){return Math.floor(Math.random()*(b-a+1))+a}
+function fmt(s){return "0:"+(s<10?"0":"")+s}
+function rankOf(w){var n="Novice";for(var i=0;i<RANKS.length;i++){if(w>=RANKS[i][0])n=RANKS[i][1];}return n;}
+
+function loadStats(){
+  try{ var s=JSON.parse(localStorage.getItem("dbrief_stats")); if(s) return s; }catch(e){}
+  if(mem) return mem; return {wins:0,losses:0};
+}
+function saveStats(s){ mem=s; try{ localStorage.setItem("dbrief_stats",JSON.stringify(s)); }catch(e){} }
+
+/* ---------- ACCUEIL ---------- */
+function renderHome(){
+  var s=loadStats();
+  $("rk").textContent=rankOf(s.wins);
+  $("rec").textContent=s.wins+" V · "+s.losses+" D";
+  var g=$("grid"); g.innerHTML="";
+  for(var i=0;i<ORDER.length;i++){
+    (function(id){
+      var c=CASES[id];
+      var b=document.createElement("button");
+      b.className="ccard";
+      b.innerHTML='<span class="accent" style="background:'+c.accent+'"></span>'+
+        '<span class="cl">'+c.client+'</span>'+
+        '<span class="sr">'+c.serie+'</span>'+
+        '<span class="ch">'+c.charge+'</span>'+
+        '<span class="go">›</span>';
+      b.onclick=function(){ startCase(id); };
+      g.appendChild(b);
+    })(ORDER[i]);
+  }
+  $("home").classList.add("on");
+  $("game").classList.remove("on");
+  $("verdict").classList.remove("show");
+}
+
+/* ---------- DUEL ---------- */
+function startCase(id){
+  stopTimer(); curId=id; CUR=CASES[id]; meter=50; cur=0; busy=false;
+  $("eyebrow").textContent="Affaire · "+CUR.serie;
+  $("title").textContent="Vous défendez "+CUR.client;
+  $("verdict").classList.remove("show"); $("vfill").style.width="0"; $("vrank").textContent="";
+  $("home").classList.remove("on");
+  $("game").classList.add("on");
+  paintGauge(); renderRound();
+}
+
+function paintGauge(){
+  $("gfill").style.width=meter+"%"; $("gmark").style.left=meter+"%";
+  $("dPct").textContent=Math.round(meter)+"%"; $("aPct").textContent=Math.round(100-meter)+"%";
+}
+function popDelta(d){
+  var pop=$("pop"); pop.style.left=meter+"%"; pop.textContent=(d>=0?"+":"")+d+"%";
+  pop.style.background=d>=0?"#1ec878":"#e0556a";
+  pop.classList.remove("go"); void pop.offsetWidth; pop.classList.add("go");
+}
+function setSpeak(who,line,kind){
+  $("who").textContent=who; $("line").textContent=line;
+  var s=$("speak"); s.className="speak"+(kind?(" "+kind):"")+" fade";
+  void s.offsetWidth; s.classList.add("fade");
+}
+function stopTimer(){ if(tmr){clearInterval(tmr); tmr=null;} }
+function startTimer(){
+  stopTimer(); left=SEC;
+  var t=$("timer"); t.classList.add("on"); t.classList.remove("urgent");
+  $("tnum").textContent=fmt(left);
+  var f=$("tfill"); f.style.transition="none"; f.style.width="100%"; void f.offsetWidth;
+  f.style.transition="width "+SEC+"s linear"; f.style.width="0%";
+  tmr=setInterval(function(){
+    left--; $("tnum").textContent=fmt(Math.max(0,left));
+    if(left<=10) t.classList.add("urgent");
+    if(left<=0){ stopTimer(); timeUp(); }
+  },1000);
+}
+function buildCards(r){
+  var box=$("cards"); box.innerHTML="";
+  r.cards.forEach(function(card,i){
+    var b=document.createElement("button");
+    b.className="card"+(card.reco?" reco":"");
+    b.innerHTML='<span class="bar" style="background:'+card.c+'"></span>'+
+      '<span class="head"><span class="dot" style="background:'+card.c+'"></span>'+
+      '<span class="lab">'+card.lab+'</span></span>'+
+      '<span class="prev">'+card.prev+'</span>'+
+      (card.reco?'<span class="play">Joue ›</span>':'<span class="chev">›</span>');
+    b.onclick=function(){pick(i,b,card)};
+    box.appendChild(b);
+  });
+}
+function renderRound(){
+  var r=CUR.rounds[cur]; busy=true;
+  $("manche").textContent="Manche "+(cur+1)+"/3";
+  $("turn").textContent=(cur===CUR.rounds.length-1)?"À toi — le dernier mot":"À toi de plaider";
+  setSpeak("Adversaire · Avocat du barreau", r.opp, "");
+  $("turn").style.visibility="hidden";
+  $("timer").classList.remove("on","urgent");
+  $("cards").innerHTML='<div class="reading">L\'adversaire plaide… prends le temps de lire.</div>';
+  setTimeout(function(){
+    $("turn").style.visibility="visible";
+    buildCards(r); startTimer(); busy=false;
+  },1500);
+}
+function pick(i,btn,card){
+  if(busy) return; busy=true;
+  stopTimer(); $("timer").classList.remove("on","urgent");
+  var all=document.querySelectorAll(".card");
+  for(var k=0;k<all.length;k++){ all[k].style.pointerEvents="none"; if(all[k]!==btn) all[k].classList.add("dim"); }
+  btn.classList.remove("reco"); btn.classList.add("picked");
+  var gain=card.imp+rnd(-1,2); meter=clamp(meter+gain); paintGauge(); popDelta(gain);
+  setTimeout(function(){ setSpeak("Vous · Maître", card.prev, "you"); },380);
+  setTimeout(function(){
+    if(cur>=CUR.rounds.length-1){ verdict(); return; }
+    var counter=rnd(3,5); meter=clamp(meter-counter); paintGauge(); popDelta(-counter);
+    cur++; setTimeout(renderRound,520);
+  },1250);
+}
+function timeUp(){
+  if($("verdict").classList.contains("show")) return;
+  busy=true; $("timer").classList.remove("on","urgent");
+  var all=document.querySelectorAll(".card");
+  for(var k=0;k<all.length;k++){ all[k].style.pointerEvents="none"; all[k].classList.add("dim"); }
+  var last=(cur>=CUR.rounds.length-1);
+  var loss=rnd(9,13); meter=clamp(meter-loss); paintGauge(); popDelta(-loss);
+  setSpeak("Temps écoulé", last
+    ? "Vous n'avez pas conclu. Le public tranche sans votre dernier mot."
+    : "Vous n'avez pas répondu. La parole passe à l'adversaire.", "late");
+  setTimeout(function(){
+    if(last){ verdict(); return; }
+    cur++; renderRound();
+  },1600);
+}
+
+/* ---------- VERDICT ---------- */
+function verdict(){
+  stopTimer();
+  var win=meter>=50, pct=Math.round(meter);
+  var s=loadStats(); var before=rankOf(s.wins);
+  if(win) s.wins++; else s.losses++;
+  saveStats(s);
+  var after=rankOf(s.wins);
+  $("vbig").textContent=win?"Vous gagnez":"Vous perdez";
+  $("vbig").className="vbig"+(win?"":" lose");
+  $("vsub").textContent=pct+"% pour la défense";
+  $("vrank").textContent=(win && after!==before) ? ("Vous montez : "+after+" !") : "";
+  $("verdict").classList.add("show");
+  setTimeout(function(){ $("vfill").style.width=pct+"%"; },120);
+}
+
+$("replay").onclick=function(){ startCase(curId); };
+$("tohome").onclick=function(){ renderHome(); };
+$("back").onclick=function(){ stopTimer(); renderHome(); };
+
+renderHome();
+</script>
+</body>
+</html>
