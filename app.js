@@ -156,7 +156,7 @@ function hashPwd(s) {
 
 function cleanMsg(t) {
   if (!t) return '';
-  return String(t).replace(/<[^>]*>/g, '').substring(0, 300);
+  return String(t).replace(/<[^>]*>/g, '').substring(0, 5000);
 }
 
 function uR(id, f) {
@@ -234,14 +234,14 @@ function buildHome() {
         '<div onclick="switchTab(\'profil\')" style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#c7a0d0,#FF7A2E);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#fff;cursor:pointer">' + (me.name || '?').substring(0, 2).toUpperCase() + '</div>' +
       '</div>' +
       '<div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;position:relative;flex-wrap:wrap;">' +
-        '<div style="display:inline-block;padding:5px 14px;border-radius:20px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);font-size:11px;font-weight:800;color:rgba(255,255,255,.4);letter-spacing:2px;">' + c.t.toUpperCase() + badge + '</div>' +
+        '<div style="display:inline-block;padding:5px 14px;border-radius:20px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);font-size:11px;font-weight:800;color:rgba(255,255,255,.4);letter-spacing:2px;">' + c.t.toUpperCase() + badge + '</div>' +
       '</div>' +
-      '<div style="font-size:36px;font-weight:900;color:#fff;line-height:1.1;margin-bottom:14px;position:relative">' + c.n + '</div>' +
+      '<div style="font-size:36px;font-weight:900;color:#F0F0F5;line-height:1.1;margin-bottom:14px;position:relative">' + c.n + '</div>' +
       '<div style="font-size:15px;color:rgba(255,255,255,.35);line-height:1.6;margin-bottom:32px;position:relative">' + c.q + '</div>' +
       '<div style="display:flex;align-items:center;gap:12px;margin-bottom:28px;position:relative">' +
-        '<div style="flex:1;height:1px;background:rgba(255,255,255,.06)"></div>' +
+        '<div style="flex:1;height:1px;background:rgba(255,255,255,0.07)"></div>' +
         '<div style="font-size:11px;font-weight:800;color:rgba(255,255,255,.12);letter-spacing:3px">' + (c.jm ? 'RENDRE UN VERDICT' : 'CHOISIS TON CAMP') + '</div>' +
-        '<div style="flex:1;height:1px;background:rgba(255,255,255,.06)"></div>' +
+        '<div style="flex:1;height:1px;background:rgba(255,255,255,0.07)"></div>' +
       '</div>' +
       '<div style="display:flex;gap:10px;position:relative">' +
         (c.jm ?
@@ -309,6 +309,7 @@ function goToSubmitOnboarding() {
   document.getElementById('ds-case-name').textContent = c.n;
   document.getElementById('ds-opp-status').style.display = 'none';
   go('duel-submit');
+  renderArgPicker();
   var tot = c.wt || 240, left = tot;
   clearInterval(prepI);
   uR('ds-ring', 1);
@@ -612,6 +613,122 @@ function startDuel() {
   }, 1000);
 }
 
+var DUEL_ARGS = {
+  ghost_power:{def:[{lab:"L'appel à l'émotion",prev:"Il a tout risqué pour sortir sa famille de la rue."},{lab:"La logique implacable",prev:"Aucune preuve directe ne le relie à ces ordres."},{lab:"L'aveu sincère",prev:"Oui, il a fauté. Mais il n'a jamais cessé de protéger les siens."},{lab:"La comparaison",prev:"Qui, dans ce milieu, a les mains plus propres que lui ?"},{lab:"La péroraison",prev:"Ghost n'est pas un saint. C'est un homme qui a aimé trop fort."},{lab:"L'appel au juré",prev:"Vous aussi, vous auriez tout fait pour les vôtres."}],acc:[{lab:"L'appel à l'émotion",prev:"Comptez les corps. Chaque victime avait une famille."},{lab:"La logique implacable",prev:"Il a donné les ordres. Le sang retombe sur lui."},{lab:"L'attaque frontale",prev:"Il se cache derrière les siens pour masquer son ambition."},{lab:"Le rappel des faits",prev:"Protéger sa famille ? Il a fait de son fils un meurtrier."},{lab:"La péroraison",prev:"Tuer pour garder son trône, ce n'est pas aimer : c'est régner."}]},
+  walter1:{def:[{lab:"L'appel à l'émotion",prev:"Il voulait laisser un avenir à sa famille avant de mourir."},{lab:"La logique implacable",prev:"Un homme condamné par le cancer agit sous la contrainte."},{lab:"L'aveu sincère",prev:"Il a basculé, c'est vrai. Mais l'amour des siens fut son moteur."},{lab:"La comparaison",prev:"Combien, à sa place et condamnés, garderaient les mains propres ?"},{lab:"La péroraison",prev:"Walter a aimé, a eu peur, a fauté. Un homme, jamais un monstre."},{lab:"L'appel au juré",prev:"Qui n'a jamais rêvé de compter, d'exister, avant de partir ?"}],acc:[{lab:"L'appel à l'émotion",prev:"Il a empoisonné un enfant. Aucune famille ne justifie ça."},{lab:"La logique implacable",prev:"Il a refusé l'argent qu'on lui offrait. Ce n'était pas pour eux."},{lab:"L'aveu retourné",prev:"Il l'a dit lui-même : il l'a fait parce qu'il aimait ça."},{lab:"L'attaque frontale",prev:"Il a regardé Jane mourir sans lever le petit doigt."},{lab:"La péroraison",prev:"Heisenberg n'a pas sauvé sa famille. Il l'a détruite."}]},
+  lupin1:{def:[{lab:"L'appel à l'émotion",prev:"Tout ce qu'il fait, c'est pour laver l'honneur de son père."},{lab:"La logique implacable",prev:"Il n'a jamais versé une seule goutte de sang."},{lab:"L'aveu sincère",prev:"Il risque sa propre liberté pour ceux qu'il aime."},{lab:"La comparaison",prev:"Un Robin des Bois moderne mérite-t-il la prison ?"},{lab:"La péroraison",prev:"Assane ne vole pas par avidité, mais par fidélité."},{lab:"L'appel au juré",prev:"Vous vous battriez aussi pour la mémoire d'un parent."}],acc:[{lab:"La logique implacable",prev:"La douleur n'autorise pas le vol. Il reste un voleur."},{lab:"L'appel au juré",prev:"S'il se croit au-dessus des lois, qui ne le pourrait pas ?"},{lab:"L'attaque frontale",prev:"Il manipule ses proches et les met en danger."},{lab:"Le rappel des faits",prev:"Sa vengeance a brisé des innocents au passage."},{lab:"La péroraison",prev:"Élégant ou non, le crime reste un crime."}]},
+  topboy1:{def:[{lab:"L'appel à l'émotion",prev:"La rue l'a élevé sans rien lui offrir d'autre que ce code."},{lab:"La logique implacable",prev:"Dans son monde, baisser la garde, c'est mourir."},{lab:"L'aveu sincère",prev:"Il a fauté, mais il a protégé et élevé un fils de la rue."},{lab:"La comparaison",prev:"Combien, nés là, auraient survécu en restant purs ?"},{lab:"La péroraison",prev:"Sully n'est pas un monstre. C'est un survivant d'un monde sans pitié."},{lab:"L'appel au juré",prev:"À sa place, sans issue, qu'auriez-vous fait ?"}],acc:[{lab:"La logique implacable",prev:"Le code de la rue ne lave pas le meurtre."},{lab:"L'appel à l'émotion",prev:"Il a tué les siens et appelé ça loyauté."},{lab:"L'attaque frontale",prev:"Il choisit la violence même quand il a le choix."},{lab:"L'appel au juré",prev:"Si on l'excuse, la rue n'aura plus aucune limite."},{lab:"La péroraison",prev:"La loyauté ne ressuscite pas ses victimes."}]},
+  tommy1:{def:[{lab:"L'appel à l'émotion",prev:"Tout ce qu'il bâtit, c'est pour que les Shelby ne manquent plus."},{lab:"La logique implacable",prev:"Survivant des tranchées, il joue les cartes qu'on lui a données."},{lab:"L'aveu sincère",prev:"Hanté par la guerre, il porte les siens malgré ses démons."},{lab:"La comparaison",prev:"Quel chef, en ce temps-là, a gardé les mains propres ?"},{lab:"La péroraison",prev:"Tommy n'est pas un monstre. C'est un soldat qui n'a jamais quitté la guerre."},{lab:"L'appel au juré",prev:"Survivez à l'enfer, et reparlons de vos principes."}],acc:[{lab:"L'appel à l'émotion",prev:"Il mène sa propre famille à l'abattoir."},{lab:"La logique implacable",prev:"Le génie n'excuse pas la cruauté."},{lab:"Le rappel des faits",prev:"Il a brisé Arthur, exposé Michael, sacrifié les siens."},{lab:"L'attaque frontale",prev:"Chaque Shelby saigne pour son ambition à lui."},{lab:"La péroraison",prev:"Sacrifier sa famille à son trône, c'est de la tyrannie."}]},
+  snowfall1:{def:[{lab:"L'appel à l'émotion",prev:"Un gamin brillant à qui ce pays n'offrait aucune autre porte."},{lab:"La logique implacable",prev:"Si ce n'était pas lui, un autre l'aurait fait à sa place."},{lab:"L'aveu sincère",prev:"Il a fauté, mais il rêvait d'offrir un avenir aux siens."},{lab:"La comparaison",prev:"Qui, né sans rien, aurait refusé la seule issue offerte ?"},{lab:"La péroraison",prev:"Franklin n'a pas haï son quartier. Il a voulu le fuir par tous les moyens."},{lab:"L'appel au juré",prev:"Sans avenir possible, qu'auriez-vous saisi ?"}],acc:[{lab:"L'appel à l'émotion",prev:"Il a inondé son propre quartier de crack."},{lab:"La logique implacable",prev:"Il avait l'intelligence de réussir autrement."},{lab:"L'attaque frontale",prev:"Il s'est enrichi sur la ruine des siens."},{lab:"Le rappel des faits",prev:"Des familles entières ont sombré pour son profit."},{lab:"La péroraison",prev:"Détruire les siens pour s'élever, c'est une trahison."}]},
+  valide1:{def:[{lab:"L'appel à l'émotion",prev:"Sorti de rien, il s'est battu pour ne jamais y retourner."},{lab:"La logique implacable",prev:"Dans ce milieu, la moindre faiblesse te fait disparaître."},{lab:"L'aveu sincère",prev:"Il a fauté, mais la peur de retomber guidait chaque choix."},{lab:"La comparaison",prev:"Qui, au sommet du rap, n'a jamais marché sur quelqu'un ?"},{lab:"La péroraison",prev:"Apash n'a pas trahi par avidité, mais par terreur de retomber."},{lab:"L'appel au juré",prev:"Après tant d'efforts, accepteriez-vous de tout reperdre ?"}],acc:[{lab:"Le rappel des faits",prev:"Il a trahi William, celui qui l'a fait."},{lab:"La logique implacable",prev:"La gloire ne justifie pas la trahison."},{lab:"L'attaque frontale",prev:"Arrivé au sommet, il a renié tous les siens."},{lab:"L'appel au juré",prev:"Un homme qui vend les siens vend n'importe qui."},{lab:"La péroraison",prev:"Il a sacrifié son âme pour ne pas redescendre."}]},
+  annalise1:{def:[{lab:"L'appel à l'émotion",prev:"Elle les a aussi protégés, encore et encore, à ses risques."},{lab:"La logique implacable",prev:"Ce sont eux qui ont agi. Elle n'a fait que limiter les dégâts."},{lab:"L'aveu sincère",prev:"Brisée, elle s'est quand même battue pour eux."},{lab:"La comparaison",prev:"Quel avocat n'a jamais sali ses mains pour gagner ?"},{lab:"La péroraison",prev:"Annalise est blessée, pas malveillante. Elle a sauvé plus qu'elle n'a perdu."},{lab:"L'appel au juré",prev:"Qui, acculé, n'aurait pas tout fait pour survivre ?"}],acc:[{lab:"L'appel à l'émotion",prev:"Elle a fait de ses étudiants des complices."},{lab:"La logique implacable",prev:"Elle les expose pour sauver sa propre peau."},{lab:"Le rappel des faits",prev:"Elle a menti et manipulé pour se couvrir."},{lab:"L'attaque frontale",prev:"Une mentor devrait protéger, pas sacrifier."},{lab:"La péroraison",prev:"Ceux qu'elle devait guider, elle les a salis."}]},
+  sakho1:{def:[{lab:"L'appel à l'émotion",prev:"Il transgresse pour sauver des vies que la procédure abandonnerait."},{lab:"La logique implacable",prev:"Face au surnaturel, les règles ordinaires ne protègent personne."},{lab:"L'aveu sincère",prev:"Il prend les risques sur lui avant d'en faire courir aux autres."},{lab:"La comparaison",prev:"Quel grand flic n'a jamais contourné une règle pour la vérité ?"},{lab:"La péroraison",prev:"Sakho ne sert pas son ego, mais la vérité que d'autres fuient."},{lab:"L'appel au juré",prev:"Pour sauver un innocent, briseriez-vous une règle ?"}],acc:[{lab:"La logique implacable",prev:"Un policier n'est pas au-dessus de la loi."},{lab:"L'attaque frontale",prev:"Il met en danger ceux qui le suivent."},{lab:"L'appel au juré",prev:"S'il décide seul du juste, plus personne n'est protégé."},{lab:"Le rappel des faits",prev:"Il bafoue les règles qu'il jure d'incarner."},{lab:"La péroraison",prev:"La vérité n'excuse pas le mépris de la loi."}]},
+  nemesis1:{def:[{lab:"L'appel à l'émotion",prev:"Elle a protégé sa famille d'un effondrement total."},{lab:"La logique implacable",prev:"Sans preuve, parler n'aurait fait que tout détruire."},{lab:"L'aveu sincère",prev:"Déchirée, elle a porté seule un secret qui la rongeait."},{lab:"La comparaison",prev:"Qui dénoncerait sans hésiter l'homme de sa vie ?"},{lab:"La péroraison",prev:"Ebony n'a pas protégé un crime, mais tout ce qui lui restait."},{lab:"L'appel au juré",prev:"Trahiriez-vous, sans preuve, celui que vous aimez ?"}],acc:[{lab:"La logique implacable",prev:"Elle savait, et elle s'est tue : c'est complice."},{lab:"L'appel à l'émotion",prev:"Son silence a permis à d'autres d'être blessés."},{lab:"L'attaque frontale",prev:"Par confort, elle a couvert un criminel."},{lab:"L'appel au juré",prev:"Se taire par amour n'efface pas le crime."},{lab:"La péroraison",prev:"Protéger un coupable, c'est trahir ses victimes."}]},
+  leconkr1:{def:[{lab:"L'appel à l'émotion",prev:"Il protège des élèves que le système a abandonnés."},{lab:"La logique implacable",prev:"Face à des bourreaux, la douceur ne sauve personne."},{lab:"L'aveu sincère",prev:"Ses méthodes sont rudes, mais il rend leur dignité aux victimes."},{lab:"La comparaison",prev:"Quand la loi échoue, qui d'autre protège l'innocent ?"},{lab:"La péroraison",prev:"Na Hwa-jin n'aime pas la violence. Il la retourne contre ceux qui en abusent."},{lab:"L'appel au juré",prev:"Devant un enfant tabassé, resteriez-vous les bras croisés ?"}],acc:[{lab:"La logique implacable",prev:"Combattre la violence par la violence, c'est l'alimenter."},{lab:"L'attaque frontale",prev:"Il humilie et frappe : il devient le tyran."},{lab:"L'appel au juré",prev:"Qui combat les monstres avec leurs armes en devient un."},{lab:"Le rappel des faits",prev:"Sous prétexte de protéger, il terrorise."},{lab:"La péroraison",prev:"La peur n'a jamais été la justice."}]},
+  blood1:{def:[{lab:"L'appel à l'émotion",prev:"Elle a agi pour échapper à un homme qui allait la détruire."},{lab:"La logique implacable",prev:"C'était lui ou elle. La légitime défense n'est pas un crime."},{lab:"L'aveu sincère",prev:"Paniquée, elle s'est accrochée à la seule personne de confiance."},{lab:"La comparaison",prev:"Qui, terrifié, raisonnerait parfaitement dans l'instant ?"},{lab:"La péroraison",prev:"Sarah n'est pas une meurtrière froide. C'est une femme qui a voulu survivre."},{lab:"L'appel au juré",prev:"Face à votre bourreau, qu'auriez-vous fait ?"}],acc:[{lab:"L'appel à l'émotion",prev:"Elle a enchaîné son amie à son secret."},{lab:"La logique implacable",prev:"Elle a fait porter son crime à une innocente."},{lab:"L'attaque frontale",prev:"Pour se sauver, elle a sacrifié Kemi."},{lab:"Le rappel des faits",prev:"Une amitié brisée par son seul intérêt."},{lab:"La péroraison",prev:"Entraîner une innocente dans son crime, c'est impardonnable."}]},
+  maitresse1:{def:[{lab:"L'appel à l'émotion",prev:"Elle aime sincèrement, sans avoir cherché à détruire personne."},{lab:"La logique implacable",prev:"Ce n'est pas elle qui a juré fidélité à cette épouse."},{lab:"L'aveu sincère",prev:"Prise au piège, elle n'a pas choisi de tomber amoureuse."},{lab:"La comparaison",prev:"Le cœur décide-t-il vraiment selon nos principes ?"},{lab:"La péroraison",prev:"Marème n'a pas volé un mari. Elle a aimé l'homme venu à elle."},{lab:"L'appel au juré",prev:"Choisit-on vraiment de qui l'on tombe amoureux ?"}],acc:[{lab:"L'appel à l'émotion",prev:"Une femme et des enfants souffrent à cause d'elle."},{lab:"La logique implacable",prev:"Elle s'installe sciemment dans le foyer d'une autre."},{lab:"L'attaque frontale",prev:"Son désir passe avant une famille entière."},{lab:"L'appel au juré",prev:"Bâtir son bonheur sur le malheur d'autrui, est-ce juste ?"},{lab:"La péroraison",prev:"L'amour n'excuse pas de briser une famille."}]},
+  who2:{def:[{lab:"L'appel à l'émotion",prev:"Il protège peut-être le groupe d'une vérité insupportable."},{lab:"La logique implacable",prev:"Révéler sa source mettrait tout le monde en danger."},{lab:"L'aveu sincère",prev:"Il porte seul un fardeau qu'il refuse de leur imposer."},{lab:"La comparaison",prev:"Qui n'a jamais tu une vérité pour épargner les autres ?"},{lab:"La péroraison",prev:"Wilson ne cache pas pour régner, mais pour ne pas détruire."},{lab:"L'appel au juré",prev:"Diriez-vous tout, si la vérité pouvait tuer ?"}],acc:[{lab:"La logique implacable",prev:"Diriger par le secret, c'est manipuler."},{lab:"L'attaque frontale",prev:"Il garde jalousement le pouvoir que ce secret lui donne."},{lab:"L'appel au juré",prev:"Un chef qui cache ses sources trahit la confiance."},{lab:"Le rappel des faits",prev:"Le secret nourrit la méfiance dans le groupe."},{lab:"La péroraison",prev:"Cacher d'où vient son savoir, c'est régner par la peur."}]},
+  nuitdesrois1:{def:[{lab:"L'appel à l'émotion",prev:"Sans ce rituel, la prison sombrerait dans le chaos total."},{lab:"La logique implacable",prev:"Dans cet enfer, seul un ordre fort empêche le pire."},{lab:"L'aveu sincère",prev:"Il porte le poids d'un pouvoir qu'il n'a pas vraiment choisi."},{lab:"La comparaison",prev:"Qui, roi d'un tel enfer, gouvernerait sans dureté ?"},{lab:"La péroraison",prev:"Barbe Noire ne sert pas son orgueil, mais l'équilibre d'un monde sans loi."},{lab:"L'appel au juré",prev:"Roi d'une jungle, gouverneriez-vous par la douceur ?"}],acc:[{lab:"L'attaque frontale",prev:"Il déguise sa tyrannie en tradition."},{lab:"La logique implacable",prev:"Il sacrifie un homme chaque nuit pour son trône."},{lab:"L'appel à l'émotion",prev:"Il règne sur la MACA par la pure terreur."},{lab:"L'appel au juré",prev:"Imposer la peur au nom d'un rite, c'est de la tyrannie."},{lab:"La péroraison",prev:"La tradition ne justifie pas la domination."}]},
+  heritage1:{def:[{lab:"L'appel à l'émotion",prev:"Il a voulu préserver l'entreprise d'un héritier inexpérimenté."},{lab:"La logique implacable",prev:"Confier un empire à un jeune en deuil aurait tout précipité."},{lab:"L'aveu sincère",prev:"Il a pris les rênes pour ne pas voir l'héritage s'effondrer."},{lab:"La comparaison",prev:"Qui laisserait une fortune à un héritier non préparé ?"},{lab:"La péroraison",prev:"L'oncle n'a pas volé. Il a gardé ce que le fils n'était pas prêt à porter."},{lab:"L'appel au juré",prev:"Confieriez-vous tout à un enfant brisé par le chagrin ?"}],acc:[{lab:"L'appel à l'émotion",prev:"Il a dépouillé son neveu en plein deuil."},{lab:"La logique implacable",prev:"Il s'est servi avant même de penser au fils."},{lab:"L'attaque frontale",prev:"Il a trahi la mémoire du défunt."},{lab:"Le rappel des faits",prev:"Le deuil à peine commencé, il prenait les rênes."},{lab:"La péroraison",prev:"Profiter d'un deuil pour s'enrichir, c'est trahir le sang."}]},
+  tag1:{def:[{lab:"L'appel à l'émotion",prev:"Son talent, c'est tout ce qui lui a permis d'exister."},{lab:"La logique implacable",prev:"Sans lui, l'équipe n'aurait jamais atteint ce niveau."},{lab:"L'aveu sincère",prev:"Il a fauté, mais il a porté l'équipe quand elle vacillait."},{lab:"La comparaison",prev:"Quel champion n'a jamais eu besoin de briller pour avancer ?"},{lab:"La péroraison",prev:"Tag n'a pas trahi l'équipe. Il a cru, à tort, devoir la sauver seul."},{lab:"L'appel au juré",prev:"Avec un don pareil, sauriez-vous toujours vous effacer ?"}],acc:[{lab:"L'attaque frontale",prev:"Il joue pour lui, jamais pour l'équipe."},{lab:"L'appel à l'émotion",prev:"Son génie a brisé l'esprit du groupe."},{lab:"La logique implacable",prev:"Une équipe ne gagne pas avec un seul homme."},{lab:"Le rappel des faits",prev:"Il a humilié ses coéquipiers pour briller seul."},{lab:"La péroraison",prev:"Se croire plus grand que l'équipe, c'est la condamner."}]},
+  dinercon1:{def:[{lab:"L'appel à l'émotion",prev:"Il voulait sincèrement aider, sans jamais vouloir nuire."},{lab:"La logique implacable",prev:"Chaque catastrophe partait d'une bonne intention."},{lab:"L'aveu sincère",prev:"Maladroit, oui, mais d'une gentillesse que Brochant n'avait pas."},{lab:"La comparaison",prev:"Qui n'a jamais aggravé les choses en voulant bien faire ?"},{lab:"La péroraison",prev:"Pignon n'a aucune malice. Il a payé sa naïveté plus que ses fautes."},{lab:"L'appel au juré",prev:"Condamne-t-on un homme dont le seul tort est la gentillesse ?"}],acc:[{lab:"Le rappel des faits",prev:"En une soirée, il a ravagé la vie de Brochant."},{lab:"La logique implacable",prev:"La bonne foi n'efface pas le désastre."},{lab:"L'attaque frontale",prev:"Il détruit un couple, une carrière, une soirée entière."},{lab:"L'appel au juré",prev:"Faire le malheur des autres sans répondre de rien ?"},{lab:"La péroraison",prev:"L'intention ne répare jamais les dégâts."}]},
+  bloom1:{def:[{lab:"L'appel à l'émotion",prev:"Elle a grandi sans savoir qui elle était, et s'est construite seule."},{lab:"La logique implacable",prev:"Son pouvoir ne vaut que parce qu'elle a appris à le maîtriser."},{lab:"L'aveu sincère",prev:"Le don ne fait rien : c'est son courage qui sauve les autres."},{lab:"La comparaison",prev:"Reproche-t-on à quiconque les talents reçus à la naissance ?"},{lab:"La péroraison",prev:"Bloom n'a pas hérité de son courage. Elle l'a prouvé, encore et encore."},{lab:"L'appel au juré",prev:"Vaut-on par ce qu'on reçoit, ou par ce qu'on en fait ?"}],acc:[{lab:"La logique implacable",prev:"Sa grandeur lui a été donnée, pas méritée."},{lab:"L'attaque frontale",prev:"Sans son sang royal, elle ne serait qu'une élève."},{lab:"L'appel au juré",prev:"Se réclamer d'un héritage n'est pas une vertu."},{lab:"Le rappel des faits",prev:"Son pouvoir vient de sa naissance, pas de ses actes."},{lab:"La péroraison",prev:"On ne vaut pas par ce qu'on reçoit, mais par ce qu'on fait."}]}
+};
+
+var plSelected = [];
+var PL_MAX = 5;
+function colForLab(lab){
+  var l = (lab || '').toLowerCase();
+  if (l.indexOf('motion') > -1) return '#FF4E8A';
+  if (l.indexOf('logique') > -1 || l.indexOf('fait') > -1) return '#3A7BD5';
+  if (l.indexOf('attaque') > -1 || l.indexOf('frontale') > -1 || l.indexOf('roraison') > -1) return '#FF7A2E';
+  if (l.indexOf('jur') > -1 || l.indexOf('doute') > -1 || l.indexOf('retournement') > -1 || l.indexOf('comparaison') > -1 || l.indexOf('aveu') > -1) return '#A24BFA';
+  return '#FF7A2E';
+}
+function plData(){
+  if (typeof DUEL_ARGS === 'undefined' || !DUEL_ARGS[curCase]) return null;
+  var key = (myRole === 'accusation') ? 'acc' : 'def';
+  return DUEL_ARGS[curCase][key] || null;
+}
+function renderArgPicker(){
+  plSelected = [];
+  var data = plData();
+  var pool = document.getElementById('pl-pool');
+  var fb = document.getElementById('pl-fallback');
+  document.getElementById('pl-title').textContent = (myRole === 'accusation') ? 'VOTRE RÉQUISITOIRE' : 'VOTRE PLAIDOIRIE';
+  document.getElementById('ds-arg').value = '';
+  var headEls = ['pl-pool-label'];
+  if (!data || !data.length) {
+    pool.style.display = 'none';
+    document.getElementById('pl-pool-label').style.display = 'none';
+    document.getElementById('pl-compose').style.display = 'none';
+    document.getElementsByClassName('pl-meter')[0].style.display = 'none';
+    document.getElementsByClassName('pl-head')[0].style.display = 'none';
+    fb.style.display = 'block'; fb.value = '';
+    return;
+  }
+  pool.style.display = 'flex';
+  document.getElementById('pl-pool-label').style.display = 'block';
+  document.getElementById('pl-compose').style.display = 'flex';
+  document.getElementsByClassName('pl-meter')[0].style.display = 'block';
+  document.getElementsByClassName('pl-head')[0].style.display = 'flex';
+  fb.style.display = 'none';
+  pool.innerHTML = '';
+  for (var i = 0; i < data.length; i++) {
+    (function(arg, idx){
+      var col = colForLab(arg.lab);
+      var el = document.createElement('div');
+      el.className = 'pl-card';
+      el.style.borderLeftColor = col;
+      el.innerHTML = '<div class="add">+</div><div class="lab">' + arg.lab + '</div><div class="prev">' + arg.prev + '</div>';
+      el.getElementsByClassName('add')[0].style.color = col;
+      el.getElementsByClassName('lab')[0].style.color = col;
+      el.onclick = function(){ plToggle(idx, el); };
+      pool.appendChild(el);
+    })(data[i], i);
+  }
+  plRenderCompose();
+}
+function plToggle(idx, el){
+  var pos = plSelected.indexOf(idx);
+  if (pos > -1) { plSelected.splice(pos, 1); el.className = 'pl-card'; el.getElementsByClassName('add')[0].textContent = '+'; }
+  else { if (plSelected.length >= PL_MAX) return; plSelected.push(idx); el.className = 'pl-card used'; el.getElementsByClassName('add')[0].textContent = '✓'; }
+  plRenderCompose();
+}
+function plRemove(idx){
+  var pos = plSelected.indexOf(idx);
+  if (pos > -1) plSelected.splice(pos, 1);
+  var cards = document.getElementById('pl-pool').children;
+  for (var i = 0; i < cards.length; i++) {
+    var used = plSelected.indexOf(i) > -1;
+    cards[i].className = used ? 'pl-card used' : 'pl-card';
+    var add = cards[i].getElementsByClassName('add')[0];
+    if (add) add.textContent = used ? '✓' : '+';
+  }
+  plRenderCompose();
+}
+function plRenderCompose(){
+  var data = plData(); if (!data) return;
+  var comp = document.getElementById('pl-compose');
+  if (!plSelected.length) {
+    comp.className = 'pl-compose';
+    comp.innerHTML = '<div id="pl-empty" class="pl-empty">Touchez des arguments pour bâtir votre plaidoirie.</div>';
+  } else {
+    comp.className = 'pl-compose has';
+    var html = '';
+    for (var i = 0; i < plSelected.length; i++) {
+      var a = data[plSelected[i]]; var col = colForLab(a.lab);
+      html += '<div class="pl-chip" style="border-left-color:' + col + '" onclick="plRemove(' + plSelected[i] + ')">' + a.prev + '<span class="x">×</span></div>';
+    }
+    comp.innerHTML = html;
+  }
+  var parts = [];
+  for (var j = 0; j < plSelected.length; j++) parts.push(data[plSelected[j]].prev);
+  document.getElementById('ds-arg').value = parts.join(' ');
+  document.getElementById('pl-meter-fill').style.width = Math.min(100, plSelected.length * 20) + '%';
+  document.getElementById('pl-strength').textContent = 'Force ' + (plSelected.length * 20);
+}
+
 function goToSubmit() {
   clearInterval(prepI);
   var c = CASES[curCase];
@@ -622,6 +739,7 @@ function goToSubmit() {
   document.getElementById('ds-role2').style.color = myRole === 'defense' ? '#4ECB71' : '#FF4757';
   document.getElementById('ds-case-name').textContent = c.n;
   go('duel-submit');
+  renderArgPicker();
   var tot = (c || {}).wt || 120, left = tot;
   clearInterval(prepI);
   uR('ds-ring', 1);
@@ -758,7 +876,7 @@ function afterSignup() {
     buildHome(); buildProfile();
     go('home');
   } else {
-    go('onboarding');
+    buildSeriesGrid(); go('series-select');
   }
 }
 
@@ -902,7 +1020,7 @@ function buildProfile() {
         var cKey = k.split('_')[0];
         var cName = CASES[cKey] ? CASES[cKey].n : k;
         var hi = document.createElement('div');
-        hi.style.cssText = 'padding:14px 16px 14px 20px;position:relative;display:flex;justify-content:space-between;align-items:center;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.04);border-radius:14px;margin-bottom:8px';
+        hi.style.cssText = 'padding:14px 16px 14px 20px;position:relative;display:flex;justify-content:space-between;align-items:center;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);border-radius:14px;margin-bottom:8px';
         hi.innerHTML = '<div style="position:absolute;left:0;top:10px;bottom:10px;width:3.5px;border-radius:2px;background:' + (role === 'Défense' ? '#4ECB71' : '#FF4757') + '"></div><div><div style="font-size:15px;font-weight:800;color:#F0F0F5">' + cName + '</div><div style="font-size:11px;color:rgba(255,255,255,.25);margin-top:2px">' + role + '</div></div><div style="font-size:12px;font-weight:700;color:#FF7A2E">En cours…</div>';
         ph.appendChild(hi);
       });
@@ -948,11 +1066,11 @@ function loadPublicDuels() {
       var defPct = Math.round(defVotes / total * 100);
       var accPct = 100 - defPct;
       var card = document.createElement('div');
-      card.style.cssText = 'padding:20px;border-bottom:1px solid rgba(255,255,255,.04);position:relative';
+      card.style.cssText = 'padding:20px;border-bottom:1px solid rgba(255,255,255,0.06);position:relative';
       var html = '';
       if (isLive) html += '<div style="position:absolute;top:20px;right:20px;padding:4px 10px;border-radius:10px;background:rgba(255,122,46,.08);border:1px solid rgba(255,122,46,.15);font-size:10px;font-weight:700;color:#FF7A2E">EN COURS</div>';
       html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><span style="font-size:11px;font-weight:800;color:#FF7A2E;letter-spacing:2px">' + (v.caseType || '').toUpperCase() + '</span><span style="font-size:11px;color:rgba(255,255,255,.2)">' + timeStr + '</span></div>';
-      html += '<div style="font-size:22px;font-weight:900;color:#fff;margin-bottom:14px;line-height:1.1">' + (v.caseName || '') + '</div>';
+      html += '<div style="font-size:22px;font-weight:900;color:#F0F0F5;margin-bottom:14px;line-height:1.1">' + (v.caseName || '') + '</div>';
       html += '<div style="display:flex;gap:8px;margin-bottom:12px"><div style="flex:1;padding:12px;background:rgba(78,203,113,.04);border:1px solid rgba(78,203,113,.1);border-radius:12px"><div style="font-size:9px;font-weight:800;color:#4ECB71;letter-spacing:2px;margin-bottom:5px">DÉFENSE · ' + (v.defense ? v.defense.name : '—') + '</div><div style="font-size:13px;color:rgba(255,255,255,.4);line-height:1.5">' + (v.defense ? v.defense.text : '...') + '</div></div><div style="flex:1;padding:12px;background:rgba(255,71,87,.04);border:1px solid rgba(255,71,87,.1);border-radius:12px"><div style="font-size:9px;font-weight:800;color:#FF4757;letter-spacing:2px;margin-bottom:5px">ACCUSATION · ' + (v.accusation ? v.accusation.name : '—') + '</div><div style="font-size:13px;color:rgba(255,255,255,.4);line-height:1.5">' + (v.accusation ? v.accusation.text : '...') + '</div></div></div>';
       if (votes > 0) html += '<div style="display:flex;height:4px;border-radius:2px;overflow:hidden;margin-bottom:10px"><div style="width:' + defPct + '%;background:#4ECB71"></div><div style="width:' + accPct + '%;background:#FF4757"></div></div>';
       if (v.result && v.result.decision) { html += '<div style="font-size:22px;font-weight:900;color:' + (v.result.decision === 'COUPABLE' ? '#FF4757' : '#4ECB71') + ';letter-spacing:2px">' + v.result.decision + '</div>'; }
