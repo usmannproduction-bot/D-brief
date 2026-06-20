@@ -334,6 +334,7 @@ function submitOnboarding() {
   document.getElementById('dv-acc-name').textContent = "Avocat du barreau";
   go('duel-vote');
   updateDuelVoteActions();
+  listenVerdictGauge();
   if(typeof showGuestBanner==='function') showGuestBanner();
   if (window.db) {
     window.db.ref('rooms/' + currentRoom + '/arguments/defense').set({ text: t, uid: myUid, name: me.name || '', ts: Date.now() });
@@ -451,6 +452,7 @@ function leaveDuel() {
   clearInterval(prepI);
   clearTimeout(botTimer);
   clearInterval(judgeI);
+  if (window._vgRef) { try { window._vgRef.off(); } catch(e){} window._vgRef = null; }
   currentRoom = null;
   curCase = '';
   myRole = '';
@@ -460,6 +462,92 @@ function leaveDuel() {
 }
 
 function joinDuelAs(id, role) { myRole = role; joinDuel(id); }
+
+// ===== Inviter un ami : partage du lien de la salle =====
+function shareRoom() {
+  var room = currentRoom, cs = curCase;
+  if (!room || !cs) { alert("Le duel n'est pas encore prêt — patiente une seconde."); return; }
+  var base = window.location.origin + window.location.pathname;
+  var url = base + '?room=' + encodeURIComponent(room) + '&case=' + encodeURIComponent(cs);
+  var cName = (CASES[cs] && CASES[cs].n) ? CASES[cs].n : '';
+  var txt = "Affronte-moi en duel sur D'brief" + (cName ? ' \u2014 ' + cName : '') + ' !';
+  if (navigator.share) {
+    navigator.share({ title: "D'brief", text: txt, url: url }).catch(function(){});
+  } else if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(url).then(function(){ alert('Lien copié ! Envoie-le à ton adversaire.'); }, function(){ window.prompt('Copie ce lien et envoie-le :', url); });
+  } else {
+    window.prompt('Copie ce lien et envoie-le :', url);
+  }
+}
+
+// ===== Rejoindre une salle via le lien (?room=...&case=...) =====
+function handleUrlRoom() {
+  var qs = new URLSearchParams(window.location.search);
+  var room = qs.get('room');
+  var cs = qs.get('case');
+  if (!room || !window.db) { go('home'); return; }
+  currentRoom = room;
+  window.db.ref('rooms/' + room).once('value', function(snap) {
+    var rm = snap.val() || {};
+    if (!cs) cs = rm.caseId || '';
+    if (!cs || !CASES[cs]) { alert("Ce duel n'est plus disponible."); currentRoom = null; go('home'); return; }
+    curCase = cs;
+    var roles = rm.roles || {};
+    var myR = roles.defense ? (roles.accusation ? null : 'accusation') : 'defense';
+    if (!myR) { alert('Ce duel est déjà complet.'); currentRoom = null; go('home'); return; }
+    myRole = myR;
+    var c = CASES[cs];
+    document.getElementById('dw-series').textContent = c.t.toUpperCase();
+    document.getElementById('dw-name').textContent = c.n;
+    document.getElementById('dw-q').textContent = c.q;
+    document.getElementById('dw-av-def').textContent = '?';
+    document.getElementById('dw-av-acc').textContent = '?';
+    document.getElementById('dw-name-def').textContent = 'En attente\u2026';
+    document.getElementById('dw-name-acc').textContent = 'En attente\u2026';
+    document.getElementById('dw-status').textContent = 'Connexion au duel\u2026';
+    document.getElementById('dw-myrole').style.display = 'none';
+    go('duel-wait');
+    window.db.ref('rooms/' + room + '/roles/' + myR).set({ uid: myUid, name: me.name || '' });
+    window.db.ref('rooms/' + room + '/caseId').set(cs);
+    if (myR === 'defense') { updateVs(); } else { updateVsAcc(); }
+    window.db.ref('matchmaking/' + cs).remove();
+    window.db.ref('rooms/' + room + '/roles').on('value', function(snap2) {
+      var r = snap2.val() || {};
+      if (r.defense) {
+        document.getElementById('dw-av-def').textContent = (r.defense.name || '?').substring(0, 2).toUpperCase();
+        document.getElementById('dw-av-def').style.borderStyle = 'solid';
+        document.getElementById('dw-name-def').textContent = r.defense.name || '';
+      }
+      if (r.accusation) {
+        var ae = document.getElementById('dw-av-acc');
+        ae.textContent = (r.accusation.name || '?').substring(0, 2).toUpperCase();
+        ae.style.borderStyle = 'solid'; ae.style.borderColor = '#FF4757'; ae.style.color = '#FF4757';
+        document.getElementById('dw-name-acc').textContent = r.accusation.name || '';
+      }
+      document.getElementById('dw-count').textContent = ((r.defense ? 1 : 0) + (r.accusation ? 1 : 0)) + ' personne(s)';
+      if (r.defense && r.accusation) {
+        document.getElementById('dw-status').textContent = 'Duel prêt!';
+        setTimeout(startDuel, 1500);
+      }
+    });
+  });
+}
+
+// ===== Jauge de verdict en direct (style démo) =====
+function listenVerdictGauge() {
+  if (!window.db || !currentRoom) return;
+  if (window._vgRef) { try { window._vgRef.off(); } catch(e){} }
+  window._vgRef = window.db.ref('public-duels/' + currentRoom + '/votes');
+  window._vgRef.on('value', function(s) {
+    var v = s.val() || {}, ks = Object.keys(v), def = 0, acc = 0;
+    for (var i = 0; i < ks.length; i++) { if (v[ks[i]] && v[ks[i]].side === 'defense') def++; else acc++; }
+    var tot = def + acc, pct = tot ? Math.round(def / tot * 100) : 50;
+    var fill = document.getElementById('dvg-fill'); if (fill) fill.style.width = pct + '%';
+    var dd = document.getElementById('dvg-d'); if (dd) dd.textContent = pct + '%';
+    var da = document.getElementById('dvg-a'); if (da) da.textContent = (100 - pct) + '%';
+    var info = document.getElementById('dv-vote-info'); if (info) info.textContent = tot + ' vote' + (tot > 1 ? 's' : '');
+  });
+}
 
 function joinDuel(id) {
   curCase = id;
@@ -613,26 +701,27 @@ function startDuel() {
   }, 1000);
 }
 
+var DA_E="#ff4e8a", DA_L="#5b8def", DA_A="#ff7a2e", DA_T="#a24bfa";
 var DUEL_ARGS = {
-  ghost_power:{def:[{lab:"L'appel à l'émotion",prev:"Il a tout risqué pour sortir sa famille de la rue."},{lab:"La logique implacable",prev:"Aucune preuve directe ne le relie à ces ordres."},{lab:"L'aveu sincère",prev:"Oui, il a fauté. Mais il n'a jamais cessé de protéger les siens."},{lab:"La comparaison",prev:"Qui, dans ce milieu, a les mains plus propres que lui ?"},{lab:"La péroraison",prev:"Ghost n'est pas un saint. C'est un homme qui a aimé trop fort."},{lab:"L'appel au juré",prev:"Vous aussi, vous auriez tout fait pour les vôtres."}],acc:[{lab:"L'appel à l'émotion",prev:"Comptez les corps. Chaque victime avait une famille."},{lab:"La logique implacable",prev:"Il a donné les ordres. Le sang retombe sur lui."},{lab:"L'attaque frontale",prev:"Il se cache derrière les siens pour masquer son ambition."},{lab:"Le rappel des faits",prev:"Protéger sa famille ? Il a fait de son fils un meurtrier."},{lab:"La péroraison",prev:"Tuer pour garder son trône, ce n'est pas aimer : c'est régner."}]},
-  walter1:{def:[{lab:"L'appel à l'émotion",prev:"Il voulait laisser un avenir à sa famille avant de mourir."},{lab:"La logique implacable",prev:"Un homme condamné par le cancer agit sous la contrainte."},{lab:"L'aveu sincère",prev:"Il a basculé, c'est vrai. Mais l'amour des siens fut son moteur."},{lab:"La comparaison",prev:"Combien, à sa place et condamnés, garderaient les mains propres ?"},{lab:"La péroraison",prev:"Walter a aimé, a eu peur, a fauté. Un homme, jamais un monstre."},{lab:"L'appel au juré",prev:"Qui n'a jamais rêvé de compter, d'exister, avant de partir ?"}],acc:[{lab:"L'appel à l'émotion",prev:"Il a empoisonné un enfant. Aucune famille ne justifie ça."},{lab:"La logique implacable",prev:"Il a refusé l'argent qu'on lui offrait. Ce n'était pas pour eux."},{lab:"L'aveu retourné",prev:"Il l'a dit lui-même : il l'a fait parce qu'il aimait ça."},{lab:"L'attaque frontale",prev:"Il a regardé Jane mourir sans lever le petit doigt."},{lab:"La péroraison",prev:"Heisenberg n'a pas sauvé sa famille. Il l'a détruite."}]},
-  lupin1:{def:[{lab:"L'appel à l'émotion",prev:"Tout ce qu'il fait, c'est pour laver l'honneur de son père."},{lab:"La logique implacable",prev:"Il n'a jamais versé une seule goutte de sang."},{lab:"L'aveu sincère",prev:"Il risque sa propre liberté pour ceux qu'il aime."},{lab:"La comparaison",prev:"Un Robin des Bois moderne mérite-t-il la prison ?"},{lab:"La péroraison",prev:"Assane ne vole pas par avidité, mais par fidélité."},{lab:"L'appel au juré",prev:"Vous vous battriez aussi pour la mémoire d'un parent."}],acc:[{lab:"La logique implacable",prev:"La douleur n'autorise pas le vol. Il reste un voleur."},{lab:"L'appel au juré",prev:"S'il se croit au-dessus des lois, qui ne le pourrait pas ?"},{lab:"L'attaque frontale",prev:"Il manipule ses proches et les met en danger."},{lab:"Le rappel des faits",prev:"Sa vengeance a brisé des innocents au passage."},{lab:"La péroraison",prev:"Élégant ou non, le crime reste un crime."}]},
-  topboy1:{def:[{lab:"L'appel à l'émotion",prev:"La rue l'a élevé sans rien lui offrir d'autre que ce code."},{lab:"La logique implacable",prev:"Dans son monde, baisser la garde, c'est mourir."},{lab:"L'aveu sincère",prev:"Il a fauté, mais il a protégé et élevé un fils de la rue."},{lab:"La comparaison",prev:"Combien, nés là, auraient survécu en restant purs ?"},{lab:"La péroraison",prev:"Sully n'est pas un monstre. C'est un survivant d'un monde sans pitié."},{lab:"L'appel au juré",prev:"À sa place, sans issue, qu'auriez-vous fait ?"}],acc:[{lab:"La logique implacable",prev:"Le code de la rue ne lave pas le meurtre."},{lab:"L'appel à l'émotion",prev:"Il a tué les siens et appelé ça loyauté."},{lab:"L'attaque frontale",prev:"Il choisit la violence même quand il a le choix."},{lab:"L'appel au juré",prev:"Si on l'excuse, la rue n'aura plus aucune limite."},{lab:"La péroraison",prev:"La loyauté ne ressuscite pas ses victimes."}]},
-  tommy1:{def:[{lab:"L'appel à l'émotion",prev:"Tout ce qu'il bâtit, c'est pour que les Shelby ne manquent plus."},{lab:"La logique implacable",prev:"Survivant des tranchées, il joue les cartes qu'on lui a données."},{lab:"L'aveu sincère",prev:"Hanté par la guerre, il porte les siens malgré ses démons."},{lab:"La comparaison",prev:"Quel chef, en ce temps-là, a gardé les mains propres ?"},{lab:"La péroraison",prev:"Tommy n'est pas un monstre. C'est un soldat qui n'a jamais quitté la guerre."},{lab:"L'appel au juré",prev:"Survivez à l'enfer, et reparlons de vos principes."}],acc:[{lab:"L'appel à l'émotion",prev:"Il mène sa propre famille à l'abattoir."},{lab:"La logique implacable",prev:"Le génie n'excuse pas la cruauté."},{lab:"Le rappel des faits",prev:"Il a brisé Arthur, exposé Michael, sacrifié les siens."},{lab:"L'attaque frontale",prev:"Chaque Shelby saigne pour son ambition à lui."},{lab:"La péroraison",prev:"Sacrifier sa famille à son trône, c'est de la tyrannie."}]},
-  snowfall1:{def:[{lab:"L'appel à l'émotion",prev:"Un gamin brillant à qui ce pays n'offrait aucune autre porte."},{lab:"La logique implacable",prev:"Si ce n'était pas lui, un autre l'aurait fait à sa place."},{lab:"L'aveu sincère",prev:"Il a fauté, mais il rêvait d'offrir un avenir aux siens."},{lab:"La comparaison",prev:"Qui, né sans rien, aurait refusé la seule issue offerte ?"},{lab:"La péroraison",prev:"Franklin n'a pas haï son quartier. Il a voulu le fuir par tous les moyens."},{lab:"L'appel au juré",prev:"Sans avenir possible, qu'auriez-vous saisi ?"}],acc:[{lab:"L'appel à l'émotion",prev:"Il a inondé son propre quartier de crack."},{lab:"La logique implacable",prev:"Il avait l'intelligence de réussir autrement."},{lab:"L'attaque frontale",prev:"Il s'est enrichi sur la ruine des siens."},{lab:"Le rappel des faits",prev:"Des familles entières ont sombré pour son profit."},{lab:"La péroraison",prev:"Détruire les siens pour s'élever, c'est une trahison."}]},
-  valide1:{def:[{lab:"L'appel à l'émotion",prev:"Sorti de rien, il s'est battu pour ne jamais y retourner."},{lab:"La logique implacable",prev:"Dans ce milieu, la moindre faiblesse te fait disparaître."},{lab:"L'aveu sincère",prev:"Il a fauté, mais la peur de retomber guidait chaque choix."},{lab:"La comparaison",prev:"Qui, au sommet du rap, n'a jamais marché sur quelqu'un ?"},{lab:"La péroraison",prev:"Apash n'a pas trahi par avidité, mais par terreur de retomber."},{lab:"L'appel au juré",prev:"Après tant d'efforts, accepteriez-vous de tout reperdre ?"}],acc:[{lab:"Le rappel des faits",prev:"Il a trahi William, celui qui l'a fait."},{lab:"La logique implacable",prev:"La gloire ne justifie pas la trahison."},{lab:"L'attaque frontale",prev:"Arrivé au sommet, il a renié tous les siens."},{lab:"L'appel au juré",prev:"Un homme qui vend les siens vend n'importe qui."},{lab:"La péroraison",prev:"Il a sacrifié son âme pour ne pas redescendre."}]},
-  annalise1:{def:[{lab:"L'appel à l'émotion",prev:"Elle les a aussi protégés, encore et encore, à ses risques."},{lab:"La logique implacable",prev:"Ce sont eux qui ont agi. Elle n'a fait que limiter les dégâts."},{lab:"L'aveu sincère",prev:"Brisée, elle s'est quand même battue pour eux."},{lab:"La comparaison",prev:"Quel avocat n'a jamais sali ses mains pour gagner ?"},{lab:"La péroraison",prev:"Annalise est blessée, pas malveillante. Elle a sauvé plus qu'elle n'a perdu."},{lab:"L'appel au juré",prev:"Qui, acculé, n'aurait pas tout fait pour survivre ?"}],acc:[{lab:"L'appel à l'émotion",prev:"Elle a fait de ses étudiants des complices."},{lab:"La logique implacable",prev:"Elle les expose pour sauver sa propre peau."},{lab:"Le rappel des faits",prev:"Elle a menti et manipulé pour se couvrir."},{lab:"L'attaque frontale",prev:"Une mentor devrait protéger, pas sacrifier."},{lab:"La péroraison",prev:"Ceux qu'elle devait guider, elle les a salis."}]},
-  sakho1:{def:[{lab:"L'appel à l'émotion",prev:"Il transgresse pour sauver des vies que la procédure abandonnerait."},{lab:"La logique implacable",prev:"Face au surnaturel, les règles ordinaires ne protègent personne."},{lab:"L'aveu sincère",prev:"Il prend les risques sur lui avant d'en faire courir aux autres."},{lab:"La comparaison",prev:"Quel grand flic n'a jamais contourné une règle pour la vérité ?"},{lab:"La péroraison",prev:"Sakho ne sert pas son ego, mais la vérité que d'autres fuient."},{lab:"L'appel au juré",prev:"Pour sauver un innocent, briseriez-vous une règle ?"}],acc:[{lab:"La logique implacable",prev:"Un policier n'est pas au-dessus de la loi."},{lab:"L'attaque frontale",prev:"Il met en danger ceux qui le suivent."},{lab:"L'appel au juré",prev:"S'il décide seul du juste, plus personne n'est protégé."},{lab:"Le rappel des faits",prev:"Il bafoue les règles qu'il jure d'incarner."},{lab:"La péroraison",prev:"La vérité n'excuse pas le mépris de la loi."}]},
-  nemesis1:{def:[{lab:"L'appel à l'émotion",prev:"Elle a protégé sa famille d'un effondrement total."},{lab:"La logique implacable",prev:"Sans preuve, parler n'aurait fait que tout détruire."},{lab:"L'aveu sincère",prev:"Déchirée, elle a porté seule un secret qui la rongeait."},{lab:"La comparaison",prev:"Qui dénoncerait sans hésiter l'homme de sa vie ?"},{lab:"La péroraison",prev:"Ebony n'a pas protégé un crime, mais tout ce qui lui restait."},{lab:"L'appel au juré",prev:"Trahiriez-vous, sans preuve, celui que vous aimez ?"}],acc:[{lab:"La logique implacable",prev:"Elle savait, et elle s'est tue : c'est complice."},{lab:"L'appel à l'émotion",prev:"Son silence a permis à d'autres d'être blessés."},{lab:"L'attaque frontale",prev:"Par confort, elle a couvert un criminel."},{lab:"L'appel au juré",prev:"Se taire par amour n'efface pas le crime."},{lab:"La péroraison",prev:"Protéger un coupable, c'est trahir ses victimes."}]},
-  leconkr1:{def:[{lab:"L'appel à l'émotion",prev:"Il protège des élèves que le système a abandonnés."},{lab:"La logique implacable",prev:"Face à des bourreaux, la douceur ne sauve personne."},{lab:"L'aveu sincère",prev:"Ses méthodes sont rudes, mais il rend leur dignité aux victimes."},{lab:"La comparaison",prev:"Quand la loi échoue, qui d'autre protège l'innocent ?"},{lab:"La péroraison",prev:"Na Hwa-jin n'aime pas la violence. Il la retourne contre ceux qui en abusent."},{lab:"L'appel au juré",prev:"Devant un enfant tabassé, resteriez-vous les bras croisés ?"}],acc:[{lab:"La logique implacable",prev:"Combattre la violence par la violence, c'est l'alimenter."},{lab:"L'attaque frontale",prev:"Il humilie et frappe : il devient le tyran."},{lab:"L'appel au juré",prev:"Qui combat les monstres avec leurs armes en devient un."},{lab:"Le rappel des faits",prev:"Sous prétexte de protéger, il terrorise."},{lab:"La péroraison",prev:"La peur n'a jamais été la justice."}]},
-  blood1:{def:[{lab:"L'appel à l'émotion",prev:"Elle a agi pour échapper à un homme qui allait la détruire."},{lab:"La logique implacable",prev:"C'était lui ou elle. La légitime défense n'est pas un crime."},{lab:"L'aveu sincère",prev:"Paniquée, elle s'est accrochée à la seule personne de confiance."},{lab:"La comparaison",prev:"Qui, terrifié, raisonnerait parfaitement dans l'instant ?"},{lab:"La péroraison",prev:"Sarah n'est pas une meurtrière froide. C'est une femme qui a voulu survivre."},{lab:"L'appel au juré",prev:"Face à votre bourreau, qu'auriez-vous fait ?"}],acc:[{lab:"L'appel à l'émotion",prev:"Elle a enchaîné son amie à son secret."},{lab:"La logique implacable",prev:"Elle a fait porter son crime à une innocente."},{lab:"L'attaque frontale",prev:"Pour se sauver, elle a sacrifié Kemi."},{lab:"Le rappel des faits",prev:"Une amitié brisée par son seul intérêt."},{lab:"La péroraison",prev:"Entraîner une innocente dans son crime, c'est impardonnable."}]},
-  maitresse1:{def:[{lab:"L'appel à l'émotion",prev:"Elle aime sincèrement, sans avoir cherché à détruire personne."},{lab:"La logique implacable",prev:"Ce n'est pas elle qui a juré fidélité à cette épouse."},{lab:"L'aveu sincère",prev:"Prise au piège, elle n'a pas choisi de tomber amoureuse."},{lab:"La comparaison",prev:"Le cœur décide-t-il vraiment selon nos principes ?"},{lab:"La péroraison",prev:"Marème n'a pas volé un mari. Elle a aimé l'homme venu à elle."},{lab:"L'appel au juré",prev:"Choisit-on vraiment de qui l'on tombe amoureux ?"}],acc:[{lab:"L'appel à l'émotion",prev:"Une femme et des enfants souffrent à cause d'elle."},{lab:"La logique implacable",prev:"Elle s'installe sciemment dans le foyer d'une autre."},{lab:"L'attaque frontale",prev:"Son désir passe avant une famille entière."},{lab:"L'appel au juré",prev:"Bâtir son bonheur sur le malheur d'autrui, est-ce juste ?"},{lab:"La péroraison",prev:"L'amour n'excuse pas de briser une famille."}]},
-  who2:{def:[{lab:"L'appel à l'émotion",prev:"Il protège peut-être le groupe d'une vérité insupportable."},{lab:"La logique implacable",prev:"Révéler sa source mettrait tout le monde en danger."},{lab:"L'aveu sincère",prev:"Il porte seul un fardeau qu'il refuse de leur imposer."},{lab:"La comparaison",prev:"Qui n'a jamais tu une vérité pour épargner les autres ?"},{lab:"La péroraison",prev:"Wilson ne cache pas pour régner, mais pour ne pas détruire."},{lab:"L'appel au juré",prev:"Diriez-vous tout, si la vérité pouvait tuer ?"}],acc:[{lab:"La logique implacable",prev:"Diriger par le secret, c'est manipuler."},{lab:"L'attaque frontale",prev:"Il garde jalousement le pouvoir que ce secret lui donne."},{lab:"L'appel au juré",prev:"Un chef qui cache ses sources trahit la confiance."},{lab:"Le rappel des faits",prev:"Le secret nourrit la méfiance dans le groupe."},{lab:"La péroraison",prev:"Cacher d'où vient son savoir, c'est régner par la peur."}]},
-  nuitdesrois1:{def:[{lab:"L'appel à l'émotion",prev:"Sans ce rituel, la prison sombrerait dans le chaos total."},{lab:"La logique implacable",prev:"Dans cet enfer, seul un ordre fort empêche le pire."},{lab:"L'aveu sincère",prev:"Il porte le poids d'un pouvoir qu'il n'a pas vraiment choisi."},{lab:"La comparaison",prev:"Qui, roi d'un tel enfer, gouvernerait sans dureté ?"},{lab:"La péroraison",prev:"Barbe Noire ne sert pas son orgueil, mais l'équilibre d'un monde sans loi."},{lab:"L'appel au juré",prev:"Roi d'une jungle, gouverneriez-vous par la douceur ?"}],acc:[{lab:"L'attaque frontale",prev:"Il déguise sa tyrannie en tradition."},{lab:"La logique implacable",prev:"Il sacrifie un homme chaque nuit pour son trône."},{lab:"L'appel à l'émotion",prev:"Il règne sur la MACA par la pure terreur."},{lab:"L'appel au juré",prev:"Imposer la peur au nom d'un rite, c'est de la tyrannie."},{lab:"La péroraison",prev:"La tradition ne justifie pas la domination."}]},
-  heritage1:{def:[{lab:"L'appel à l'émotion",prev:"Il a voulu préserver l'entreprise d'un héritier inexpérimenté."},{lab:"La logique implacable",prev:"Confier un empire à un jeune en deuil aurait tout précipité."},{lab:"L'aveu sincère",prev:"Il a pris les rênes pour ne pas voir l'héritage s'effondrer."},{lab:"La comparaison",prev:"Qui laisserait une fortune à un héritier non préparé ?"},{lab:"La péroraison",prev:"L'oncle n'a pas volé. Il a gardé ce que le fils n'était pas prêt à porter."},{lab:"L'appel au juré",prev:"Confieriez-vous tout à un enfant brisé par le chagrin ?"}],acc:[{lab:"L'appel à l'émotion",prev:"Il a dépouillé son neveu en plein deuil."},{lab:"La logique implacable",prev:"Il s'est servi avant même de penser au fils."},{lab:"L'attaque frontale",prev:"Il a trahi la mémoire du défunt."},{lab:"Le rappel des faits",prev:"Le deuil à peine commencé, il prenait les rênes."},{lab:"La péroraison",prev:"Profiter d'un deuil pour s'enrichir, c'est trahir le sang."}]},
-  tag1:{def:[{lab:"L'appel à l'émotion",prev:"Son talent, c'est tout ce qui lui a permis d'exister."},{lab:"La logique implacable",prev:"Sans lui, l'équipe n'aurait jamais atteint ce niveau."},{lab:"L'aveu sincère",prev:"Il a fauté, mais il a porté l'équipe quand elle vacillait."},{lab:"La comparaison",prev:"Quel champion n'a jamais eu besoin de briller pour avancer ?"},{lab:"La péroraison",prev:"Tag n'a pas trahi l'équipe. Il a cru, à tort, devoir la sauver seul."},{lab:"L'appel au juré",prev:"Avec un don pareil, sauriez-vous toujours vous effacer ?"}],acc:[{lab:"L'attaque frontale",prev:"Il joue pour lui, jamais pour l'équipe."},{lab:"L'appel à l'émotion",prev:"Son génie a brisé l'esprit du groupe."},{lab:"La logique implacable",prev:"Une équipe ne gagne pas avec un seul homme."},{lab:"Le rappel des faits",prev:"Il a humilié ses coéquipiers pour briller seul."},{lab:"La péroraison",prev:"Se croire plus grand que l'équipe, c'est la condamner."}]},
-  dinercon1:{def:[{lab:"L'appel à l'émotion",prev:"Il voulait sincèrement aider, sans jamais vouloir nuire."},{lab:"La logique implacable",prev:"Chaque catastrophe partait d'une bonne intention."},{lab:"L'aveu sincère",prev:"Maladroit, oui, mais d'une gentillesse que Brochant n'avait pas."},{lab:"La comparaison",prev:"Qui n'a jamais aggravé les choses en voulant bien faire ?"},{lab:"La péroraison",prev:"Pignon n'a aucune malice. Il a payé sa naïveté plus que ses fautes."},{lab:"L'appel au juré",prev:"Condamne-t-on un homme dont le seul tort est la gentillesse ?"}],acc:[{lab:"Le rappel des faits",prev:"En une soirée, il a ravagé la vie de Brochant."},{lab:"La logique implacable",prev:"La bonne foi n'efface pas le désastre."},{lab:"L'attaque frontale",prev:"Il détruit un couple, une carrière, une soirée entière."},{lab:"L'appel au juré",prev:"Faire le malheur des autres sans répondre de rien ?"},{lab:"La péroraison",prev:"L'intention ne répare jamais les dégâts."}]},
-  bloom1:{def:[{lab:"L'appel à l'émotion",prev:"Elle a grandi sans savoir qui elle était, et s'est construite seule."},{lab:"La logique implacable",prev:"Son pouvoir ne vaut que parce qu'elle a appris à le maîtriser."},{lab:"L'aveu sincère",prev:"Le don ne fait rien : c'est son courage qui sauve les autres."},{lab:"La comparaison",prev:"Reproche-t-on à quiconque les talents reçus à la naissance ?"},{lab:"La péroraison",prev:"Bloom n'a pas hérité de son courage. Elle l'a prouvé, encore et encore."},{lab:"L'appel au juré",prev:"Vaut-on par ce qu'on reçoit, ou par ce qu'on en fait ?"}],acc:[{lab:"La logique implacable",prev:"Sa grandeur lui a été donnée, pas méritée."},{lab:"L'attaque frontale",prev:"Sans son sang royal, elle ne serait qu'une élève."},{lab:"L'appel au juré",prev:"Se réclamer d'un héritage n'est pas une vertu."},{lab:"Le rappel des faits",prev:"Son pouvoir vient de sa naissance, pas de ses actes."},{lab:"La péroraison",prev:"On ne vaut pas par ce qu'on reçoit, mais par ce qu'on fait."}]}
+  ghost_power:{def:[{lab:"L'émotion",c:DA_E,reco:true,prev:"Tout ce qu'il a bâti, il l'a bâti pour offrir aux siens la vie propre qu'on lui refusait. Le condamner, c'est condamner un homme d'avoir voulu sortir sa famille de la rue."},{lab:"La logique",c:DA_L,prev:"Pas un ordre signé, pas une arme à sa main. Vous le jugez sur ce qu'il représente, jamais sur ce qu'on peut prouver."},{lab:"La comparaison",c:DA_T,prev:"Montrez-moi, dans ce milieu, un seul homme aux mains plus propres. Vous n'en trouverez pas — et pourtant lui seul est au banc."}],acc:[{lab:"Les faits",c:DA_L,reco:true,prev:"Comptez les corps autour de lui : un associé, une amie, presque sa propre femme. Chaque mort porte sa signature, toutes au nom du même trône."},{lab:"Le retournement",c:DA_T,prev:"Sa famille ? Il a fait de son propre fils un meurtrier. On ne protège pas les siens en les jetant dans le sang."},{lab:"La péroraison",c:DA_A,prev:"Tuer pour garder son empire, ce n'est pas aimer. C'est régner. Et un roi qui sacrifie ses sujets n'a jamais aimé personne."}]},
+  walter1:{def:[{lab:"L'émotion",c:DA_E,reco:true,prev:"Un homme condamné par le cancer, qui ne voulait qu'une chose : ne pas laisser les siens sans rien. La peur de mourir fait basculer même les justes."},{lab:"La comparaison",c:DA_T,prev:"La dose était calculée pour que l'enfant survive. Un monstre n'aurait jamais compté les milligrammes."},{lab:"Le doute",c:DA_L,prev:"Vous voyez Heisenberg. Moi je vous montre un prof de chimie humilié, terrifié, qui n'a jamais rien voulu de tout cela au départ."}],acc:[{lab:"Les faits",c:DA_L,reco:true,prev:"Il a empoisonné un enfant de huit ans, puis regardé Jesse s'effondrer en sachant qu'il en était la cause. Aucune famille ne justifie cela."},{lab:"Le retournement",c:DA_T,prev:"Il l'a avoué lui-même, à la fin : il l'a fait parce qu'il aimait ça. La famille n'était qu'un alibi qu'il se racontait."},{lab:"L'attaque",c:DA_A,prev:"Il a regardé Jane mourir sans lever le petit doigt. Voilà l'homme qu'on nous demande d'excuser."}]},
+  lupin1:{def:[{lab:"L'émotion",c:DA_E,reco:true,prev:"Son père est mort en prison pour un vol qu'il n'avait pas commis. Assane ne fait que rendre à un innocent l'honneur que la justice lui a volé."},{lab:"La logique",c:DA_L,prev:"Pas une goutte de sang en toute une vie. Son seul crime, c'est d'être plus malin que ceux qui l'ont brisé."},{lab:"La comparaison",c:DA_T,prev:"Quand la justice protège le puissant et enterre le faible, qui blâmer celui qui rétablit l'équilibre à sa façon ?"}],acc:[{lab:"La logique",c:DA_L,reco:true,prev:"La douleur n'a jamais effacé un délit. Aussi belle soit l'histoire, un voleur reste un voleur devant la loi."},{lab:"L'attaque",c:DA_A,prev:"Sa vengeance, il l'a payée avec la sécurité de sa femme et de son fils. Les vrais innocents de cette affaire, ce sont eux."},{lab:"Le juré",c:DA_T,prev:"S'il suffit d'avoir souffert pour se placer au-dessus des lois, alors plus aucune loi ne tient. Où s'arrête-t-on ?"}]},
+  topboy1:{def:[{lab:"L'émotion",c:DA_E,reco:true,prev:"La rue l'a élevé sans rien lui offrir qu'un seul code : tu obéis ou tu meurs. On ne juge pas un homme aux règles d'un monde qu'on ne lui a pas laissé choisir."},{lab:"La logique",c:DA_L,prev:"L'ordre venait d'au-dessus de lui. Refuser, c'était sa propre mort — et celle de bien d'autres."},{lab:"La comparaison",c:DA_T,prev:"Combien, nés dans ce béton, auraient survécu les mains pures ? Lui au moins n'a jamais menti sur ce qu'il était."}],acc:[{lab:"Les faits",c:DA_L,reco:true,prev:"Il a regardé Jamie dans les yeux — un homme qui essayait juste de sauver ses frères — et il a tiré. Aaron n'a plus de frère à cause de ce code."},{lab:"La logique",c:DA_T,prev:"Le code de la rue n'est pas une loi. C'est l'excuse que se donnent ceux qui ont choisi de tuer."},{lab:"L'attaque",c:DA_A,prev:"Il a le choix. Il l'a toujours eu. Et chaque fois, il choisit la gâchette."}]},
+  tommy1:{def:[{lab:"L'émotion",c:DA_E,reco:true,prev:"Il a sorti les Shelby de la boue et les a hissés là où personne ne les croyait capables d'aller. Ce sang, c'était le prix d'une famille qui ne manquerait plus jamais."},{lab:"La logique",c:DA_L,prev:"Un survivant des tranchées joue les cartes qu'on lui a données. Reprochez la guerre à ceux qui l'ont déclenchée, pas à celui qui en est revenu."},{lab:"La comparaison",c:DA_T,prev:"Quel chef, à cette époque, dans ce monde, a gardé les mains propres ? Aucun. Lui au moins savait pourquoi il se battait."}],acc:[{lab:"Les faits",c:DA_L,reco:true,prev:"Il a vu Arthur se noyer dans la drogue et la violence, et il a continué à lui confier les sales besognes — parce qu'Arthur était utile."},{lab:"L'attaque",c:DA_A,prev:"Chaque Shelby saigne pour SES guerres, SES ambitions. Une famille n'est pas un champ de bataille où l'on jette les siens."},{lab:"La péroraison",c:DA_T,prev:"Élever les siens, ce n'est pas les broyer un à un pour garder son trône. Cela porte un nom : la tyrannie."}]},
+  snowfall1:{def:[{lab:"L'émotion",c:DA_E,reco:true,prev:"Un gamin brillant à qui l'Amérique avait fermé toutes les portes. Il a saisi la seule ouverture qu'on lui laissait — celle qu'on avait déposée dans son quartier."},{lab:"La logique",c:DA_L,prev:"Le crack n'est pas venu de lui, mais de forces immenses qui le dépassaient. S'il avait refusé, un autre aurait vendu à sa place."},{lab:"Le doute",c:DA_T,prev:"Il n'a jamais haï South Central. Il a voulu en sortir, et en sortir les siens. Est-ce vraiment cela, trahir ?"}],acc:[{lab:"Les faits",c:DA_L,reco:true,prev:"Il savait, mieux que quiconque, ce que le crack ferait aux familles de ses voisins. Il l'a vendu quand même, et s'est enrichi sur leurs ruines."},{lab:"La logique",c:DA_T,prev:"Il avait l'intelligence de réussir cent autres façons. Il a choisi celle qui détruisait les siens."},{lab:"La péroraison",c:DA_A,prev:"Bâtir son empire sur les cendres de son propre quartier, ce n'est pas survivre. C'est trahir tout ce qui vous a fait."}]},
+  valide1:{def:[{lab:"L'émotion",c:DA_E,reco:true,prev:"Sorti de la galère à la force du poignet, il s'est juré de ne jamais y retomber. Dans ce milieu, la moindre faiblesse et tu disparais."},{lab:"La logique",c:DA_L,prev:"Personne ne reste au sommet du rap par sentimentalisme. Il a fait ce que le jeu exige de quiconque veut y survivre."},{lab:"La comparaison",c:DA_T,prev:"Qui, arrivé tout en haut après être parti de rien, n'a jamais dû couper un lien pour ne pas tomber ?"}],acc:[{lab:"Les faits",c:DA_L,reco:true,prev:"William l'a fait. Il l'a lancé, cru, porté. Et Apash l'a renié dès que sa lumière a commencé à gêner la sienne."},{lab:"La logique",c:DA_T,prev:"La gloire n'a jamais justifié la trahison. Un homme qui vend celui qui l'a fait peut vendre n'importe qui."},{lab:"La péroraison",c:DA_A,prev:"Ce n'est pas le milieu qui l'a changé. C'est lui qui a choisi son ego avant sa parole."}]},
+  annalise1:{def:[{lab:"L'émotion",c:DA_E,reco:true,prev:"Elle leur a offert ce qu'aucune fac ne donnera jamais : la vérité crue du droit, et sa protection, encore et encore, au péril de sa propre vie."},{lab:"La logique",c:DA_L,prev:"Ce sont eux qui ont agi, eux qui ont franchi la ligne. Elle n'a fait que tenter de limiter le désastre qu'ils avaient déclenché."},{lab:"Le doute",c:DA_T,prev:"Une femme brisée, qui sombre, et qui se relève malgré tout pour ne pas les abandonner. Est-ce vraiment cela, une manipulatrice ?"}],acc:[{lab:"Les faits",c:DA_L,reco:true,prev:"Elle a recruté des étudiants vulnérables, les a rendus complices de meurtres, puis s'est servie de leur loyauté comme d'un bouclier."},{lab:"La logique",c:DA_T,prev:"Chaque fois que cela la menace, elle les expose pour se sauver, elle. Une mentor protège — elle, elle sacrifie."},{lab:"L'attaque",c:DA_A,prev:"Ceux qu'elle devait élever vers le droit, elle les a salis à jamais. On ne s'en relève pas."}]},
+  sakho1:{def:[{lab:"L'émotion",c:DA_E,reco:true,prev:"Il enfreint les règles pour sauver des vies que la procédure laisserait mourir. Face à des coupables que la loi protège, il est le dernier rempart."},{lab:"La logique",c:DA_L,prev:"Un système imparfait laisse filer les vrais criminels. Un flic qui joue selon leurs règles est parfois le seul qui puisse les arrêter."},{lab:"La comparaison",c:DA_T,prev:"Quel grand enquêteur n'a jamais contourné une règle pour atteindre la vérité ? Le résultat lui donne raison."}],acc:[{lab:"La logique",c:DA_L,reco:true,prev:"Le jour où chaque flic décide seul quelles lois il respecte, il n'y a plus de loi — il n'y a que des hommes armés qui se croient justes."},{lab:"L'attaque",c:DA_A,prev:"Il s'introduit, il intimide, il manipule. Et il entraîne dans ses transgressions ceux qui ont le malheur de le suivre."},{lab:"La péroraison",c:DA_T,prev:"La vérité n'a jamais autorisé le mépris du droit. Un policier au-dessus des lois n'est plus un policier."}]},
+  nemesis1:{def:[{lab:"L'émotion",c:DA_E,reco:true,prev:"Une femme qui découvre l'homme de sa vie sous un autre visage, et doit choisir entre le détruire ou protéger ce qui lui reste. Qui trancherait sans trembler ?"},{lab:"La logique",c:DA_L,prev:"Sans preuve, parler n'aurait rien sauvé — cela n'aurait fait que tout détruire, sa famille la première."},{lab:"Le doute",c:DA_T,prev:"Elle n'a pas couvert un crime. Elle a porté seule un secret qui la rongeait, parce qu'elle n'avait personne à qui le confier."}],acc:[{lab:"Les faits",c:DA_L,reco:true,prev:"Elle a écouté Candice lui parler de son mari brisé par cette enquête — et elle a souri. Elle savait. Ce silence porte un nom."},{lab:"La logique",c:DA_T,prev:"Savoir et se taire, ce n'est pas de l'amour. C'est de la complicité, choisie en connaissance de cause."},{lab:"La péroraison",c:DA_A,prev:"Protéger un coupable par confort, c'est trahir chacune de ses victimes."}]},
+  leconkr1:{def:[{lab:"L'émotion",c:DA_E,reco:true,prev:"Quand le harcèlement pousse des enfants au désespoir et que les adultes sont impuissants, l'inaction tue. Lui agit, et rend leur sécurité à ceux que la terreur écrasait."},{lab:"La logique",c:DA_L,prev:"Face à des bourreaux que rien n'arrête, la douceur ne sauve personne. Parfois, seule la fermeté fait reculer la violence."},{lab:"Le doute",c:DA_T,prev:"Il n'aime pas la violence : il la retourne contre ceux qui en abusent. Devant un enfant tabassé, resteriez-vous les bras croisés ?"}],acc:[{lab:"La logique",c:DA_L,reco:true,prev:"Combattre la violence par la violence, c'est la nourrir. Qui affronte les monstres avec leurs armes finit toujours par leur ressembler."},{lab:"L'attaque",c:DA_A,prev:"Il frappe et humilie des adolescents avec le mandat de l'État. Ce n'est pas de la justice : c'est un abus de pouvoir institutionnalisé."},{lab:"La péroraison",c:DA_T,prev:"Aucune fin ne justifie qu'un adulte mandaté lève la main sur un enfant. La peur n'a jamais été la justice."}]},
+  blood1:{def:[{lab:"L'émotion",c:DA_E,reco:true,prev:"Kola était un homme violent qui aurait fini par tuer Kemi. Dans l'urgence et la terreur, Sarah n'a pensé qu'à une chose : sauver son amie."},{lab:"La logique",c:DA_L,prev:"C'était lui ou elle. La légitime défense n'est pas un crime — c'est le réflexe de qui veut vivre."},{lab:"Le doute",c:DA_T,prev:"Qui, terrifié, le corps encore tremblant, raisonnerait parfaitement dans l'instant ? Elle a paniqué, elle n'a pas calculé."}],acc:[{lab:"Les faits",c:DA_L,reco:true,prev:"Elle a menti à Kemi pendant des semaines, l'a transformée en fugitive, en complice d'un crime qu'elle n'avait pas commis."},{lab:"La logique",c:DA_T,prev:"Pour échapper aux conséquences, elle a fait porter le poids de son acte à la seule personne qui lui faisait confiance."},{lab:"La péroraison",c:DA_A,prev:"Sauver sa peau en enchaînant son amie à un secret capable de la détruire — cela, c'est impardonnable."}]},
+  maitresse1:{def:[{lab:"L'émotion",c:DA_E,reco:true,prev:"Elle n'a fait aucune promesse, juré aucune fidélité. Elle a aimé un homme venu à elle. Le serment brisé, c'est lui qui l'avait fait."},{lab:"La logique",c:DA_L,prev:"Ce n'est pas elle qui devait loyauté à Dialika. On ne peut trahir un pacte qu'on n'a jamais signé."},{lab:"Le doute",c:DA_T,prev:"Choisit-on vraiment de qui l'on tombe amoureux ? Si le cœur obéissait à nos principes, il n'y aurait jamais de drame."}],acc:[{lab:"L'émotion",c:DA_E,reco:true,prev:"Une épouse, des enfants, un foyer — et elle s'y est installée en sachant exactement ce qu'elle brisait."},{lab:"La logique",c:DA_L,prev:"Elle savait qu'il était marié. Elle a choisi de continuer. La liberté s'arrête où elle détruit sciemment la vie d'une autre."},{lab:"La péroraison",c:DA_A,prev:"Aimer n'a jamais autorisé à bâtir son bonheur sur les ruines d'une famille."}]},
+  who2:{def:[{lab:"L'émotion",c:DA_E,reco:true,prev:"Il porte peut-être seul une vérité si lourde qu'il refuse de l'imposer aux autres. Se taire, parfois, c'est protéger plus que parler."},{lab:"La logique",c:DA_L,prev:"Révéler sa source mettrait le groupe entier en danger. Son silence n'est pas un calcul : c'est un bouclier."},{lab:"Le doute",c:DA_T,prev:"Être plus lucide que les autres, est-ce un crime ? On lui reproche une intelligence qu'on aimerait avoir."}],acc:[{lab:"La logique",c:DA_L,reco:true,prev:"Il sait toujours avant tout le monde, et ne dit jamais d'où cela vient. Diriger par le secret, ce n'est pas guider : c'est manipuler."},{lab:"L'attaque",c:DA_A,prev:"Ce savoir lui donne l'ascendant sur le groupe — et il garde jalousement la seule chose qui pourrait l'expliquer."},{lab:"La péroraison",c:DA_T,prev:"Un homme qui cache l'origine de son pouvoir règne par la peur, pas par la confiance."}]},
+  nuitdesrois1:{def:[{lab:"L'émotion",c:DA_E,reco:true,prev:"Sans ce rituel, la MACA sombrerait dans la violence brute. Il a transformé un enfer où l'on s'entretue en un monde où la parole, au moins, a une valeur."},{lab:"La logique",c:DA_L,prev:"Dans une jungle sans loi, seul un ordre fort empêche le chaos. Roi d'un tel lieu, qui gouvernerait par la douceur ?"},{lab:"Le doute",c:DA_T,prev:"Il n'a pas vraiment choisi ce pouvoir. Il en porte le poids, et avec lui le fragile équilibre d'un monde que personne d'autre ne tient."}],acc:[{lab:"L'attaque",c:DA_A,reco:true,prev:"Il a inventé une tradition sur mesure pour se donner un droit de vie et de mort. La coutume n'est que le masque de sa domination."},{lab:"La logique",c:DA_L,prev:"Chaque nuit, un homme doit raconter ou mourir. Voilà le prix de son trône : une vie suspendue à son bon vouloir."},{lab:"La péroraison",c:DA_T,prev:"Régner par la terreur en l'appelant tradition, cela reste régner par la terreur."}]},
+  heritage1:{def:[{lab:"L'émotion",c:DA_E,reco:true,prev:"Au cœur du deuil, quelqu'un devait protéger le patrimoine que le fils, effondré, ne pouvait gérer. Il a tenu ce rôle ingrat dont personne ne voulait."},{lab:"La logique",c:DA_L,prev:"Gérer n'est pas voler. Il a préservé l'ensemble du bien le temps que la famille se relève — rien n'a disparu."},{lab:"Le doute",c:DA_T,prev:"On l'accuse parce qu'il est resté quand tout le monde fuyait. La prudence d'un gardien ressemble parfois, de loin, à une mainmise."}],acc:[{lab:"Les faits",c:DA_L,reco:true,prev:"Il a attendu que son frère soit en terre pour mettre la main sur ce qu'il n'avait jamais obtenu de son vivant."},{lab:"La logique",c:DA_T,prev:"Le deuil d'un fils n'a jamais fait de lui un incapable. Cette gestion, c'est une dépossession déguisée en prudence."},{lab:"La péroraison",c:DA_A,prev:"Profiter de la douleur d'un endeuillé pour capter son héritage, aucun lien de sang ne l'excuse."}]},
+  tag1:{def:[{lab:"L'émotion",c:DA_E,reco:true,prev:"Son talent, c'est tout ce que la rue lui a donné. C'est par le ballon qu'il existe — lui retirer son jeu, c'est lui retirer sa voix."},{lab:"La logique",c:DA_L,prev:"Ce sont ses dribbles, ses buts, qui gagnent les matchs. Sans son génie, cette équipe n'aurait jamais rien gagné du tout."},{lab:"La comparaison",c:DA_T,prev:"Tous les grands joueurs ont eu cette part d'ego. C'est le moteur qui les pousse à oser ce que personne d'autre ne tente."}],acc:[{lab:"L'attaque",c:DA_A,reco:true,prev:"Il préfère rater un dribble impossible que réussir une passe simple. Il confond son talent avec le droit d'ignorer ses coéquipiers."},{lab:"La logique",c:DA_L,prev:"Un match se gagne à onze. Le génie qui joue seul fait perdre toute l'équipe — talent ou pas."},{lab:"La péroraison",c:DA_T,prev:"Faire passer son show personnel avant les siens, ce n'est pas du talent. C'est de l'égoïsme."}]},
+  dinercon1:{def:[{lab:"L'émotion",c:DA_E,reco:true,prev:"Pignon n'a jamais voulu nuire. À chaque catastrophe, il croyait sincèrement aider. On ne condamne pas un homme pour la pureté maladroite de ses intentions."},{lab:"La logique",c:DA_L,prev:"C'est Brochant qui a monté ce dîner cruel pour se moquer de lui. Le piège s'est refermé sur son auteur — pas sur sa victime."},{lab:"Le doute",c:DA_T,prev:"Un homme de bonne foi, naïf, qu'on a invité pour rire de lui. Le vrai con de l'histoire est-il vraiment celui qu'on croit ?"}],acc:[{lab:"Les faits",c:DA_L,reco:true,prev:"En quelques heures : la femme de Brochant en fuite, le fisc alerté, une maîtresse débarquée. La bonne intention n'efface pas l'ampleur des dégâts."},{lab:"La logique",c:DA_T,prev:"À un moment, l'incompétence qui détruit tout sur son passage fait autant de mal qu'une vraie méchanceté."},{lab:"La péroraison",c:DA_A,prev:"Vouloir bien faire ne suffit pas quand on laisse un champ de ruines derrière soi."}]},
+  bloom1:{def:[{lab:"L'émotion",c:DA_E,reco:true,prev:"Elle a grandi en se croyant ordinaire, puis a découvert un destin qu'elle n'avait pas demandé. Elle aurait pu fuir. Elle a choisi de se battre."},{lab:"La logique",c:DA_L,prev:"On ne choisit pas son sang. On choisit ce qu'on en fait. Bloom a assumé une responsabilité que beaucoup auraient refusée."},{lab:"Le doute",c:DA_T,prev:"Lui reprocher ses origines, est-ce juste ? Le mérite, ce n'est pas d'où l'on part, c'est ce qu'on décide d'affronter."}],acc:[{lab:"La logique",c:DA_L,reco:true,prev:"Elle débarque sans formation, sans effort, et s'impose comme la plus puissante grâce à sa seule naissance. C'est le privilège déguisé en destin."},{lab:"L'attaque",c:DA_A,prev:"Tout ce qu'elle a, elle le doit au hasard de son sang, pas à son travail. Et elle se pare pourtant d'une grandeur qu'elle n'a pas gagnée."},{lab:"La péroraison",c:DA_T,prev:"Une héroïne qui hérite de sa gloire au lieu de la conquérir incarne exactement ce que le mérite devrait combattre."}]}
 };
 
 var plSelected = [];
@@ -650,84 +739,56 @@ function plData(){
   var key = (myRole === 'accusation') ? 'acc' : 'def';
   return DUEL_ARGS[curCase][key] || null;
 }
+var pickedArg = -1;
 function renderArgPicker(){
-  plSelected = [];
+  pickedArg = -1;
   var data = plData();
   var pool = document.getElementById('pl-pool');
   var fb = document.getElementById('pl-fallback');
   document.getElementById('pl-title').textContent = (myRole === 'accusation') ? 'VOTRE RÉQUISITOIRE' : 'VOTRE PLAIDOIRIE';
   document.getElementById('ds-arg').value = '';
-  var headEls = ['pl-pool-label'];
+  var comp = document.getElementById('pl-compose'); if (comp) comp.style.display = 'none';
+  var mt = document.getElementsByClassName('pl-meter')[0]; if (mt) mt.style.display = 'none';
+  var hd = document.getElementsByClassName('pl-head')[0]; if (hd) hd.style.display = 'none';
+  var lbl = document.getElementById('pl-pool-label');
   if (!data || !data.length) {
     pool.style.display = 'none';
-    document.getElementById('pl-pool-label').style.display = 'none';
-    document.getElementById('pl-compose').style.display = 'none';
-    document.getElementsByClassName('pl-meter')[0].style.display = 'none';
-    document.getElementsByClassName('pl-head')[0].style.display = 'none';
+    if (lbl) lbl.style.display = 'none';
     fb.style.display = 'block'; fb.value = '';
     return;
   }
-  pool.style.display = 'flex';
-  document.getElementById('pl-pool-label').style.display = 'block';
-  document.getElementById('pl-compose').style.display = 'flex';
-  document.getElementsByClassName('pl-meter')[0].style.display = 'block';
-  document.getElementsByClassName('pl-head')[0].style.display = 'flex';
   fb.style.display = 'none';
+  if (lbl) { lbl.style.display = 'block'; lbl.textContent = (myRole === 'accusation') ? 'CHOISISSEZ VOTRE CHARGE' : 'CHOISISSEZ VOTRE PLAIDOIRIE'; }
+  pool.style.display = 'flex';
+  pool.className = 'pl-pool dd-cards';
   pool.innerHTML = '';
   for (var i = 0; i < data.length; i++) {
     (function(arg, idx){
-      var col = colForLab(arg.lab);
-      var el = document.createElement('div');
-      el.className = 'pl-card';
-      el.style.borderLeftColor = col;
-      el.innerHTML = '<div class="add">+</div><div class="lab">' + arg.lab + '</div><div class="prev">' + arg.prev + '</div>';
-      el.getElementsByClassName('add')[0].style.color = col;
-      el.getElementsByClassName('lab')[0].style.color = col;
-      el.onclick = function(){ plToggle(idx, el); };
+      var col = arg.c || colForLab(arg.lab);
+      var el = document.createElement('button');
+      el.type = 'button';
+      el.className = 'dd-card' + (arg.reco ? ' reco' : '');
+      el.innerHTML = '<span class="dd-bar" style="background:' + col + '"></span><span class="dd-lab" style="color:' + col + '">' + arg.lab + '</span><span class="dd-prev">' + arg.prev + '</span>' + (arg.reco ? '<span class="dd-tag">Recommandé</span>' : '<span class="dd-chev">\u203A</span>');
+      el.onclick = function(){ pickArg(idx, el, arg); };
       pool.appendChild(el);
     })(data[i], i);
   }
-  plRenderCompose();
 }
-function plToggle(idx, el){
-  var pos = plSelected.indexOf(idx);
-  if (pos > -1) { plSelected.splice(pos, 1); el.className = 'pl-card'; el.getElementsByClassName('add')[0].textContent = '+'; }
-  else { if (plSelected.length >= PL_MAX) return; plSelected.push(idx); el.className = 'pl-card used'; el.getElementsByClassName('add')[0].textContent = '✓'; }
-  plRenderCompose();
+function pickArg(idx, el, arg){
+  pickedArg = idx;
+  var all = document.getElementById('pl-pool').children;
+  for (var k = 0; k < all.length; k++){ all[k].className = all[k].className.replace(/ picked/g, ''); }
+  if (el.className.indexOf('picked') === -1) el.className += ' picked';
+  document.getElementById('ds-arg').value = arg.prev;
 }
-function plRemove(idx){
-  var pos = plSelected.indexOf(idx);
-  if (pos > -1) plSelected.splice(pos, 1);
-  var cards = document.getElementById('pl-pool').children;
-  for (var i = 0; i < cards.length; i++) {
-    var used = plSelected.indexOf(i) > -1;
-    cards[i].className = used ? 'pl-card used' : 'pl-card';
-    var add = cards[i].getElementsByClassName('add')[0];
-    if (add) add.textContent = used ? '✓' : '+';
-  }
-  plRenderCompose();
+function defaultArgText(){
+  var data = plData(); if (!data || !data.length) return '';
+  for (var i = 0; i < data.length; i++){ if (data[i].reco) return data[i].prev; }
+  return data[0].prev;
 }
-function plRenderCompose(){
-  var data = plData(); if (!data) return;
-  var comp = document.getElementById('pl-compose');
-  if (!plSelected.length) {
-    comp.className = 'pl-compose';
-    comp.innerHTML = '<div id="pl-empty" class="pl-empty">Touchez des arguments pour bâtir votre plaidoirie.</div>';
-  } else {
-    comp.className = 'pl-compose has';
-    var html = '';
-    for (var i = 0; i < plSelected.length; i++) {
-      var a = data[plSelected[i]]; var col = colForLab(a.lab);
-      html += '<div class="pl-chip" style="border-left-color:' + col + '" onclick="plRemove(' + plSelected[i] + ')">' + a.prev + '<span class="x">×</span></div>';
-    }
-    comp.innerHTML = html;
-  }
-  var parts = [];
-  for (var j = 0; j < plSelected.length; j++) parts.push(data[plSelected[j]].prev);
-  document.getElementById('ds-arg').value = parts.join(' ');
-  document.getElementById('pl-meter-fill').style.width = Math.min(100, plSelected.length * 20) + '%';
-  document.getElementById('pl-strength').textContent = 'Force ' + (plSelected.length * 20);
-}
+function plToggle(){}
+function plRemove(){}
+function plRenderCompose(){}
 
 function goToSubmit() {
   clearInterval(prepI);
@@ -764,7 +825,9 @@ function goToSubmit() {
 function submitArgument() {
   if (!me.onboarded) { submitOnboarding(); return; }
   clearInterval(prepI);
-  var t = cleanMsg(document.getElementById('ds-arg').value.trim() || '(vide)');
+  var raw = document.getElementById('ds-arg').value.trim();
+  if (!raw && typeof defaultArgText === 'function') raw = defaultArgText();
+  var t = cleanMsg(raw || '(vide)');
   me.duels = (me.duels || 0) + 1;
   saveSession();
   if (window.db) {
@@ -781,6 +844,7 @@ function submitArgument() {
   document.getElementById('dv-name').textContent = (CASES[curCase] || {}).n || '';
   go('duel-vote');
   updateDuelVoteActions();
+  listenVerdictGauge();
   if(typeof showGuestBanner==='function') showGuestBanner();
 }
 

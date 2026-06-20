@@ -119,6 +119,31 @@
 .pl-card .prev{font-size:14px;line-height:1.4;color:rgba(255,255,255,.92);}
 .pl-card .add{position:absolute;top:50%;right:14px;transform:translateY(-50%);font-size:20px;font-weight:800;color:#FF7A2E;}
 .pl-fallback{flex:1 1 auto;width:100%;padding:16px;background:rgba(255,255,255,0.04);border:1.5px solid rgba(255,255,255,0.06);border-radius:14px;color:#F0F0F5;font-size:15px;resize:none;font-family:'Outfit',sans-serif;line-height:1.6;min-height:140px;}
+
+/* ===== Cartes de duel (style démo) ===== */
+.pl-pool.dd-cards{gap:11px;padding:2px 2px 6px;}
+.dd-card{position:relative;display:block;text-align:left;width:100%;cursor:pointer;background:rgba(255,255,255,0.04);border:1.5px solid rgba(255,255,255,0.07);border-radius:16px;padding:15px 42px 15px 24px;color:#F0F0F5;font-family:'Outfit',sans-serif;transition:transform .12s ease,box-shadow .25s ease;}
+.dd-card .dd-bar{position:absolute;left:12px;top:15px;bottom:15px;width:4px;border-radius:6px;}
+.dd-card .dd-lab{display:block;font-size:11px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;margin-bottom:6px;}
+.dd-card .dd-prev{display:block;font-size:14.5px;line-height:1.5;color:rgba(255,255,255,.9);font-weight:500;}
+.dd-card .dd-chev{position:absolute;right:15px;top:50%;transform:translateY(-50%);color:rgba(255,255,255,.22);font-size:23px;font-weight:700;}
+.dd-card .dd-tag{position:absolute;right:12px;top:12px;font-size:9.5px;font-weight:800;letter-spacing:.3px;color:#fff;background:linear-gradient(90deg,#ff7a2e,#ff4e8a,#a24bfa);padding:4px 11px;border-radius:999px;}
+.dd-card:active{transform:scale(.985);}
+.dd-card.reco{border-color:transparent;background:linear-gradient(#16161f,#16161f) padding-box,linear-gradient(90deg,#ff7a2e,#ff4e8a,#a24bfa) border-box;animation:ddPulse 2s ease-in-out infinite;}
+.dd-card.reco .dd-chev{display:none;}
+@keyframes ddPulse{0%,100%{box-shadow:0 0 15px rgba(255,90,140,.18);}50%{box-shadow:0 0 28px rgba(255,90,140,.42);}}
+.dd-card.picked{background:linear-gradient(90deg,#ff7a2e,#ff4e8a,#a24bfa);border-color:transparent;animation:none;box-shadow:0 12px 30px rgba(255,90,140,.4);}
+.dd-card.picked .dd-prev,.dd-card.picked .dd-lab{color:#fff !important;}
+.dd-card.picked .dd-bar{background:#fff !important;}
+.dd-card.picked .dd-tag{background:rgba(255,255,255,.28);}
+
+/* ===== Jauge de verdict en direct (style démo) ===== */
+.dvg-wrap{margin:2px 0 14px;}
+.dvg-lab{display:flex;justify-content:space-between;font-size:13px;font-weight:900;margin-bottom:8px;}
+.dvg-lab .d{color:#ffb38a;}
+.dvg-lab .a{color:#9aa6ff;}
+.dvg-track{position:relative;height:18px;border-radius:999px;background:#14141d;border:1px solid #24242f;overflow:hidden;}
+.dvg-fill{height:100%;width:50%;background:linear-gradient(90deg,#ff7a2e,#ff4e8a,#a24bfa);border-radius:999px;transition:width .7s cubic-bezier(.34,1.1,.5,1);}
 </style>
 </head>
 <body>
@@ -453,7 +478,8 @@
       <div style="font-size:13px;color:rgba(255,255,255,0.4);" id="dw-status">En attente d'un adversaire…</div>
       <div style="font-size:13px;font-weight:700;color:#4ECB71;margin:6px 0;display:none;" id="dw-myrole"></div>
       <div style="font-size:11px;color:rgba(255,255,255,0.15);margin-bottom:18px;" id="dw-count">1 personne(s)</div>
-      <button style="padding:10px 30px;background:rgba(255,122,46,0.1);border:1.5px solid rgba(255,122,46,0.2);border-radius:12px;color:#FF7A2E;font-size:13px;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif;margin-bottom:8px;" onclick="shareRoom()">Inviter un ami</button>
+      <div style="font-size:12px;color:rgba(255,255,255,0.3);margin-bottom:10px;max-width:280px;line-height:1.4;">Envie de jouer tout de suite ? Invite un ami à prendre le banc d'en face.</div>
+      <button style="width:calc(100% - 8px);max-width:320px;padding:16px;background:linear-gradient(90deg,#ff7a2e,#ff4e8a,#a24bfa);border:none;border-radius:15px;color:#fff;font-size:16px;font-weight:900;cursor:pointer;font-family:'Outfit',sans-serif;margin-bottom:10px;box-shadow:0 12px 28px rgba(255,78,138,0.28);" onclick="shareRoom()">⚔️&nbsp; Inviter un ami à m'affronter</button>
       <button class="btn bs" style="padding:10px 30px;margin-bottom:8px;" onclick="leaveDuel()">Retour</button>
     </div>
   </div>
@@ -533,6 +559,10 @@
     <div style="flex:1;padding:16px;overflow-y:auto;background:#0a0a12;">
       <div style="font-size:10px;font-weight:800;color:rgba(255,255,255,0.2);letter-spacing:3px;text-align:center;margin-bottom:6px;">VERDICT</div>
       <div id="dv-name" style="font-size:22px;font-weight:900;text-align:center;margin-bottom:14px;"></div>
+      <div class="dvg-wrap">
+        <div class="dvg-lab"><span class="d">Défense <span id="dvg-d">50%</span></span><span class="a"><span id="dvg-a">50%</span> Accusation</span></div>
+        <div class="dvg-track"><div class="dvg-fill" id="dvg-fill"></div></div>
+      </div>
       <div style="display:flex;gap:8px;margin-bottom:10px;">
         <div style="flex:1;padding:12px;background:rgba(78,203,113,0.04);border:1.5px solid rgba(78,203,113,0.12);border-radius:14px;">
           <div id="dv-def-name" style="font-size:10px;font-weight:800;color:#4ECB71;margin-bottom:5px;">Défense</div>
@@ -604,7 +634,7 @@
 
 </div>
 
-<script src="app.js?v=29"></script>
+<script src="app.js?v=30"></script>
 <script>
 // ======================
 // MODE INVITÉ
