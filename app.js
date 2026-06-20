@@ -452,6 +452,9 @@ function leaveDuel() {
   clearInterval(prepI);
   clearTimeout(botTimer);
   clearInterval(judgeI);
+  if (typeof ldTimer !== 'undefined' && ldTimer) { clearInterval(ldTimer); ldTimer = null; }
+  if (window._ldRef) { try { window._ldRef.off(); } catch(e){} window._ldRef = null; }
+  if (typeof hideLiveVerdict === 'function') hideLiveVerdict();
   if (window._vgRef) { try { window._vgRef.off(); } catch(e){} window._vgRef = null; }
   currentRoom = null;
   curCase = '';
@@ -689,13 +692,13 @@ function startDuel() {
   document.getElementById('dd-role').textContent = myRole === 'defense' ? 'DÉFENSE — Vous défendez ' + cn[0] : 'ACCUSATION — Vous accusez ' + cn[0];
   document.getElementById('dd-role').style.color = myRole === 'defense' ? '#4ECB71' : '#FF4757';
   go('duel-dossier');
-  var tot = c.pt || 120, left = tot;
+  var tot = 18, left = tot;
   clearInterval(prepI);
   uR('dd-ring', 1);
   document.getElementById('dd-timer').textContent = fT(left);
   prepI = setInterval(function() {
     left--;
-    if (left <= 0) { clearInterval(prepI); goToSubmit(); return; }
+    if (left <= 0) { clearInterval(prepI); startLiveDuel(); return; }
     document.getElementById('dd-timer').textContent = fT(left);
     uR('dd-ring', left / tot);
   }, 1000);
@@ -1385,3 +1388,220 @@ function adminExport() {
   document.getElementById('admin-export').scrollIntoView();
 }
 
+
+
+// =====================================================
+// DUEL EN DIRECT (tour par tour, synchronisé Firebase)
+// =====================================================
+var LD_ROUNDS = 3, LD_TURN = 25, LD_GRACE = 6;
+var ldTimer = null, ldRoles = null, ldActed = '', ldBot = '', ldDoneShown = false;
+
+function ldCardsFor(role){
+  var d = (typeof DUEL_ARGS !== 'undefined' && DUEL_ARGS[curCase]) ? DUEL_ARGS[curCase][(role === 'accusation') ? 'acc' : 'def'] : null;
+  return d || [];
+}
+function ldStrength(card, idx){
+  if (card && typeof card.q === 'number') return card.q;
+  if (card && card.reco) return 4.2;
+  return idx === 1 ? 3.5 : 3.1;
+}
+// Dérive tout l'état du duel à partir des coups joués (identique sur les 2 clients)
+function ldState(live){
+  live = live || {};
+  var moves = live.moves || {};
+  var order = ['accusation', 'defense']; // l'accusation ouvre, la défense répond
+  var g = 50, lastMove = null, lastTs = live.startedAt || 0;
+  var used = { accusation: [], defense: [] };
+  for (var r = 1; r <= LD_ROUNDS; r++){
+    var mr = moves[r] || {};
+    for (var oi = 0; oi < order.length; oi++){
+      var role = order[oi];
+      var mv = mr[role];
+      if (mv){
+        var sh = Math.round(((typeof mv.str === 'number' ? mv.str : 3) - 3) * 6);
+        g += (role === 'defense') ? sh : -sh;
+        if (g < 5) g = 5; if (g > 95) g = 95;
+        if (typeof mv.idx === 'number') used[role].push(mv.idx);
+        lastMove = { role: role, lab: mv.lab, text: mv.text, c: mv.c };
+        lastTs = mv.ts || lastTs;
+      } else {
+        return { phase: 'play', round: r, active: role, prevTs: lastTs || (live.startedAt || Date.now()), gauge: g, used: used, lastMove: lastMove, lastTs: lastTs };
+      }
+    }
+  }
+  return { phase: 'done', round: LD_ROUNDS, active: null, prevTs: lastTs, gauge: g, used: used, lastMove: lastMove, lastTs: lastTs };
+}
+
+function startLiveDuel(){
+  clearInterval(prepI);
+  if (!window.db || !currentRoom || !CASES[curCase]) { go('home'); return; }
+  ldDoneShown = false; ldActed = ''; ldBot = ''; window._live = null;
+  var c = CASES[curCase];
+  var cn = c.n.split(' vs ');
+  var ce = document.getElementById('ld-client'); if (ce) ce.textContent = (c.def || cn[0] || '');
+  var se = document.getElementById('ld-serie'); if (se) se.textContent = c.t || '';
+  var re = document.getElementById('ld-role');
+  if (re){ re.textContent = (myRole === 'defense') ? 'Vous : DÉFENSE' : "Vous : ACCUSATION"; re.style.color = (myRole === 'defense') ? '#ffb38a' : '#9aa6ff'; }
+  hideLiveVerdict();
+  go('live-duel');
+  // on n'a plus besoin du listener d'attente : on le détache
+  window.db.ref('rooms/' + currentRoom + '/roles').off('value');
+  window.db.ref('rooms/' + currentRoom + '/roles').once('value', function(s){ ldRoles = s.val() || {}; });
+  // démarre l'horloge commune (une seule fois)
+  var liveRef = window.db.ref('rooms/' + currentRoom + '/live');
+  liveRef.child('startedAt').transaction(function(cur){ return cur ? cur : Date.now(); });
+  if (window._ldRef) { try { window._ldRef.off(); } catch(e){} }
+  window._ldRef = liveRef;
+  window._ldRef.on('value', function(s){ window._live = s.val() || {}; ldRender(); });
+  clearInterval(ldTimer);
+  ldTimer = setInterval(ldTick, 300);
+  ldRender();
+}
+
+function ldRender(){
+  var pg = document.getElementById('live-duel');
+  if (!pg || !pg.classList.contains('on')) return;
+  var st = ldState(window._live || {});
+  var pct = Math.round(st.gauge);
+  var f = document.getElementById('ld-fill'); if (f) f.style.width = pct + '%';
+  var mk = document.getElementById('ld-mark'); if (mk) mk.style.left = pct + '%';
+  var gd = document.getElementById('ld-gd'); if (gd) gd.textContent = pct + '%';
+  var ga = document.getElementById('ld-ga'); if (ga) ga.textContent = (100 - pct) + '%';
+  var mn = document.getElementById('ld-manche'); if (mn) mn.textContent = (st.phase === 'done') ? 'Verdict' : ('Manche ' + st.round + '/' + LD_ROUNDS);
+  var arg = document.getElementById('ld-arg'), who = document.getElementById('ld-who'), tag = document.getElementById('ld-tag'), txt = document.getElementById('ld-txt');
+  if (st.lastMove){
+    arg.className = 'ld-arg ' + (st.lastMove.role === 'defense' ? 'def' : 'acc') + ' fade';
+    who.textContent = (st.lastMove.role === 'defense') ? 'Défense' : 'Accusation';
+    tag.textContent = st.lastMove.lab || '';
+    txt.textContent = '« ' + st.lastMove.text + ' »';
+  } else {
+    arg.className = 'ld-arg';
+    who.textContent = 'Le duel commence';
+    tag.textContent = (CASES[curCase] || {}).t || '';
+    txt.textContent = (CASES[curCase] || {}).q || '';
+  }
+  if (st.phase === 'done'){
+    clearInterval(ldTimer); ldTimer = null;
+    var bc = document.getElementById('ld-cards'); if (bc) bc.innerHTML = '';
+    var tn0 = document.getElementById('ld-turn'); if (tn0) tn0.innerHTML = '';
+    if (!ldDoneShown){ ldDoneShown = true; ldFinish(st, window._live || {}); }
+    return;
+  }
+  var myTurn = (st.active === myRole);
+  var turn = document.getElementById('ld-turn'), box = document.getElementById('ld-cards');
+  if (myTurn){
+    var last = (st.round === LD_ROUNDS && st.active === 'defense');
+    turn.innerHTML = (last ? 'Le dernier mot ' : 'À vous de plaider ') + '<span class="ld-cd" id="ld-cd"></span>';
+    var cards = ldCardsFor(myRole), usedMine = st.used[myRole] || [];
+    box.innerHTML = '';
+    for (var i = 0; i < cards.length; i++){
+      (function(card, idx){
+        var b = document.createElement('button');
+        b.type = 'button';
+        var isUsed = usedMine.indexOf(idx) > -1;
+        b.className = 'dd-card' + (card.reco && !isUsed ? ' reco' : '') + (isUsed ? ' dim' : '');
+        var col = card.c || '#ff7a2e';
+        b.innerHTML = '<span class="dd-bar" style="background:' + col + '"></span><span class="dd-lab" style="color:' + col + '">' + card.lab + '</span><span class="dd-prev">' + card.prev + '</span>' + (card.reco && !isUsed ? '<span class="dd-tag">Recommandé</span>' : '<span class="dd-chev">\u203A</span>');
+        if (!isUsed){ b.onclick = function(){ ldPick(idx, card); }; } else { b.style.pointerEvents = 'none'; }
+        box.appendChild(b);
+      })(cards[i], i);
+    }
+  } else {
+    turn.innerHTML = 'Au tour de ' + (st.active === 'defense' ? 'la défense' : "l'accusation") + ' <span class="ld-cd" id="ld-cd"></span>';
+    box.innerHTML = '<div style="text-align:center;color:#8e8e9c;font-size:13.5px;font-weight:700;padding:16px;">L\u2019adversaire plaide\u2026</div>';
+  }
+}
+
+function ldTick(){
+  var st = ldState(window._live || {});
+  if (st.phase === 'done') { clearInterval(ldTimer); ldTimer = null; return; }
+  var deadline = (st.prevTs || Date.now()) + LD_TURN * 1000;
+  var remain = Math.max(0, Math.ceil((deadline - Date.now()) / 1000));
+  var cd = document.getElementById('ld-cd'); if (cd) cd.textContent = '· ' + remain + 's';
+  var key = st.round + ':' + st.active;
+  if (Date.now() > deadline){
+    if (st.active === myRole){
+      if (ldActed !== key){ ldActed = key; ldAutoPick(st); }
+    } else if (Date.now() > deadline + LD_GRACE * 1000){
+      if (ldActed !== ('F' + key)){ ldActed = 'F' + key; ldForfeit(st); }
+    }
+  }
+  // L'adversaire est un bot : je joue son coup pour faire avancer le duel
+  if (st.active !== myRole && ldRoles && ldRoles[st.active] && ldRoles[st.active].uid === 'bot'){
+    if (ldBot !== key && Date.now() > (st.prevTs + 2800)){ ldBot = key; ldBotPlay(st); }
+  }
+}
+
+function ldPick(idx, card){
+  var st = ldState(window._live || {});
+  if (st.active !== myRole || st.phase === 'done') return;
+  ldActed = st.round + ':' + st.active;
+  ldWriteMove(myRole, st.round, idx, card);
+}
+function ldAutoPick(st){
+  var cards = ldCardsFor(myRole), used = st.used[myRole] || [], idx = -1, i;
+  for (i = 0; i < cards.length; i++){ if (cards[i].reco && used.indexOf(i) === -1){ idx = i; break; } }
+  if (idx === -1){ for (i = 0; i < cards.length; i++){ if (used.indexOf(i) === -1){ idx = i; break; } } }
+  if (idx === -1) return;
+  ldWriteMove(myRole, st.round, idx, cards[idx]);
+}
+function ldForfeit(st){
+  var role = st.active, cards = ldCardsFor(role), used = st.used[role] || [], idx = -1, i;
+  for (i = 0; i < cards.length; i++){ if (used.indexOf(i) === -1){ idx = i; break; } }
+  if (idx === -1) return;
+  window.db.ref('rooms/' + currentRoom + '/live/moves/' + st.round + '/' + role).once('value', function(s){
+    if (!s.val()) ldWriteMove(role, st.round, idx, cards[idx]);
+  });
+}
+function ldBotPlay(st){
+  var role = st.active, cards = ldCardsFor(role), used = st.used[role] || [], avail = [], i;
+  for (i = 0; i < cards.length; i++){ if (used.indexOf(i) === -1) avail.push(i); }
+  if (!avail.length) return;
+  var idx = avail[0];
+  for (i = 0; i < avail.length; i++){ if (cards[avail[i]].reco){ idx = avail[i]; break; } }
+  window.db.ref('rooms/' + currentRoom + '/live/moves/' + st.round + '/' + role).once('value', function(s){
+    if (!s.val()) ldWriteMove(role, st.round, idx, cards[idx]);
+  });
+}
+function ldWriteMove(role, round, idx, card){
+  if (!window.db || !currentRoom || !card) return;
+  window.db.ref('rooms/' + currentRoom + '/live/moves/' + round + '/' + role).set({
+    idx: idx, lab: card.lab, text: card.prev, c: card.c || '#ff7a2e', str: ldStrength(card, idx), ts: Date.now()
+  });
+}
+
+function ldFinish(st, live){
+  clearInterval(ldTimer); ldTimer = null;
+  var gauge = Math.round(st.gauge), defWon = gauge >= 50;
+  var iWon = (myRole === 'defense' && defWon) || (myRole === 'accusation' && !defWon);
+  me.duels = (me.duels || 0) + 1;
+  if (iWon) me.wins = (me.wins || 0) + 1;
+  saveSession();
+  if (window.db){
+    window.db.ref('users/' + myUid + '/duels').set(me.duels);
+    if (iWon) window.db.ref('users/' + myUid + '/wins').set(me.wins);
+    if (myRole === 'defense'){
+      var moves = live.moves || {}, dTxt = '', aTxt = '';
+      for (var r = LD_ROUNDS; r >= 1; r--){ if (moves[r]){ if (!dTxt && moves[r].defense) dTxt = moves[r].defense.text; if (!aTxt && moves[r].accusation) aTxt = moves[r].accusation.text; } }
+      var c = CASES[curCase] || {};
+      window.db.ref('public-duels/' + currentRoom).update({
+        caseName: c.n || '', caseType: c.t || '', question: c.q || '',
+        defense: { text: dTxt, name: (ldRoles && ldRoles.defense && ldRoles.defense.name) || 'Défense' },
+        accusation: { text: aTxt, name: (ldRoles && ldRoles.accusation && ldRoles.accusation.name) || 'Accusation' },
+        result: { defensePct: gauge, winner: defWon ? 'defense' : 'accusation' },
+        publishedAt: Date.now()
+      });
+    }
+  }
+  showLiveVerdict(iWon, gauge);
+  if (typeof showGuestBanner === 'function') showGuestBanner();
+}
+function showLiveVerdict(iWon, gauge){
+  var ov = document.getElementById('ld-vd'); if (!ov) return;
+  var b = document.getElementById('ld-vb');
+  if (b){ b.textContent = iWon ? 'Vous gagnez' : 'Vous perdez'; b.className = 'vb' + (iWon ? '' : ' lose'); }
+  var s = document.getElementById('ld-vs');
+  if (s) s.textContent = gauge + '% pour la défense · ' + (100 - gauge) + "% pour l'accusation";
+  ov.classList.add('show');
+}
+function hideLiveVerdict(){ var ov = document.getElementById('ld-vd'); if (ov) ov.classList.remove('show'); }
