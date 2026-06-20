@@ -1416,7 +1416,7 @@ function adminExport() {
 // =====================================================
 // DUEL EN DIRECT (tour par tour, synchronisé Firebase)
 // =====================================================
-var LD_ROUNDS = 3, LD_TURN = 25, LD_GRACE = 6;
+var LD_ROUNDS = 3, LD_TURN = 120, LD_GRACE = 6;
 var ldTimer = null, ldRoles = null, ldActed = '', ldBot = '', ldDoneShown = false;
 var _myVote = null;
 
@@ -1556,6 +1556,25 @@ function spectatorVote(side){
   window.db.ref('public-duels/' + currentRoom + '/votes/' + myUid).set({ side: side, ts: Date.now() });
   ldMarkVote();
 }
+function ldCustomCount(){
+  var t = document.getElementById('ld-custom'), c = document.getElementById('ld-custom-count');
+  if (t && c) c.textContent = t.value.length + '/300';
+}
+function ldSubmitCustom(){
+  var st = ldState(window._live || {});
+  if (st.active !== myRole || st.phase === 'done') return;
+  var t = document.getElementById('ld-custom'); if (!t) return;
+  var txt = (t.value || '').trim();
+  if (!txt){ t.style.borderColor = '#FF4757'; return; }
+  if (txt.length > 300) txt = txt.substring(0, 300);
+  if (typeof cleanMsg === 'function') txt = cleanMsg(txt);
+  ldActed = st.round + ':' + st.active;
+  var lab = (myRole === 'accusation') ? 'Réquisitoire' : 'Plaidoirie';
+  var col = (myRole === 'defense') ? '#ff8a55' : '#6f9bff';
+  window.db.ref('rooms/' + currentRoom + '/live/moves/' + st.round + '/' + myRole).set({
+    idx: -1, lab: lab, text: txt, c: col, str: 3.5, ts: Date.now()
+  });
+}
 
 function ldRender(){
   var pg = document.getElementById('live-duel');
@@ -1610,6 +1629,12 @@ function ldRender(){
         box.appendChild(b);
       })(cards[i], i);
     }
+    var wrap = document.createElement('div');
+    wrap.style.marginTop = '12px';
+    wrap.innerHTML = '<div style="text-align:center;color:rgba(255,255,255,.22);font-size:10.5px;font-weight:800;letter-spacing:1.5px;margin:8px 0 10px;">— OU ÉCRIVEZ LA VÔTRE —</div>'
+      + '<textarea id="ld-custom" maxlength="300" placeholder="Votre plaidoirie (300 caractères max)…" oninput="ldCustomCount()" style="width:100%;box-sizing:border-box;min-height:74px;padding:13px 14px;background:rgba(255,255,255,.04);border:1.5px solid rgba(255,255,255,.1);border-radius:14px;color:#F0F0F5;font-size:14.5px;font-family:Outfit,sans-serif;line-height:1.45;resize:none;outline:none;"></textarea>'
+      + '<div style="display:flex;align-items:center;gap:10px;margin-top:8px;"><span id="ld-custom-count" style="font-size:11px;color:rgba(255,255,255,.3);font-weight:700;">0/300</span><button type="button" onclick="ldSubmitCustom()" style="margin-left:auto;padding:11px 24px;border-radius:12px;border:none;background:linear-gradient(90deg,#ff7a2e,#ff4e8a,#a24bfa);color:#fff;font-family:Outfit,sans-serif;font-size:14px;font-weight:800;cursor:pointer;">Plaider</button></div>';
+    box.appendChild(wrap);
   } else {
     turn.innerHTML = 'Au tour de ' + (st.active === 'defense' ? 'la défense' : "l'accusation") + ' <span class="ld-cd" id="ld-cd"></span>';
     box.innerHTML = '<div style="text-align:center;color:#8e8e9c;font-size:13.5px;font-weight:700;padding:16px;">L\u2019adversaire plaide\u2026</div>';
@@ -1645,6 +1670,8 @@ function ldPick(idx, card){
   ldWriteMove(myRole, st.round, idx, card);
 }
 function ldAutoPick(st){
+  var t = document.getElementById('ld-custom');
+  if (t && (t.value || '').trim()){ ldSubmitCustom(); return; }
   var cards = ldCardsFor(myRole), used = st.used[myRole] || [], idx = -1, i;
   for (i = 0; i < cards.length; i++){ if (cards[i].reco && used.indexOf(i) === -1){ idx = i; break; } }
   if (idx === -1){ for (i = 0; i < cards.length; i++){ if (used.indexOf(i) === -1){ idx = i; break; } } }
