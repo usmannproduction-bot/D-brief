@@ -436,16 +436,10 @@ function nextCase() {
 
 // Boutons de fin d'affaire (verdict) selon invité / compte
 function updateDuelVoteActions() {
-  // Compte : marquer l'affaire signature comme faite -> déverrouille le prétoire
   var nextBtn = document.getElementById('dv-next');
   var acctBtn = document.getElementById('dv-account');
-  if (me.email) {
-    if (nextBtn) nextBtn.style.display = 'block';
-    if (acctBtn) acctBtn.style.display = 'none';
-  } else {
-    if (nextBtn) nextBtn.style.display = 'none';
-    if (acctBtn) acctBtn.style.display = 'block';
-  }
+  if (nextBtn) nextBtn.style.display = 'block';
+  if (acctBtn) acctBtn.style.display = 'none';
 }
 
 function leaveDuel() {
@@ -460,7 +454,6 @@ function leaveDuel() {
   curCase = '';
   myRole = '';
   if (!me.onboarded) { buildSeriesGrid(); go('series-select'); return; }
-  if (!me.email) { go('account-wall'); return; }
   buildHome(); go('home');
 }
 
@@ -1176,13 +1169,15 @@ function initMainApp() {
     if (s) {
       try {
         var u = JSON.parse(s);
-        if (u && u.name && u.email) {
+        if (u && u.name) {
           Object.assign(me, u);
           if (u.uid) myUid = u.uid;
           if (window.firebaseLoaded) {
             loadDuelDuJour(function() {
               buildHome(); buildProfile();
-              if (urlRoom) handleUrlRoom(); else go('home');
+              if (urlRoom) handleUrlRoom();
+              else if (!me.onboarded) { buildClientSelect(); go('client-select'); }
+              else go('home');
             });
           } else { go('splash'); }
           return;
