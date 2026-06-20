@@ -692,7 +692,7 @@ function startDuel() {
   document.getElementById('dd-role').textContent = myRole === 'defense' ? 'DÉFENSE — Vous défendez ' + cn[0] : 'ACCUSATION — Vous accusez ' + cn[0];
   document.getElementById('dd-role').style.color = myRole === 'defense' ? '#4ECB71' : '#FF4757';
   go('duel-dossier');
-  var tot = 18, left = tot;
+  var tot = 60, left = tot;
   clearInterval(prepI);
   uR('dd-ring', 1);
   document.getElementById('dd-timer').textContent = fT(left);
@@ -1526,9 +1526,10 @@ function ldTick(){
       if (ldActed !== ('F' + key)){ ldActed = 'F' + key; ldForfeit(st); }
     }
   }
-  // L'adversaire est un bot : je joue son coup pour faire avancer le duel
+  // L'adversaire est un bot : on laisse l'argument affiché ~20s avant de répondre (sinon illisible)
   if (st.active !== myRole && ldRoles && ldRoles[st.active] && ldRoles[st.active].uid === 'bot'){
-    if (ldBot !== key && Date.now() > (st.prevTs + 2800)){ ldBot = key; ldBotPlay(st); }
+    var botWait = st.lastTs ? (st.lastTs + 20000) : (st.prevTs + 2800);
+    if (ldBot !== key && Date.now() > botWait){ ldBot = key; ldBotPlay(st); }
   }
 }
 
