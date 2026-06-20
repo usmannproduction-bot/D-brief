@@ -19,18 +19,18 @@ var duelDuJour = 'who2'; // Mis à jour manuellement chaque matin dans Firebase
 // CLIENT ATTITRÉ (personnages des affaires)
 // ======================
 var CLIENTS = [
-  {id:'ghost',name:'Ghost',serie:'Power',sig:'ghost_power',c1:'#2A1660',c2:'#5B2D9A'},
-  {id:'assane',name:'Assane',serie:'Lupin',sig:'lupin1',c1:'#0F2A52',c2:'#1B4A8C'},
-  {id:'annalise',name:'Annalise',serie:'Murder',sig:'annalise1',c1:'#4A1020',c2:'#8B1C3A'},
-  {id:'sully',name:'Sully',serie:'Top Boy',sig:'topboy1',c1:'#0C2818',c2:'#1A5C32'},
-  {id:'tommy',name:'Tommy',serie:'Peaky Blinders',sig:'tommy1',c1:'#1C1C24',c2:'#3A3A48'},
-  {id:'walter',name:'Walter',serie:'Breaking Bad',sig:'walter1',c1:'#0C3818',c2:'#1A6C32'},
-  {id:'apash',name:'Apash',serie:'Validé',sig:'valide1',c1:'#3A1A08',c2:'#7A3510'},
-  {id:'sakho',name:'Sakho',serie:'Sakho & Mangane',sig:'sakho1',c1:'#08303A',c2:'#10606C'},
-  {id:'wilson',name:'Wilson',serie:'WHO',sig:'who2',c1:'#2A2008',c2:'#5A4510'},
-  {id:'ebony',name:'Ebony',serie:'Nemesis',sig:'nemesis1',c1:'#2A0818',c2:'#5A1038'},
-  {id:'franklin',name:'Franklin',serie:'Snowfall',sig:'snowfall1',c1:'#3A0F08',c2:'#9A2D14'},
-  {id:'nahwajin',name:'Na Hwa-jin',serie:'Que ça vous serve de leçon',sig:'leconkr1',c1:'#18202E',c2:'#384E72'}
+  {id:'ghost',name:'Ghost',serie:'Power',sig:'ghost_power',c1:'#2A1660',c2:'#5B2D9A',charge:'Meurtre'},
+  {id:'assane',name:'Assane',serie:'Lupin',sig:'lupin1',c1:'#0F2A52',c2:'#1B4A8C',charge:'Vol'},
+  {id:'annalise',name:'Annalise',serie:'Murder',sig:'annalise1',c1:'#4A1020',c2:'#8B1C3A',charge:'Complicité de meurtre'},
+  {id:'sully',name:'Sully',serie:'Top Boy',sig:'topboy1',c1:'#0C2818',c2:'#1A5C32',charge:'Meurtre'},
+  {id:'tommy',name:'Tommy',serie:'Peaky Blinders',sig:'tommy1',c1:'#1C1C24',c2:'#3A3A48',charge:'Meurtre'},
+  {id:'walter',name:'Walter',serie:'Breaking Bad',sig:'walter1',c1:'#0C3818',c2:'#1A6C32',charge:'Empoisonnement'},
+  {id:'apash',name:'Apash',serie:'Validé',sig:'valide1',c1:'#3A1A08',c2:'#7A3510',charge:'Trahison'},
+  {id:'sakho',name:'Sakho',serie:'Sakho & Mangane',sig:'sakho1',c1:'#08303A',c2:'#10606C',charge:'Abus de pouvoir'},
+  {id:'wilson',name:'Wilson',serie:'WHO',sig:'who2',c1:'#2A2008',c2:'#5A4510',charge:'Manipulation'},
+  {id:'ebony',name:'Ebony',serie:'Nemesis',sig:'nemesis1',c1:'#2A0818',c2:'#5A1038',charge:'Complicité'},
+  {id:'franklin',name:'Franklin',serie:'Snowfall',sig:'snowfall1',c1:'#3A0F08',c2:'#9A2D14',charge:'Trafic de drogue'},
+  {id:'nahwajin',name:'Na Hwa-jin',serie:'Que ça vous serve de leçon',sig:'leconkr1',c1:'#18202E',c2:'#384E72',charge:'Violences'}
 ];
 var selectedClient = '';
 
@@ -390,6 +390,10 @@ function buildClientSelect() {
         '<div class="client-pre">Défendre</div>' +
         '<div class="client-nm">' + cl.name + '</div>' +
         '<div class="client-sr">' + cl.serie + '</div>' +
+        '<div style="margin-top:11px;display:inline-flex;align-items:center;gap:7px;">' +
+          '<span style="font-size:9px;font-weight:800;letter-spacing:1.5px;color:rgba(255,255,255,.5);">ACCUSÉ DE</span>' +
+          '<span style="padding:4px 11px;border-radius:999px;background:rgba(255,80,95,.18);border:1px solid rgba(255,80,95,.38);font-size:11px;font-weight:800;color:#ff9aa4;">' + (cl.charge || '—') + '</span>' +
+        '</div>' +
       '</div>';
     wrap.appendChild(card);
   });
@@ -1615,26 +1619,8 @@ function ldRender(){
   if (myTurn){
     var last = (st.round === LD_ROUNDS && st.active === 'defense');
     turn.innerHTML = (last ? 'Le dernier mot ' : 'À vous de plaider ') + '<span class="ld-cd" id="ld-cd"></span>';
-    var cards = ldCardsFor(myRole), usedMine = st.used[myRole] || [];
-    box.innerHTML = '';
-    for (var i = 0; i < cards.length; i++){
-      (function(card, idx){
-        var b = document.createElement('button');
-        b.type = 'button';
-        var isUsed = usedMine.indexOf(idx) > -1;
-        b.className = 'dd-card' + (card.reco && !isUsed ? ' reco' : '') + (isUsed ? ' dim' : '');
-        var col = card.c || '#ff7a2e';
-        b.innerHTML = '<span class="dd-bar" style="background:' + col + '"></span><span class="dd-lab" style="color:' + col + '">' + card.lab + '</span><span class="dd-prev">' + card.prev + '</span>' + (card.reco && !isUsed ? '<span class="dd-tag">Recommandé</span>' : '<span class="dd-chev">\u203A</span>');
-        if (!isUsed){ b.onclick = function(){ ldPick(idx, card); }; } else { b.style.pointerEvents = 'none'; }
-        box.appendChild(b);
-      })(cards[i], i);
-    }
-    var wrap = document.createElement('div');
-    wrap.style.marginTop = '12px';
-    wrap.innerHTML = '<div style="text-align:center;color:rgba(255,255,255,.22);font-size:10.5px;font-weight:800;letter-spacing:1.5px;margin:8px 0 10px;">— OU ÉCRIVEZ LA VÔTRE —</div>'
-      + '<textarea id="ld-custom" maxlength="300" placeholder="Votre plaidoirie (300 caractères max)…" oninput="ldCustomCount()" style="width:100%;box-sizing:border-box;min-height:74px;padding:13px 14px;background:rgba(255,255,255,.04);border:1.5px solid rgba(255,255,255,.1);border-radius:14px;color:#F0F0F5;font-size:14.5px;font-family:Outfit,sans-serif;line-height:1.45;resize:none;outline:none;"></textarea>'
-      + '<div style="display:flex;align-items:center;gap:10px;margin-top:8px;"><span id="ld-custom-count" style="font-size:11px;color:rgba(255,255,255,.3);font-weight:700;">0/300</span><button type="button" onclick="ldSubmitCustom()" style="margin-left:auto;padding:11px 24px;border-radius:12px;border:none;background:linear-gradient(90deg,#ff7a2e,#ff4e8a,#a24bfa);color:#fff;font-family:Outfit,sans-serif;font-size:14px;font-weight:800;cursor:pointer;">Plaider</button></div>';
-    box.appendChild(wrap);
+    box.innerHTML = '<textarea id="ld-custom" maxlength="300" placeholder="Écrivez votre plaidoirie (300 caractères max)…" oninput="ldCustomCount()" style="width:100%;box-sizing:border-box;min-height:120px;padding:14px 15px;background:rgba(255,255,255,.04);border:1.5px solid rgba(255,255,255,.12);border-radius:15px;color:#F0F0F5;font-size:15px;font-family:Outfit,sans-serif;line-height:1.5;resize:none;outline:none;"></textarea>'
+      + '<div style="display:flex;align-items:center;gap:10px;margin-top:10px;"><span id="ld-custom-count" style="font-size:11.5px;color:rgba(255,255,255,.3);font-weight:700;">0/300</span><button type="button" onclick="ldSubmitCustom()" style="margin-left:auto;padding:13px 30px;border-radius:13px;border:none;background:linear-gradient(90deg,#ff7a2e,#ff4e8a,#a24bfa);color:#fff;font-family:Outfit,sans-serif;font-size:15px;font-weight:800;cursor:pointer;box-shadow:0 8px 22px rgba(255,78,138,.26);">Plaider →</button></div>';
   } else {
     turn.innerHTML = 'Au tour de ' + (st.active === 'defense' ? 'la défense' : "l'accusation") + ' <span class="ld-cd" id="ld-cd"></span>';
     box.innerHTML = '<div style="text-align:center;color:#8e8e9c;font-size:13.5px;font-weight:700;padding:16px;">L\u2019adversaire plaide\u2026</div>';
