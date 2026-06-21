@@ -452,6 +452,7 @@ function leaveDuel() {
   clearTimeout(botTimer);
   clearInterval(judgeI);
   if (typeof ldTimer !== 'undefined' && ldTimer) { clearInterval(ldTimer); ldTimer = null; }
+  if (typeof stopTension === 'function') stopTension();
   if (window._ldRef) { try { window._ldRef.off(); } catch(e){} window._ldRef = null; }
   if (window._ldVotesRef) { try { window._ldVotesRef.off(); } catch(e){} window._ldVotesRef = null; }
   if (typeof hideLiveVerdict === 'function') hideLiveVerdict();
@@ -1500,6 +1501,7 @@ function startLiveDuel(){
   clearInterval(ldTimer);
   ldTimer = setInterval(ldTick, 300);
   ldRender();
+  startTension();
 }
 
 // ===== Mode spectateur : rejoindre un duel en cours pour voter =====
@@ -1526,6 +1528,7 @@ function spectateDuel(room, caseId){
     clearInterval(ldTimer);
     ldTimer = setInterval(ldTick, 300);
     ldRender();
+    startTension();
   });
 }
 
@@ -1699,6 +1702,7 @@ function ldWriteMove(role, round, idx, card){
 
 function ldFinish(st, live){
   clearInterval(ldTimer); ldTimer = null;
+  stopTension();
   var gauge = ldGaugePct(st), defWon = gauge >= 50;
   if (myRole === 'spectator'){
     var ov = document.getElementById('ld-vd');
@@ -1742,3 +1746,86 @@ function showLiveVerdict(iWon, gauge){
   ov.classList.add('show');
 }
 function hideLiveVerdict(){ var ov = document.getElementById('ld-vd'); if (ov) ov.classList.remove('show'); }
+
+
+// =====================================================
+// MUSIQUE DE TENSION (synthétisée, Web Audio API)
+// =====================================================
+var _actx = null, _tension = null, _musicOn = true;
+
+function _ensureCtx(){
+  if (_actx) return _actx;
+  try {
+    var AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return null;
+    _actx = new AC();
+  } catch(e){ _actx = null; }
+  return _actx;
+}
+function unlockAudio(){
+  var c = _ensureCtx();
+  if (c && c.state === 'suspended') { try { c.resume(); } catch(e){} }
+}
+try {
+  document.addEventListener('touchend', unlockAudio, false);
+  document.addEventListener('click', unlockAudio, false);
+} catch(e){}
+
+function startTension(){
+  if (!_musicOn) return;
+  var c = _ensureCtx();
+  if (!c) return;
+  if (c.state === 'suspended') { try { c.resume(); } catch(e){} }
+  if (_tension) return;
+  var now = c.currentTime;
+  var master = c.createGain();
+  master.gain.setValueAtTime(0.0001, now);
+  master.gain.linearRampToValueAtTime(0.15, now + 1.6);
+  master.connect(c.destination);
+  // Nappe grave (deux oscillateurs légèrement désaccordés -> battement de tension)
+  var d1 = c.createOscillator(); d1.type = 'triangle'; d1.frequency.value = 65;
+  var g1 = c.createGain(); g1.gain.value = 0.5; d1.connect(g1); g1.connect(master); d1.start();
+  var d2 = c.createOscillator(); d2.type = 'triangle'; d2.frequency.value = 97.7;
+  var g2 = c.createGain(); g2.gain.value = 0.22; d2.connect(g2); g2.connect(master); d2.start();
+  // Pulsation type battement de coeur
+  var pg = c.createGain(); pg.gain.value = 0.0001; pg.connect(master);
+  var po = c.createOscillator(); po.type = 'sine'; po.frequency.value = 72; po.connect(pg); po.start();
+  var beat = setInterval(function(){
+    if (!_actx) return;
+    var t = _actx.currentTime;
+    try {
+      pg.gain.cancelScheduledValues(t);
+      pg.gain.setValueAtTime(0.0001, t);
+      pg.gain.linearRampToValueAtTime(0.6, t + 0.05);
+      pg.gain.exponentialRampToValueAtTime(0.0001, t + 0.26);
+      pg.gain.setValueAtTime(0.0001, t + 0.32);
+      pg.gain.linearRampToValueAtTime(0.4, t + 0.38);
+      pg.gain.exponentialRampToValueAtTime(0.0001, t + 0.58);
+    } catch(e){}
+  }, 1150);
+  _tension = { master: master, nodes: [d1, d2, po], timer: beat };
+}
+
+function stopTension(){
+  if (!_tension) return;
+  var c = _actx;
+  try { clearInterval(_tension.timer); } catch(e){}
+  if (c){
+    var t = c.currentTime;
+    try {
+      _tension.master.gain.cancelScheduledValues(t);
+      _tension.master.gain.setValueAtTime(_tension.master.gain.value || 0.15, t);
+      _tension.master.gain.linearRampToValueAtTime(0.0001, t + 0.6);
+    } catch(e){}
+    var nodes = _tension.nodes;
+    setTimeout(function(){ for (var i = 0; i < nodes.length; i++){ try { nodes[i].stop(); } catch(e){} } }, 750);
+  }
+  _tension = null;
+}
+
+function toggleMusic(){
+  _musicOn = !_musicOn;
+  if (_musicOn) startTension(); else stopTension();
+  var b = document.getElementById('ld-mute');
+  if (b) b.textContent = _musicOn ? '\uD83D\uDD0A' : '\uD83D\uDD07';
+}
