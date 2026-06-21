@@ -368,6 +368,11 @@
 
   <!-- HOME -->
   <div class="P" id="home" style="background:#0a0a12;">
+    <div id="home-live" onclick="switchTab('verdicts')" style="display:none;position:absolute;top:0;left:0;right:0;z-index:12;padding:13px 18px;align-items:center;gap:10px;cursor:pointer;background:linear-gradient(90deg,#ff3b5c,#a24bfa);box-shadow:0 6px 20px rgba(0,0,0,.35);">
+      <span style="width:8px;height:8px;border-radius:50%;background:#fff;display:inline-block;animation:pulse 1.4s infinite;"></span>
+      <span id="home-live-txt" style="font-size:13px;font-weight:900;color:#fff;letter-spacing:.2px;">Un duel en direct — regarde</span>
+      <span style="margin-left:auto;font-size:13px;font-weight:800;color:#fff;">Regarder →</span>
+    </div>
     <div style="position:absolute;inset:0;overflow-y:scroll;scroll-snap-type:y mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none;" id="cards-wrap">
       <style>#cards-wrap::-webkit-scrollbar{display:none;}</style>
       <div id="cards-inner"></div>
@@ -649,7 +654,7 @@
 
 </div>
 
-<script src="app.js?v=36"></script>
+<script src="app.js?v=38"></script>
 <script>
 // ======================
 // MODE INVITÉ

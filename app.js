@@ -139,7 +139,7 @@ function switchTab(id) {
   go(id);
   if (id === 'profil') { buildProfile(); loadProfile(); }
   if (id === 'verdicts') { loadPublicDuels(); loadLiveDuels(); }
-  if (id === 'home') loadFeed();
+  if (id === 'home') { loadFeed(); loadLiveDuels(); }
 }
 
 function setUid(e) { myUid = e.replace(/[^a-zA-Z0-9]/g, '_'); }
@@ -424,6 +424,7 @@ function confirmClient() {
   }
   buildProfile();
   buildHome();
+  if (typeof loadLiveDuels === 'function') loadLiveDuels();
   go('home');
 }
 
@@ -686,6 +687,17 @@ function updateVsAcc() {
 function startDuel() {
   var c = CASES[curCase];
   if (!c) return;
+  if (window.db && currentRoom) {
+    window.db.ref('rooms/' + currentRoom + '/roles').once('value', function(s){
+      var r = s.val() || {};
+      window.db.ref('live-duels/' + currentRoom).set({
+        caseId: curCase, caseName: c.n, caseType: c.t,
+        defName: (r.defense && r.defense.name) || 'Défense',
+        accName: (r.accusation && r.accusation.name) || 'Accusation',
+        startedAt: Date.now()
+      });
+    });
+  }
   document.getElementById('dd-name').textContent = c.n;
   document.getElementById('dd-dos').textContent = c.dos || c.q;
   var _re = document.getElementById('dd-reproche'); if (_re) _re.textContent = c.re || c.q; var _pa = document.getElementById('dd-parties'); if (_pa) _pa.innerHTML = '<b>' + (c.acc || 'La partie plaignante') + '</b> <span style="color:rgba(255,255,255,.4);font-weight:400;">accuse</span> <b>' + (c.def || '') + '</b>';
@@ -1153,8 +1165,6 @@ function loadPublicDuels() {
 
 function loadLiveDuels(){
   if (!window.db) return;
-  var box = document.getElementById('live-list');
-  if (!box) return;
   if (window._liveListRef) { try { window._liveListRef.off(); } catch(e){} }
   window._liveListRef = window.db.ref('live-duels').limitToLast(20);
   window._liveListRef.on('value', function(s){
@@ -1163,13 +1173,17 @@ function loadLiveDuels(){
       var k = keys[i], v = d[k];
       if (!v || !v.startedAt || (now - v.startedAt) > 8 * 60000) continue;
       shown++;
-      html += '<div onclick="spectateDuel(\'' + k + '\')" style="margin:0 16px 10px;padding:14px 16px;border-radius:16px;background:linear-gradient(135deg,rgba(255,122,46,.09),rgba(162,75,250,.07));border:1px solid rgba(255,122,46,.18);cursor:pointer;">'
+      var cid = (v.caseId || '').replace(/[^a-zA-Z0-9_]/g, '');
+      html += '<div onclick="spectateDuel(\'' + k + '\',\'' + cid + '\')" style="margin:0 16px 10px;padding:14px 16px;border-radius:16px;background:linear-gradient(135deg,rgba(255,122,46,.09),rgba(162,75,250,.07));border:1px solid rgba(255,122,46,.18);cursor:pointer;">'
         + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:7px;"><span style="font-size:10px;font-weight:800;letter-spacing:1.5px;color:#ff7a2e;">' + ((v.caseType || '').toUpperCase()) + '</span><span style="display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:800;color:#ff3b5c;"><span style="width:6px;height:6px;border-radius:50%;background:#ff3b5c;display:inline-block;animation:pulse 1.5s infinite;"></span>EN DIRECT</span></div>'
         + '<div style="font-size:16px;font-weight:900;color:#F0F0F5;margin-bottom:9px;line-height:1.15;">' + (v.caseName || '') + '</div>'
         + '<div style="display:flex;align-items:center;gap:10px;font-size:12.5px;font-weight:700;"><span style="color:#4ECB71;">' + (v.defName || 'Défense') + '</span><span style="color:rgba(255,255,255,.25);">VS</span><span style="color:#FF4757;">' + (v.accName || 'Accusation') + '</span><span style="margin-left:auto;color:#ff9a5a;font-weight:800;">Regarder →</span></div>'
         + '</div>';
     }
-    box.innerHTML = shown > 0 ? ('<div style="padding:14px 24px 8px;font-size:11px;font-weight:800;letter-spacing:2px;color:rgba(255,255,255,.3);">DUELS EN DIRECT</div>' + html) : '';
+    var box = document.getElementById('live-list');
+    if (box) box.innerHTML = shown > 0 ? ('<div style="padding:14px 24px 8px;font-size:11px;font-weight:800;letter-spacing:2px;color:rgba(255,255,255,.3);">DUELS EN DIRECT</div>' + html) : '';
+    var hb = document.getElementById('home-live');
+    if (hb){ hb.style.display = shown > 0 ? 'flex' : 'none'; var ht = document.getElementById('home-live-txt'); if (ht) ht.textContent = shown > 1 ? (shown + ' duels en direct') : 'Un duel en direct — regarde'; }
   });
 }
 
@@ -1207,6 +1221,7 @@ function initMainApp() {
           if (window.firebaseLoaded) {
             loadDuelDuJour(function() {
               buildHome(); buildProfile();
+              if (typeof loadLiveDuels === 'function') loadLiveDuels();
               if (urlRoom) handleUrlRoom();
               else if (!me.onboarded) { buildClientSelect(); go('client-select'); }
               else go('home');
@@ -1474,15 +1489,7 @@ function startLiveDuel(){
   go('live-duel');
   // on n'a plus besoin du listener d'attente : on le détache
   window.db.ref('rooms/' + currentRoom + '/roles').off('value');
-  window.db.ref('rooms/' + currentRoom + '/roles').once('value', function(s){
-    ldRoles = s.val() || {};
-    window.db.ref('live-duels/' + currentRoom).set({
-      caseName: c.n, caseType: c.t,
-      defName: (ldRoles.defense && ldRoles.defense.name) || 'Défense',
-      accName: (ldRoles.accusation && ldRoles.accusation.name) || 'Accusation',
-      startedAt: Date.now()
-    });
-  });
+  window.db.ref('rooms/' + currentRoom + '/roles').once('value', function(s){ ldRoles = s.val() || {}; });
   // démarre l'horloge commune (une seule fois)
   var liveRef = window.db.ref('rooms/' + currentRoom + '/live');
   liveRef.child('startedAt').transaction(function(cur){ return cur ? cur : Date.now(); });
@@ -1496,7 +1503,7 @@ function startLiveDuel(){
 }
 
 // ===== Mode spectateur : rejoindre un duel en cours pour voter =====
-function spectateDuel(room){
+function spectateDuel(room, caseId){
   if (!window.db || !room) return;
   if (typeof ldTimer !== 'undefined' && ldTimer) { clearInterval(ldTimer); ldTimer = null; }
   if (window._ldRef) { try { window._ldRef.off(); } catch(e){} window._ldRef = null; }
@@ -1504,7 +1511,7 @@ function spectateDuel(room){
   currentRoom = room; myRole = 'spectator';
   ldDoneShown = false; window._live = null; window._specVotes = { def: 0, acc: 0 }; _myVote = null;
   window.db.ref('rooms/' + room).once('value', function(s){
-    var rm = s.val() || {}, cs = rm.caseId || '';
+    var rm = s.val() || {}, cs = (caseId && CASES[caseId]) ? caseId : (rm.caseId || '');
     if (!cs || !CASES[cs]){ alert("Ce duel n'est plus disponible."); currentRoom = null; myRole = ''; switchTab('verdicts'); return; }
     curCase = cs; ldRoles = rm.roles || {};
     var c = CASES[cs];
@@ -1617,9 +1624,10 @@ function ldRender(){
   }
   var myTurn = (st.active === myRole);
   if (myTurn){
-    var last = (st.round === LD_ROUNDS && st.active === 'defense');
-    turn.innerHTML = (last ? 'Le dernier mot ' : 'À vous de plaider ') + '<span class="ld-cd" id="ld-cd"></span>';
-    box.innerHTML = '<textarea id="ld-custom" maxlength="300" placeholder="Écrivez votre plaidoirie (300 caractères max)…" oninput="ldCustomCount()" style="width:100%;box-sizing:border-box;min-height:120px;padding:14px 15px;background:rgba(255,255,255,.04);border:1.5px solid rgba(255,255,255,.12);border-radius:15px;color:#F0F0F5;font-size:15px;font-family:Outfit,sans-serif;line-height:1.5;resize:none;outline:none;"></textarea>'
+    var last = (st.round === LD_ROUNDS);
+    turn.innerHTML = (last ? 'Dernière plaidoirie ' : 'À vous de plaider ') + '<span class="ld-cd" id="ld-cd"></span>';
+    var ldWarn = last ? '<div style="margin:0 0 11px;padding:11px 14px;border-radius:13px;background:rgba(255,122,46,.13);border:1px solid rgba(255,122,46,.32);font-size:12.5px;font-weight:700;color:#ffb38a;line-height:1.4;">\u2696\uFE0F Dernière plaidoirie : c\'est celle-ci qui restera dans le verdict. Donnez tout.</div>' : '';
+    box.innerHTML = ldWarn + '<textarea id="ld-custom" maxlength="300" placeholder="Écrivez votre plaidoirie (300 caractères max)…" oninput="ldCustomCount()" style="width:100%;box-sizing:border-box;min-height:120px;padding:14px 15px;background:rgba(255,255,255,.04);border:1.5px solid rgba(255,255,255,.12);border-radius:15px;color:#F0F0F5;font-size:15px;font-family:Outfit,sans-serif;line-height:1.5;resize:none;outline:none;"></textarea>'
       + '<div style="display:flex;align-items:center;gap:10px;margin-top:10px;"><span id="ld-custom-count" style="font-size:11.5px;color:rgba(255,255,255,.3);font-weight:700;">0/300</span><button type="button" onclick="ldSubmitCustom()" style="margin-left:auto;padding:13px 30px;border-radius:13px;border:none;background:linear-gradient(90deg,#ff7a2e,#ff4e8a,#a24bfa);color:#fff;font-family:Outfit,sans-serif;font-size:15px;font-weight:800;cursor:pointer;box-shadow:0 8px 22px rgba(255,78,138,.26);">Plaider →</button></div>';
   } else {
     turn.innerHTML = 'Au tour de ' + (st.active === 'defense' ? 'la défense' : "l'accusation") + ' <span class="ld-cd" id="ld-cd"></span>';
