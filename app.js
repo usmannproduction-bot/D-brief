@@ -425,6 +425,7 @@ function confirmClient() {
   buildProfile();
   buildHome();
   if (typeof loadLiveDuels === 'function') loadLiveDuels();
+  if (typeof startPresence === 'function') startPresence();
   go('home');
 }
 
@@ -1222,6 +1223,7 @@ function initMainApp() {
             loadDuelDuJour(function() {
               buildHome(); buildProfile();
               if (typeof loadLiveDuels === 'function') loadLiveDuels();
+              if (typeof startPresence === 'function') startPresence();
               if (urlRoom) handleUrlRoom();
               else if (!me.onboarded) { buildClientSelect(); go('client-select'); }
               else go('home');
@@ -1742,3 +1744,68 @@ function showLiveVerdict(iWon, gauge){
   ov.classList.add('show');
 }
 function hideLiveVerdict(){ var ov = document.getElementById('ld-vd'); if (ov) ov.classList.remove('show'); }
+
+
+// ====================== PRÉSENCE + TABLEAU DE BORD ======================
+var _presenceStarted = false;
+function startPresence() {
+  if (_presenceStarted || !window.db || !me.name) return;
+  _presenceStarted = true;
+  try { window.db.ref('users/' + myUid).update({ name: me.name, lastSeen: Date.now() }); } catch(e) {}
+  try {
+    var con = window.db.ref('.info/connected');
+    con.on('value', function(snap) {
+      if (snap.val() === true) {
+        var ref = window.db.ref('presence/' + myUid);
+        ref.onDisconnect().remove();
+        ref.set({ name: me.name, since: Date.now() });
+      }
+    });
+  } catch(e) {}
+}
+
+var _dashOnline = null, _dashDuels = null, _dashTotal = null;
+function dashDetach() {
+  try {
+    if (_dashOnline) window.db.ref('presence').off('value', _dashOnline);
+    if (_dashDuels) window.db.ref('live-duels').off('value', _dashDuels);
+    if (_dashTotal) window.db.ref('users').off('value', _dashTotal);
+  } catch(e) {}
+  _dashOnline = _dashDuels = _dashTotal = null;
+}
+function openDashboard() { go('dashboard'); loadDashboard(); }
+function closeDashboard() { dashDetach(); go('admin'); }
+function loadDashboard() {
+  if (!window.db) return;
+  dashDetach();
+  _dashOnline = function(s) {
+    var d = s.val() || {}, keys = Object.keys(d), i;
+    var el = document.getElementById('dash-online'); if (el) el.textContent = keys.length;
+    keys.sort(function(a, b) { return (d[b].since || 0) - (d[a].since || 0); });
+    var html = '';
+    for (i = 0; i < keys.length; i++) {
+      html += '<div style="padding:11px 14px;background:rgba(255,255,255,.04);border-radius:11px;margin-bottom:7px;font-size:14px;font-weight:700;display:flex;align-items:center;gap:9px;"><span style="width:8px;height:8px;border-radius:50%;background:#4ECB71;display:inline-block;"></span>' + (d[keys[i]].name || '?') + '</div>';
+    }
+    var box = document.getElementById('dash-online-list');
+    if (box) box.innerHTML = html || '<div style="color:rgba(255,255,255,.3);font-size:13px;padding:6px;">Personne en ligne pour le moment.</div>';
+  };
+  window.db.ref('presence').on('value', _dashOnline);
+  _dashDuels = function(s) {
+    var d = s.val() || {}, now = Date.now(), keys = Object.keys(d), shown = 0, html = '', i;
+    for (i = 0; i < keys.length; i++) {
+      var v = d[keys[i]];
+      if (!v || !v.startedAt || (now - v.startedAt) > 8 * 60000) continue;
+      shown++;
+      html += '<div style="padding:11px 14px;background:rgba(255,122,46,.07);border:1px solid rgba(255,122,46,.18);border-radius:11px;margin-bottom:7px;font-size:13px;"><b style="color:#4ECB71;">' + (v.defName || '?') + '</b> vs <b style="color:#FF4757;">' + (v.accName || '?') + '</b><div style="font-size:11px;color:rgba(255,255,255,.45);margin-top:3px;">' + (v.caseName || '') + '</div></div>';
+    }
+    var el = document.getElementById('dash-duels'); if (el) el.textContent = shown;
+    var box = document.getElementById('dash-duels-list');
+    if (box) box.innerHTML = html || '<div style="color:rgba(255,255,255,.3);font-size:13px;padding:6px;">Aucun duel en cours.</div>';
+  };
+  window.db.ref('live-duels').on('value', _dashDuels);
+  _dashTotal = function(s) {
+    var d = s.val() || {};
+    var el = document.getElementById('dash-total'); if (el) el.textContent = Object.keys(d).length;
+  };
+  window.db.ref('users').on('value', _dashTotal);
+}
